@@ -1,0 +1,36 @@
+# The player's per-skill progress, ported from the hero skill state
+# in src/App.jsx (level, accumulated XP, difficulty, health).
+class Hero:
+  field level
+  field xp
+  field difficulty
+  field hp
+
+  fn new():
+    set this.level: 1
+    set this.xp: 0
+    set this.difficulty: 1
+    set this.hp: 10
+
+  fn init(d):
+    set this.level: 1
+    set this.xp: 0
+    set this.difficulty: d
+    set this.hp: 10
+
+  fn gain(amount):
+    set this.xp: this.xp + amount
+
+  # Spend `need` XP and climb one level.
+  fn level_up(need):
+    set this.xp: this.xp - need
+    set this.level: this.level + 1
+
+  fn lvl():
+    return: this.level
+
+  fn xp_v():
+    return: this.xp
+
+  fn diff():
+    return: this.difficulty

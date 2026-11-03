@@ -1,0 +1,83 @@
+import "mathlib.ow"
+import "Progression.ow"
+import "MathSkill.ow"
+import "MobPool.ow"
+import "Mob.ow"
+import "Hero.ow"
+
+# Orchestrates one skill's combat loop: ask a math problem, turn each
+# correct answer into damage, and convert kills into XP and levels.
+# This is the OW port of the core gameplay wiring in src/App.jsx,
+# reduced to the Math skill (see docs/PORTING.md for scope).
+class Game:
+  field prog
+  field skill
+  field pool
+  field hero
+  field mob
+  field problem
+  field message
+
+  fn new():
+    set this.prog: new Progression()
+    set this.skill: new MathSkill()
+    set this.pool: new MobPool()
+    set this.hero: new Hero()
+    set this.mob: new Mob()
+    set this.problem: new Problem()
+    set this.message: "Welcome to Code Wash RPG."
+
+  # Begin a run at the given difficulty (1-7).
+  fn start(d):
+    call: this.hero.init(d)
+    call: this.spawn()
+    call: this.next_problem()
+    set this.message: "A wild foe appears!"
+
+  # Create the next mob based on the hero's level (encounter cycle)
+  # and difficulty (hit points).
+  fn spawn():
+    set code int: this.prog.encounter(this.hero.lvl())
+    set name: this.pool.pick(code)
+    set hp int: this.prog.mob_health(this.hero.diff())
+    set m: new Mob()
+    call: m.init(name, hp)
+    set this.mob: m
+
+  fn next_problem():
+    set this.problem: this.skill.generate(this.hero.diff())
+
+  # Resolve a typed answer, then queue the next problem.
+  fn answer(n):
+    if: n == this.problem.solution()
+      call: this.hit()
+    else:
+      set this.message: "Wrong! The answer was " + this.problem.solution()
+    call: this.next_problem()
+
+  fn hit():
+    set dmg int: this.prog.damage(this.hero.diff())
+    call: this.mob.hurt(dmg)
+    if: this.mob.dead() == 1
+      call: this.reward()
+    else:
+      set this.message: "Hit! " + this.mob.label() + " has " + this.mob.cur_hp() + " HP left"
+
+  # Grant XP for a kill, apply any level-ups, and spawn a fresh mob.
+  fn reward():
+    set xp int: this.prog.xp_reward(this.hero.diff(), this.hero.lvl())
+    call: this.hero.gain(xp)
+    set need int: this.prog.xp_to_level(this.hero.diff())
+    set ups int: 0
+    while: this.hero.xp_v() > (need - 1)
+      call: this.hero.level_up(need)
+      set ups: ups + 1
+      set need: this.prog.xp_to_level(this.hero.diff())
+    set this.message: this.mob.label() + " defeated! +" + xp + " XP"
+    if: ups > 0
+      set this.message: this.message + " -- Level up! Now level " + this.hero.lvl()
+    call: this.spawn()
+
+  # One-line HUD used by the console shell.
+  fn prompt_line():
+    return: "[Lvl " + this.hero.lvl() + "  Diff " + this.hero.diff() + "  Foe: " + this.mob.label() + " " + this.mob.cur_hp() + "/" + this.mob.max_hp() + "]  " + this.problem.ask()
