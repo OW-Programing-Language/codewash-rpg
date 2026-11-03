@@ -1,0 +1,6 @@
+# macOS AppleDouble / resource-fork files
+._*
+.DS_Store
+
+# Logs
+*.log
