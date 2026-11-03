@@ -1,0 +1,18 @@
+# A single math challenge: a prompt string and its integer answer.
+class Problem:
+  field question
+  field answer
+
+  fn new():
+    set this.question: ""
+    set this.answer: 0
+
+  fn init(q, a):
+    set this.question: q
+    set this.answer: a
+
+  fn ask():
+    return: this.question
+
+  fn solution():
+    return: this.answer
