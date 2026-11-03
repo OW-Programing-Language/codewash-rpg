@@ -30,6 +30,30 @@ tiers, a mob bestiary, the combat loop and leveling), driven by the
 Solve each problem to damage the current foe; clear foes to earn XP and
 level up. Reach level 4 to finish the shift.
 
+## Voice + audio mode
+
+A second entry point, `src/main_av.ow`, is a **reading** skill: each turn
+shows a word and you **read it aloud** to attack. It uses the Ow audio
+builtins for sound effects + looping music, and `mic_transcribe` for
+offline speech recognition.
+
+```bash
+ow run src/main_av.ow
+```
+
+Requirements:
+- **Ow with the audio/voice builtins** (`audio_play`, `audio_music`,
+  `audio_stop`, `mic_transcribe`) and the function-scope fix — i.e. a
+  build from current `ow-lang` `main`.
+- **Speakers and a microphone.**
+- A **Vosk model** unzipped at `models/vosk-en` (not included — ~40 MB).
+  Get a small English model from <https://alphacephei.com/vosk/models>,
+  e.g. `vosk-model-small-en-us-0.15`, and rename its folder to `vosk-en`.
+
+Sound effects live in `assets/*.wav` and are bundled in the repo. Running
+with no audio device? Construct `Sound` and call `mute` (the default
+`main_av` keeps sound on).
+
 ## Module map (one class per file)
 
 | File | Responsibility |
@@ -41,17 +65,22 @@ level up. Reach level 4 to finish the shift.
 | `src/Mob.ow`         | A single enemy: name + hit points. |
 | `src/MobPool.ow`     | The bestiary (hostile / miniboss / boss name pools). |
 | `src/Hero.ow`        | The player: level, XP, difficulty, health. |
-| `src/Game.ow`        | Orchestrates the combat loop and leveling. |
-| `src/main.ow`        | Console entry point (I/O only). |
+| `src/Game.ow`        | Orchestrates the math combat loop and leveling. |
+| `src/main.ow`        | Math-mode console entry point (I/O only). |
+| `src/Sound.ow`       | SFX + music wrappers over the Ow audio builtins. |
+| `src/ReadingWords.ow`| Word bank for the voice reading skill. |
+| `src/GameAV.ow`      | Voice-mode combat loop (reads words aloud, plays sound). |
+| `src/main_av.ow`     | Voice + audio entry point. |
 
 ## Status
 
-⚠️ **Unverified build.** This code is written to Ow syntax/stdlib
-confirmed from the official example repos, but has **not yet been run
-through `ow run`**. Opened as a draft until verified on an Ow install.
-A CI workflow (install Ow + run) is a TODO — see `docs/PORTING.md`.
+✅ **Runs on `ow run`.** Both modes were exercised end-to-end: the math
+game (combat, kills, XP, level-ups), and the voice game's engine + sound
+effects. `mic_transcribe` recognition was verified separately with a Vosk
+model. Requires a current `ow-lang` build (audio/voice builtins + the
+function-scope fix).
 
 ## Credits
 
 Ported from the "Code Wash" educational RPG (a JavaScript/React/Electron
-project). This repo contains the Ow engine port only.
+project). This repo contains the Ow engine port and a voice/audio mode.

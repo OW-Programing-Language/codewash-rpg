@@ -1,0 +1,24 @@
+# Word bank for the voice reading skill. Stored lowercase so they can be
+# compared directly against mic_transcribe output. Ported from the short
+# READING_WORDS tier of the original game.
+class ReadingWords:
+  field words
+
+  fn new():
+    set w: array(12, "")
+    set w[0]: "cat"
+    set w[1]: "dog"
+    set w[2]: "sun"
+    set w[3]: "hat"
+    set w[4]: "red"
+    set w[5]: "big"
+    set w[6]: "book"
+    set w[7]: "tree"
+    set w[8]: "fish"
+    set w[9]: "ball"
+    set w[10]: "star"
+    set w[11]: "moon"
+    set this.words: w
+
+  fn pick():
+    return: this.words[rand(12)]
