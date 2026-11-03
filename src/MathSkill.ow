@@ -1,0 +1,130 @@
+import "Problem.ow"
+
+# Generates math problems per difficulty tier (1-7), ported from
+# generateMathProblem() in src/utils/gameUtils.js.
+# Operators are written in ASCII (* and /) for the OW console; the
+# original uses the unicode glyphs x and / (see docs/PORTING.md).
+class MathSkill:
+  field ready
+
+  fn new():
+    set this.ready: 1
+
+  # Random int in [lo, hi].
+  fn between(lo, hi):
+    return: rand(hi - lo + 1) + lo
+
+  fn generate(d):
+    if: d == 6
+      return: this.pemdas()
+    if: d == 7
+      return: this.nightmare()
+    return: this.basic(d)
+
+  # Difficulties 1-5: pick an operator allowed at this tier, then
+  # build a problem whose answer is a non-negative integer.
+  fn basic(d):
+    set hi int: 20
+    if: d == 1
+      set hi: 9
+    set op int: this.pick_op(d)
+    set a int: 0
+    set b int: 0
+    set p: new Problem()
+    switch: op
+      case 0:
+        set a: this.between(0, hi)
+        set b: this.between(0, hi)
+        call: p.init("" + a + " + " + b + " = ?", a + b)
+      case 1:
+        set a: this.between(1, hi)
+        set b: this.between(1, a)
+        call: p.init("" + a + " - " + b + " = ?", a - b)
+      case 2:
+        set a: this.between(1, 10)
+        set b: this.between(1, 10)
+        call: p.init("" + a + " * " + b + " = ?", a * b)
+      default:
+        set b: this.between(1, 10)
+        set a: this.between(1, 10)
+        set dividend int: b * a
+        call: p.init("" + dividend + " / " + b + " = ?", a)
+    return: p
+
+  # Operator codes: 0=+, 1=-, 2=*, 3=/  constrained by difficulty.
+  fn pick_op(d):
+    if: d == 1
+      return: 0
+    if: d == 2
+      return: 0
+    if: d == 3
+      return: rand(2)
+    if: d == 4
+      return: rand(3)
+    return: rand(4)
+
+  # Difficulty 6: order-of-operations table (12 problems).
+  fn pemdas():
+    set qs: array(12, "")
+    set ans: array(12, 0)
+    set qs[0]: "3 + 4 * 2"
+    set ans[0]: 11
+    set qs[1]: "(2 + 3) * 4"
+    set ans[1]: 20
+    set qs[2]: "10 - 2 * 3"
+    set ans[2]: 4
+    set qs[3]: "(5 + 5) / 2"
+    set ans[3]: 5
+    set qs[4]: "8 / 2 + 3"
+    set ans[4]: 7
+    set qs[5]: "2 * 3 + 4"
+    set ans[5]: 10
+    set qs[6]: "15 - 3 * 3"
+    set ans[6]: 6
+    set qs[7]: "(4 + 2) * 3"
+    set ans[7]: 18
+    set qs[8]: "12 / 3 + 5"
+    set ans[8]: 9
+    set qs[9]: "2 + 6 / 2"
+    set ans[9]: 5
+    set qs[10]: "(8 - 3) * 2"
+    set ans[10]: 10
+    set qs[11]: "4 * 2 - 1"
+    set ans[11]: 7
+    set i int: rand(12)
+    set p: new Problem()
+    call: p.init(qs[i] + " = ?", ans[i])
+    return: p
+
+  # Difficulty 7: nightmare multi-step table (12 problems).
+  fn nightmare():
+    set qs: array(12, "")
+    set ans: array(12, 0)
+    set qs[0]: "((25 - 10) * 4 + 18) / 2 - 7"
+    set ans[0]: 32
+    set qs[1]: "(50 / 5 + 3) * 6 - 28"
+    set ans[1]: 50
+    set qs[2]: "100 - (8 * 7 - 12) / 2"
+    set ans[2]: 78
+    set qs[3]: "((15 + 9) * 3 - 20) / 4"
+    set ans[3]: 13
+    set qs[4]: "(80 - 32) / 6 + 15 * 2"
+    set ans[4]: 38
+    set qs[5]: "((40 / 8 + 7) * 6 - 18) / 3"
+    set ans[5]: 18
+    set qs[6]: "120 / (12 - 2) + 8 * 5"
+    set ans[6]: 52
+    set qs[7]: "(18 + 22) * 2 - 35 / 7"
+    set ans[7]: 75
+    set qs[8]: "((64 - 16) / 4 + 9) * 3"
+    set ans[8]: 63
+    set qs[9]: "(100 - 45) / 5 + 17 * 2"
+    set ans[9]: 45
+    set qs[10]: "((36 / 6 + 8) * 4 - 20) / 2"
+    set ans[10]: 18
+    set qs[11]: "(72 / 9 - 3) * 7 + 15"
+    set ans[11]: 50
+    set i int: rand(12)
+    set p: new Problem()
+    call: p.init(qs[i] + " = ?", ans[i])
+    return: p

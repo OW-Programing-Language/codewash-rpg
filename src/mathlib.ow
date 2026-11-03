@@ -1,0 +1,35 @@
+# Free integer helpers for the OW port of Code Wash RPG.
+# OW's standard library is small, so the engine implements the few
+# integer operations it needs here, using only confirmed primitives
+# (+, -, *, <, >, while). No floats are required.
+
+# Integer modulo: a mod b   (a >= 0, b > 0)
+fn imod(a, b):
+  set r int: a
+  while: r > (b - 1)
+    set r: r - b
+  return: r
+
+# Integer division: floor(a / b)   (a >= 0, b > 0)
+fn idiv(a, b):
+  set q int: 0
+  set r int: a
+  while: r > (b - 1)
+    set r: r - b
+    set q: q + 1
+  return: q
+
+# Integer power: base ^ exp   (exp >= 0)
+fn ipow(base, exp):
+  set r int: 1
+  set i int: 0
+  while: i < exp
+    set r: r * base
+    set i: i + 1
+  return: r
+
+# Smaller of two ints.
+fn imin(a, b):
+  if: a < b
+    return: a
+  return: b
