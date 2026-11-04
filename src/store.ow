@@ -1,0 +1,21 @@
+# Save-file helpers for the game, using the Ow save/load builtins.
+# Progress is stored as [level, xp, difficulty]; achievements as an array
+# of 0/1 flags. Both live under save/ in the working directory.
+
+# Returns [level, xp, difficulty], or 0 when there is no save yet.
+fn load_progress():
+  return: load("save/progress.json")
+
+fn save_progress(level, xp, difficulty):
+  set p: array(3, 0)
+  set p[0]: level
+  set p[1]: xp
+  set p[2]: difficulty
+  call: save("save/progress.json", p)
+
+# Returns the saved achievement flag array, or 0 when none saved yet.
+fn load_achievements():
+  return: load("save/achievements.json")
+
+fn save_achievements(flags):
+  call: save("save/achievements.json", flags)

@@ -1,0 +1,84 @@
+import "store.ow"
+
+# Tracks unlocked achievements as a fixed array of 0/1 flags, persisted to
+# disk. Index <-> achievement is fixed, so no dynamic lists/maps are needed.
+#
+#   0 First Blood   - land your first kill
+#   1 Apprentice    - reach level 2
+#   2 Journeyman    - reach level 3
+#   3 Veteran       - reach level 5
+#   4 Sharpshooter  - defeat 10 foes
+class Achievements:
+  field flags
+  field names
+
+  fn new():
+    set this.flags: array(5, 0)
+    set n: array(5, "")
+    set n[0]: "First Blood"
+    set n[1]: "Apprentice"
+    set n[2]: "Journeyman"
+    set n[3]: "Veteran"
+    set n[4]: "Sharpshooter"
+    set this.names: n
+
+  # Load saved flags (if any) into this.flags.
+  fn load():
+    set saved: load_achievements()
+    if: saved == 0
+      return: 0
+    set f: this.flags
+    set count int: len(saved)
+    set i int: 0
+    while: i < 5
+      if: i < count
+        set f[i]: saved[i]
+      set i: i + 1
+    return: 0
+
+  fn persist():
+    call: save_achievements(this.flags)
+
+  # Is achievement i unlocked by the given progress?
+  fn met(i, level, kills):
+    if: i == 0
+      if: kills > 0
+        return: 1
+    if: i == 1
+      if: level > 1
+        return: 1
+    if: i == 2
+      if: level > 2
+        return: 1
+    if: i == 3
+      if: level > 4
+        return: 1
+    if: i == 4
+      if: kills > 9
+        return: 1
+    return: 0
+
+  # Unlock any newly-earned achievements; return their names as a string
+  # ("" if none were newly unlocked this call).
+  fn check(level, kills):
+    set result: ""
+    set f: this.flags
+    set i int: 0
+    while: i < 5
+      if: f[i] == 0
+        if: this.met(i, level, kills) == 1
+          set f[i]: 1
+          if: len(result) > 0
+            set result: result + ", "
+          set result: result + this.names[i]
+      set i: i + 1
+    return: result
+
+  fn count_unlocked():
+    set f: this.flags
+    set total int: 0
+    set i int: 0
+    while: i < 5
+      set total: total + f[i]
+      set i: i + 1
+    return: total

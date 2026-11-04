@@ -18,6 +18,13 @@ class Hero:
     set this.difficulty: d
     set this.hp: 10
 
+  # Restore a previously saved hero (from disk).
+  fn restore(level, xp, difficulty):
+    set this.level: level
+    set this.xp: xp
+    set this.difficulty: difficulty
+    set this.hp: 10
+
   fn gain(amount):
     set this.xp: this.xp + amount
 
