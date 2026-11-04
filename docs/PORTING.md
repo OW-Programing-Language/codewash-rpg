@@ -41,7 +41,8 @@ and documents the rest below rather than stubbing fake versions.
 | Reading skill (voice) | ✅ Ported | `GameAV.ow` + `main_av.ow` — read the word aloud |
 | Writing skill | ✅ Ported | `WritingSkill.ow` + `main_wr.ow` — unscramble & type the word |
 | Memory skill | ✅ Ported | `MemoryGame.ow` + `main_mem.ow` — clickable match-pairs grid |
-| Patterns / Cleaning skills | ⛔ Not ported | asset-bound mini-games |
+| Patterns skill | ✅ Ported | `PatternSkill.ow` + `main_pat.ow` on the generic `GameTyped` loop |
+| Cleaning skill | ⛔ Not ported | asset-bound mini-game |
 | React DOM UI, animations | ⛔ Not portable | OW has no browser/React target |
 | Graphical windowed UI (sprite + typed input) | ✅ Ported | `GameUI.ow` + `main_ui.ow` via `ui_image`/`ui_input` (web + native) |
 | Sound effects / music | ✅ Ported | `Sound.ow` via `audio_play` / `audio_music` (added to ow-lang) |
