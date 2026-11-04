@@ -1,0 +1,37 @@
+# A single enemy with a name and a hit-point pool.
+# Accessors are used (rather than raw field reads) to match the
+# one-class-per-file, method-driven style of the OW example games.
+class Mob:
+  field nm
+  field maxhp
+  field curhp
+
+  fn new():
+    set this.nm: "Zombie"
+    set this.maxhp: 1
+    set this.curhp: 1
+
+  fn init(name, hp):
+    set this.nm: name
+    set this.maxhp: hp
+    set this.curhp: hp
+
+  fn hurt(dmg):
+    set this.curhp: this.curhp - dmg
+    if: this.curhp < 0
+      set this.curhp: 0
+
+  # Returns 1 when the mob is dead, 0 otherwise.
+  fn dead():
+    if: this.curhp < 1
+      return: 1
+    return: 0
+
+  fn label():
+    return: this.nm
+
+  fn cur_hp():
+    return: this.curhp
+
+  fn max_hp():
+    return: this.maxhp
