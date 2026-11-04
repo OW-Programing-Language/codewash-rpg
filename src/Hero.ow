@@ -15,23 +15,30 @@ class Hero:
   fn init(d):
     set this.level: 1
     set this.xp: 0
-    set this.difficulty: d
     set this.hp: 10
+    call: this.scale()
 
-  # Restore a previously saved hero (from disk).
+  # Restore a previously saved hero (from disk). Difficulty is derived from
+  # the level, so the saved difficulty is recomputed rather than trusted.
   fn restore(level, xp, difficulty):
     set this.level: level
     set this.xp: xp
-    set this.difficulty: difficulty
     set this.hp: 10
+    call: this.scale()
+
+  # Difficulty rises with level: +1 tier every 2 levels, capped at 7.
+  # So mobs and challenges scale up as the hero climbs (tiers 1-7).
+  fn scale():
+    set this.difficulty: clamp(1 + (this.level - 1) / 2, 1, 7)
 
   fn gain(amount):
     set this.xp: this.xp + amount
 
-  # Spend `need` XP and climb one level.
+  # Spend `need` XP, climb one level, and re-scale the difficulty.
   fn level_up(need):
     set this.xp: this.xp - need
     set this.level: this.level + 1
+    call: this.scale()
 
   fn lvl():
     return: this.level
