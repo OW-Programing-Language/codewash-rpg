@@ -1,9 +1,4 @@
-# Sound effects and music for the voice/audio mode, using the Ow audio
-# builtins (audio_play / audio_music / audio_stop).
-#
-# Set enabled to 0 (via mute) to run silently -- useful on a machine with
-# no audio output device, since the audio builtins error if they cannot
-# open a line.
+# Original Code Wash sounds. Audio device failures leave the game playable.
 class Sound:
   field enabled
 
@@ -11,28 +6,54 @@ class Sound:
     set this.enabled: 1
 
   fn mute():
+    call: audio_stop()
     set this.enabled: 0
 
-  fn hit():
+  fn toggle():
     if: this.enabled == 1
-      call: audio_play("assets/hit.wav")
+      call: this.mute()
+    else:
+      set this.enabled: 1
+      call: this.start_music()
+
+  fn play(path):
+    if: this.enabled == 1
+      try:
+        call: audio_play(path)
+      catch err:
+        print: "Sound unavailable: " + err
+        call: this.mute()
+
+  fn hit():
+    call: this.play("assets/sounds/ui/ui/successful_hit.wav")
 
   fn kill():
-    if: this.enabled == 1
-      call: audio_play("assets/kill.wav")
+    call: this.play("assets/sounds/ui/ui/notification.wav")
 
   fn wrong():
-    if: this.enabled == 1
-      call: audio_play("assets/wrong.wav")
+    call: this.play("assets/sounds/ui/ui/fail.wav")
 
   fn levelup():
-    if: this.enabled == 1
-      call: audio_play("assets/levelup.wav")
+    call: this.play("assets/sounds/ui/ui/levelup.wav")
+
+  fn mob(name, event):
+    set folder: replace(lower(name), " ", "")
+    if: name == "Enderman"
+      set folder: "endermen"
+    set path: "assets/sounds/mob/mob/" + folder + "/" + event + ".wav"
+    if: exists(path) == 1
+      call: this.play(path)
+    else:
+      call: this.hit()
 
   fn start_music():
     if: this.enabled == 1
-      call: audio_music("assets/music.wav")
+      set tracks: ["calm1", "calm2", "calm3", "piano1", "piano2", "piano3"]
+      try:
+        call: audio_music("assets/sounds/bgm/" + tracks[rand(6)] + ".wav")
+      catch err:
+        print: "Music unavailable: " + err
+        call: this.mute()
 
   fn stop_music():
-    if: this.enabled == 1
-      call: audio_stop()
+    call: audio_stop()

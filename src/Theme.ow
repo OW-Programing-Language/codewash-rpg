@@ -1,10 +1,11 @@
 # A theme supplies the bestiary (hostile / miniboss / boss name pools), a
 # foe image and a title. The active theme is chosen by an id saved to
 # save/theme.json (see main_theme.ow), so it persists and applies to every
-# mode. Themes replace the original hardcoded (Minecraft) names with neutral
-# branding.
+# mode. New saves use the original game's names and per-mob artwork.
 #
-#   0 = Dungeon (fantasy)   1 = Space (sci-fi)
+#   0 = Dungeon (fantasy)   1 = Space (sci-fi)   2 = Original (default)
+import "OriginalAssets.ow"
+
 class Theme:
   field id
   field hostile
@@ -18,13 +19,33 @@ class Theme:
 
   fn new():
     set saved: load("save/theme.json")
-    set this.id: 0
-    if: saved != 0
+    set this.id: 2
+    if: exists("save/theme.json") == 1
       set this.id: saved
     if: this.id == 1
       call: this.space()
     else:
-      call: this.dungeon()
+      if: this.id == 0
+        call: this.dungeon()
+      else:
+        call: this.original()
+
+  fn original():
+    set art: new OriginalAssets()
+    set this.name: "Original"
+    set this.img: "assets/mobs/hostile/zombie.png"
+    set this.hostile: art.hostile()
+    set this.mini: art.mini()
+    set this.boss: art.boss()
+    set this.hcount: len(this.hostile)
+    set this.mcount: len(this.mini)
+    set this.bcount: len(this.boss)
+
+  fn image_for(name):
+    if: this.id == 2
+      set art: new OriginalAssets()
+      return: art.image_of(name)
+    return: this.img
 
   fn dungeon():
     set this.name: "Dungeon"

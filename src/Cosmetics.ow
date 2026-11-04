@@ -45,6 +45,10 @@ class Cosmetics:
   fn icon_of(id):
     return: this.icons[id]
 
+  fn image_of(id):
+    set images: ["assets/badges/wood_badge.png", "assets/badges/stone_badge.png", "assets/badges/iron_badge.png", "assets/badges/gold_badge.png", "assets/badges/diamond_badge.png", "assets/badges/emerald_badge.png"]
+    return: images[id]
+
   # The equipped cosmetic id (0 if none/locked/missing).
   fn equipped():
     set e: load("save/cosmetic.json")

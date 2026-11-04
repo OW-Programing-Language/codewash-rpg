@@ -7,6 +7,7 @@ import "WritingSkill.ow"
 import "store.ow"
 import "Achievements.ow"
 import "Cosmetics.ow"
+import "Sound.ow"
 
 # Graphical variant of the spelling skill: renders a widget tree (foe image,
 # scrambled word, a text field and a button) and reacts to events. Runs in
@@ -24,6 +25,7 @@ class GameUI:
   field ach
   field kills
   field cos
+  field sound
 
   fn new():
     set this.prog: new Progression()
@@ -33,6 +35,7 @@ class GameUI:
     set this.skill: new WritingSkill()
     set this.ach: new Achievements()
     set this.cos: new Cosmetics()
+    set this.sound: new Sound()
     set this.kills: 0
     set this.message: "Type the unscrambled word and press Enter."
 
@@ -45,6 +48,7 @@ class GameUI:
     call: this.ach.load()
     call: this.spawn()
     call: this.skill.next()
+    call: this.sound.start_music()
 
   fn spawn():
     set code int: this.prog.encounter(this.hero.lvl())
@@ -60,6 +64,7 @@ class GameUI:
     if: guess == this.skill.target()
       call: this.hit()
     else:
+      call: this.sound.wrong()
       set this.message: "Not quite -- it was '" + this.skill.target() + "'"
     call: this.skill.next()
 
@@ -70,6 +75,7 @@ class GameUI:
     call: this.skill.next()
 
   fn hit():
+    call: this.sound.mob(this.mob.label(), "hurt")
     set dmg int: this.prog.damage(this.hero.diff())
     call: this.mob.hurt(dmg)
     if: this.mob.dead() == 1
@@ -78,6 +84,7 @@ class GameUI:
       set this.message: "Hit! " + this.mob.label() + " has " + this.mob.cur_hp() + " HP left"
 
   fn reward():
+    call: this.sound.mob(this.mob.label(), "death")
     set xp int: this.prog.xp_reward(this.hero.diff(), this.hero.lvl())
     call: this.hero.gain(xp)
     set need int: this.prog.xp_to_level(this.hero.diff())
@@ -89,6 +96,7 @@ class GameUI:
     set this.kills: this.kills + 1
     set this.message: this.mob.label() + " defeated! +" + xp + " XP"
     if: ups > 0
+      call: this.sound.levelup()
       set this.message: this.message + " -- Level up! Now level " + this.hero.lvl()
     call: save_progress(this.hero.lvl(), this.hero.xp_v(), this.hero.diff())
     set earned: this.ach.check(this.hero.lvl(), this.kills)
@@ -99,4 +107,7 @@ class GameUI:
 
   # Render function: called by ui_run to build the widget tree.
   fn view():
-    return: ui_col([ui_heading(this.cos.icon_of(this.cos.equipped()) + "  Code Wash RPG -- " + this.pool.theme_title()), ui_image(this.pool.theme_image()), ui_text(this.mob.label() + "  " + this.mob.cur_hp() + "/" + this.mob.max_hp() + " HP   (Lvl " + this.hero.lvl() + ",  " + this.ach.count_unlocked() + "/5)"), ui_text("Unscramble:  " + this.skill.prompt()), ui_input("", "gameui.submit"), ui_text(this.message), ui_button("New foe", "gameui.skip")])
+    return: ui_col([ui_heading("Code Wash RPG -- " + this.pool.theme_title()), ui_row([ui_image("assets/skills/writing_icon.png"), ui_image(this.pool.mob_image(this.mob.label())), ui_image(this.cos.image_of(this.cos.equipped()))]), ui_text(this.mob.label() + "  " + this.mob.cur_hp() + "/" + this.mob.max_hp() + " HP   (Lvl " + this.hero.lvl() + ",  " + this.ach.count_unlocked() + "/5)"), ui_text("Unscramble:  " + this.skill.prompt()), ui_input("", "gameui.submit"), ui_text(this.message), ui_row([ui_button("New foe", "gameui.skip"), ui_button("Sound on/off", "gameui.toggle_sound")])])
+
+  fn toggle_sound():
+    call: this.sound.toggle()
