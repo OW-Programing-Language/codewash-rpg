@@ -1,0 +1,15 @@
+import "GameUI.ow"
+
+# Graphical entry point: a windowed spelling game using ui_image + ui_input.
+# Shows the foe, its word scrambled, and a text field; type the unscrambled
+# word and press Enter to attack. Progress/achievements are shared with the
+# other modes.
+#
+#   ow run src/main_ui.ow                 (web page, default)
+#   OW_UI_MODE=native ow run src/main_ui.ow   (native desktop window)
+#
+# The global MUST be named `gameui` so the "gameui.*" handler strings resolve.
+main:
+  set gameui: new GameUI()
+  call: gameui.start(1)
+  call: ui_run("gameui.view", "Code Wash RPG")

@@ -1,0 +1,99 @@
+import "mathlib.ow"
+import "Progression.ow"
+import "MobPool.ow"
+import "Mob.ow"
+import "Hero.ow"
+import "WritingSkill.ow"
+import "store.ow"
+import "Achievements.ow"
+
+# Graphical variant of the spelling skill: renders a widget tree (foe image,
+# scrambled word, a text field and a button) and reacts to events. Runs in
+# either UI backend via ui_run. Shares the engine + save/achievement system.
+#
+# The global that holds this object must be named `gameui` so the handler
+# strings "gameui.submit" / "gameui.skip" resolve (see main_ui.ow).
+class GameUI:
+  field prog
+  field pool
+  field hero
+  field mob
+  field skill
+  field message
+  field ach
+  field kills
+
+  fn new():
+    set this.prog: new Progression()
+    set this.pool: new MobPool()
+    set this.hero: new Hero()
+    set this.mob: new Mob()
+    set this.skill: new WritingSkill()
+    set this.ach: new Achievements()
+    set this.kills: 0
+    set this.message: "Type the unscrambled word and press Enter."
+
+  fn start(d):
+    set saved: load_progress()
+    if: saved == 0
+      call: this.hero.init(d)
+    else:
+      call: this.hero.restore(saved[0], saved[1], saved[2])
+    call: this.ach.load()
+    call: this.spawn()
+    call: this.skill.next()
+
+  fn spawn():
+    set code int: this.prog.encounter(this.hero.lvl())
+    set name: this.pool.pick(code)
+    set hp int: this.prog.mob_health(this.hero.diff())
+    set m: new Mob()
+    call: m.init(name, hp)
+    set this.mob: m
+
+  # Event handler: a typed spelling attempt from the text field.
+  fn submit(typed):
+    set guess: lower(trim(typed))
+    if: guess == this.skill.target()
+      call: this.hit()
+    else:
+      set this.message: "Not quite -- it was '" + this.skill.target() + "'"
+    call: this.skill.next()
+
+  # Event handler: skip to a fresh foe/word.
+  fn skip():
+    set this.message: "New foe!"
+    call: this.spawn()
+    call: this.skill.next()
+
+  fn hit():
+    set dmg int: this.prog.damage(this.hero.diff())
+    call: this.mob.hurt(dmg)
+    if: this.mob.dead() == 1
+      call: this.reward()
+    else:
+      set this.message: "Hit! " + this.mob.label() + " has " + this.mob.cur_hp() + " HP left"
+
+  fn reward():
+    set xp int: this.prog.xp_reward(this.hero.diff(), this.hero.lvl())
+    call: this.hero.gain(xp)
+    set need int: this.prog.xp_to_level(this.hero.diff())
+    set ups int: 0
+    while: this.hero.xp_v() > (need - 1)
+      call: this.hero.level_up(need)
+      set ups: ups + 1
+      set need: this.prog.xp_to_level(this.hero.diff())
+    set this.kills: this.kills + 1
+    set this.message: this.mob.label() + " defeated! +" + xp + " XP"
+    if: ups > 0
+      set this.message: this.message + " -- Level up! Now level " + this.hero.lvl()
+    call: save_progress(this.hero.lvl(), this.hero.xp_v(), this.hero.diff())
+    set earned: this.ach.check(this.hero.lvl(), this.kills)
+    call: this.ach.persist()
+    if: len(earned) > 0
+      set this.message: this.message + " -- Achievement: " + earned
+    call: this.spawn()
+
+  # Render function: called by ui_run to build the widget tree.
+  fn view():
+    return: ui_col([ui_heading("Code Wash RPG"), ui_image("assets/foe.png"), ui_text(this.mob.label() + "  " + this.mob.cur_hp() + "/" + this.mob.max_hp() + " HP   (Lvl " + this.hero.lvl() + ",  " + this.ach.count_unlocked() + "/5)"), ui_text("Unscramble:  " + this.skill.prompt()), ui_input("", "gameui.submit"), ui_text(this.message), ui_button("New foe", "gameui.skip")])
