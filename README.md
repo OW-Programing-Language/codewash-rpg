@@ -102,6 +102,20 @@ foes (mob HP and your damage grow together, so fights stay ~5 hits but
 the numbers — and XP — climb). This is centralized in `Hero.scale()`, so
 every mode scales the same way. The current tier is shown in the HUD.
 
+## Themes
+
+The bestiary is **themed** rather than hardcoded. Pick a theme and it
+applies to every mode — the foe names and the graphical foe image:
+
+```bash
+ow run src/main_theme.ow   # choose 0 = Dungeon (fantasy) or 1 = Space (sci-fi)
+```
+
+The choice is saved to `save/theme.json`. *Dungeon* fields goblins,
+ogres and dragons; *Space* fields drones, mechs and motherships. Adding
+another theme is a new method in `Theme.ow` (name pools + an image) and a
+new id — no changes to the game modes.
+
 ## Saves & achievements
 
 Both modes share the same saved progress (via the Ow `save`/`load`
@@ -141,6 +155,9 @@ Delete the `save/` folder to start over. See
 | `src/main_ui.ow`     | Graphical (windowed) entry point. |
 | `src/MemoryGame.ow`  | Memory match mini-game (clickable grid of cards). |
 | `src/main_mem.ow`    | Memory match entry point. |
+| `src/Theme.ow`       | Themed bestiary + foe image + title (selectable). |
+| `src/MobPool.ow`     | The bestiary — now sourced from the active `Theme`. |
+| `src/main_theme.ow`  | Theme selector (saves the choice). |
 
 ## Status
 
