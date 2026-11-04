@@ -1,0 +1,104 @@
+# A clickable "match the pairs" memory mini-game, rendered as a ui_grid of
+# buttons. Click two cards; matching pairs stay revealed, mismatches flip
+# back on your next click. Clear the board, then click to play again.
+#
+# The global holding this object must be named `mem` so the handler string
+# "mem.pick" resolves (see main_mem.ow).
+class MemoryGame:
+  field vals
+  field matched
+  field first
+  field second
+  field moves
+  field message
+
+  fn new():
+    set this.message: "Match the pairs!"
+    call: this.start()
+
+  fn start():
+    set v: array(8, "")
+    set v[0]: "A"
+    set v[1]: "A"
+    set v[2]: "B"
+    set v[3]: "B"
+    set v[4]: "C"
+    set v[5]: "C"
+    set v[6]: "D"
+    set v[7]: "D"
+    # Fisher-Yates shuffle
+    set j int: 7
+    while: j > 0
+      set k int: rand(j + 1)
+      set tmp: v[j]
+      set v[j]: v[k]
+      set v[k]: tmp
+      set j: j - 1
+    set this.vals: v
+    set this.matched: array(8, 0)
+    set this.first: 0 - 1
+    set this.second: 0 - 1
+    set this.moves: 0
+    set this.message: "Match the pairs!"
+
+  fn all_matched():
+    set m: this.matched
+    set i int: 0
+    while: i < 8
+      if: m[i] == 0
+        return: 0
+      set i: i + 1
+    return: 1
+
+  # The face shown for card i: its symbol when matched or currently picked,
+  # otherwise a hidden "?".
+  fn card_label(i):
+    if: this.matched[i] == 1
+      return: this.vals[i]
+    if: i == this.first
+      return: this.vals[i]
+    if: i == this.second
+      return: this.vals[i]
+    return: "?"
+
+  # Event handler: the player clicked card i.
+  fn pick(i):
+    # A cleared board: next click deals a fresh layout.
+    if: this.all_matched() == 1
+      call: this.start()
+      return: 0
+    # Clear a mismatch "peek" left from the previous turn.
+    if: this.second > (0 - 1)
+      set this.first: 0 - 1
+      set this.second: 0 - 1
+    if: this.matched[i] == 1
+      return: 0
+    if: i == this.first
+      return: 0
+    if: this.first < 0
+      set this.first: i
+      set this.message: "Pick another card"
+      return: 0
+    set this.second: i
+    set this.moves: this.moves + 1
+    if: this.vals[this.first] == this.vals[i]
+      set m: this.matched
+      set m[this.first]: 1
+      set m[i]: 1
+      set this.first: 0 - 1
+      set this.second: 0 - 1
+      if: this.all_matched() == 1
+        set this.message: "Board cleared in " + this.moves + " moves! Click to play again."
+      else:
+        set this.message: "Match!"
+    else:
+      set this.message: "No match -- click any card"
+    return: 0
+
+  fn view():
+    set btns: array(8, 0)
+    set i int: 0
+    while: i < 8
+      set btns[i]: ui_button(this.card_label(i), "mem.pick", i)
+      set i: i + 1
+    return: ui_col([ui_heading("Memory Match"), ui_text(this.message), ui_grid(4, btns)])
