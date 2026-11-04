@@ -1,0 +1,96 @@
+# A theme supplies the bestiary (hostile / miniboss / boss name pools), a
+# foe image and a title. The active theme is chosen by an id saved to
+# save/theme.json (see main_theme.ow), so it persists and applies to every
+# mode. Themes replace the original hardcoded (Minecraft) names with neutral
+# branding.
+#
+#   0 = Dungeon (fantasy)   1 = Space (sci-fi)
+class Theme:
+  field id
+  field hostile
+  field mini
+  field boss
+  field hcount
+  field mcount
+  field bcount
+  field img
+  field name
+
+  fn new():
+    set saved: load("save/theme.json")
+    set this.id: 0
+    if: saved != 0
+      set this.id: saved
+    if: this.id == 1
+      call: this.space()
+    else:
+      call: this.dungeon()
+
+  fn dungeon():
+    set this.name: "Dungeon"
+    set this.img: "assets/foe_dungeon.png"
+    set h: array(8, "")
+    set h[0]: "Goblin"
+    set h[1]: "Giant Rat"
+    set h[2]: "Cave Bat"
+    set h[3]: "Slime"
+    set h[4]: "Imp"
+    set h[5]: "Skeleton"
+    set h[6]: "Kobold"
+    set h[7]: "Spider"
+    set this.hostile: h
+    set this.hcount: 8
+    set m: array(3, "")
+    set m[0]: "Ogre"
+    set m[1]: "Troll"
+    set m[2]: "Minotaur"
+    set this.mini: m
+    set this.mcount: 3
+    set b: array(3, "")
+    set b[0]: "Dragon"
+    set b[1]: "Lich King"
+    set b[2]: "Demon Lord"
+    set this.boss: b
+    set this.bcount: 3
+
+  fn space():
+    set this.name: "Space"
+    set this.img: "assets/foe_space.png"
+    set h: array(8, "")
+    set h[0]: "Scout Drone"
+    set h[1]: "Space Bug"
+    set h[2]: "Probe"
+    set h[3]: "Turret"
+    set h[4]: "Raider"
+    set h[5]: "Android"
+    set h[6]: "Blob"
+    set h[7]: "Sentry"
+    set this.hostile: h
+    set this.hcount: 8
+    set m: array(3, "")
+    set m[0]: "War Mech"
+    set m[1]: "Cruiser"
+    set m[2]: "Hive Queen"
+    set this.mini: m
+    set this.mcount: 3
+    set b: array(3, "")
+    set b[0]: "Mothership"
+    set b[1]: "Overmind"
+    set b[2]: "Star Titan"
+    set this.boss: b
+    set this.bcount: 3
+
+  fn pick_hostile():
+    return: this.hostile[rand(this.hcount)]
+
+  fn pick_mini():
+    return: this.mini[rand(this.mcount)]
+
+  fn pick_boss():
+    return: this.boss[rand(this.bcount)]
+
+  fn image():
+    return: this.img
+
+  fn title():
+    return: this.name
