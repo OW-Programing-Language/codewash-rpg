@@ -4,6 +4,8 @@ import "MathSkill.ow"
 import "MobPool.ow"
 import "Mob.ow"
 import "Hero.ow"
+import "store.ow"
+import "Achievements.ow"
 
 # Orchestrates one skill's combat loop: ask a math problem, turn each
 # correct answer into damage, and convert kills into XP and levels.
@@ -17,6 +19,8 @@ class Game:
   field mob
   field problem
   field message
+  field ach
+  field kills
 
   fn new():
     set this.prog: new Progression()
@@ -25,14 +29,23 @@ class Game:
     set this.hero: new Hero()
     set this.mob: new Mob()
     set this.problem: new Problem()
+    set this.ach: new Achievements()
+    set this.kills: 0
     set this.message: "Welcome to Code Wash RPG."
 
-  # Begin a run at the given difficulty (1-7).
+  # Begin a run at the given difficulty (1-7). Resumes saved progress and
+  # achievements from disk if present, otherwise starts fresh.
   fn start(d):
-    call: this.hero.init(d)
+    set saved: load_progress()
+    if: saved == 0
+      call: this.hero.init(d)
+      set this.message: "A new washer clocks in. A wild foe appears!"
+    else:
+      call: this.hero.restore(saved[0], saved[1], saved[2])
+      set this.message: "Welcome back at level " + this.hero.lvl() + "! A wild foe appears!"
+    call: this.ach.load()
     call: this.spawn()
     call: this.next_problem()
-    set this.message: "A wild foe appears!"
 
   # Create the next mob based on the hero's level (encounter cycle)
   # and difficulty (hit points).
@@ -73,9 +86,16 @@ class Game:
       call: this.hero.level_up(need)
       set ups: ups + 1
       set need: this.prog.xp_to_level(this.hero.diff())
+    set this.kills: this.kills + 1
     set this.message: this.mob.label() + " defeated! +" + xp + " XP"
     if: ups > 0
       set this.message: this.message + " -- Level up! Now level " + this.hero.lvl()
+    # Persist progress after every kill, then unlock any new achievements.
+    call: save_progress(this.hero.lvl(), this.hero.xp_v(), this.hero.diff())
+    set earned: this.ach.check(this.hero.lvl(), this.kills)
+    call: this.ach.persist()
+    if: len(earned) > 0
+      set this.message: this.message + " -- Achievement unlocked: " + earned
     call: this.spawn()
 
   # One-line HUD used by the console shell.
