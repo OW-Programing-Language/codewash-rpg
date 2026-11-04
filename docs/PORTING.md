@@ -50,7 +50,7 @@ and documents the rest below rather than stubbing fake versions.
 | `localStorage` progress / saves | ✅ Ported | `store.ow` via `save`/`load` (added to ow-lang); resumes both modes |
 | Achievements | ✅ Ported | `Achievements.ow`, persisted; see `docs/saves-achievements.md` |
 | Themes (foe names + image) | ✅ Ported | `Theme.ow` (Dungeon/Space), selectable via `main_theme.ow`; replaces hardcoded Minecraft names |
-| Cosmetics | ⛔ Not ported | asset- and UI-bound |
+| Cosmetics | ✅ Ported | `Cosmetics.ow` + `main_cosmetics.ow` — hero badges unlocked by achievements, shown in the graphical HUD |
 
 ## Deliberate deviations (and why)
 
