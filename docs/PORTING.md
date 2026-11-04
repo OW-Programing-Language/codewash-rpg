@@ -48,7 +48,8 @@ and documents the rest below rather than stubbing fake versions.
 | Microphone / speech recognition | ✅ Ported | `mic_transcribe` (offline Vosk, added to ow-lang) |
 | `localStorage` progress / saves | ✅ Ported | `store.ow` via `save`/`load` (added to ow-lang); resumes both modes |
 | Achievements | ✅ Ported | `Achievements.ow`, persisted; see `docs/saves-achievements.md` |
-| Themes / cosmetics | ⛔ Not ported | asset- and UI-bound |
+| Themes (foe names + image) | ✅ Ported | `Theme.ow` (Dungeon/Space), selectable via `main_theme.ow`; replaces hardcoded Minecraft names |
+| Cosmetics | ⛔ Not ported | asset- and UI-bound |
 
 ## Deliberate deviations (and why)
 
@@ -64,17 +65,15 @@ and documents the rest below rather than stubbing fake versions.
 3. **Nightmare/PEMDAS tables trimmed to 12 each** (the JS has 25
    nightmare problems). The structure is identical; adding the rest is
    copy/paste into `MathSkill.nightmare`.
-4. **Mob names kept Minecraft-themed verbatim** for a faithful port.
-   The CodeWash brief flags hardcoded Minecraft names as debt to be
-   re-branded — see "Residual debt" below.
+4. **Mob names are now themed, not hardcoded.** The original hardcoded
+   Minecraft names were replaced with neutral, selectable themes
+   (`Theme.ow`: Dungeon / Space), addressing the CodeWash brief's
+   re-branding note.
 
 ## Residual debt / next steps
 
-- **Re-theme mob names** in `MobPool.ow` to neutral branding (tracked
-  by the CodeWash brief).
-- **A clickable UI** would require either an OW text-input widget (not
-  currently available) or reworking answers into multiple-choice
-  buttons using `ui_button` + `ui_grid`.
+- **A clickable (typed) UI** now exists via `ui_input` (graphical mode);
+  a multiple-choice variant with `ui_button` + `ui_grid` is still open.
 - **Restore float XP scaling** if/when OW's float semantics are
   verified, to match the JS curve exactly.
 
