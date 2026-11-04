@@ -6,10 +6,11 @@ object-oriented, **one class per file**, logic in classes and I/O in
 `main` — the same style as the official `tictactoe`, `connect4` and
 `guess-the-number` examples.
 
-Answer math problems to defeat foes, earn XP and level up. It ports the
+Answer challenges to defeat foes, earn XP and level up. It ports the
 *engine* of a larger educational RPG (progression maths, difficulty
-tiers, a mob bestiary, the combat loop and leveling), driven by the
-**Math** skill as a complete vertical slice.
+tiers, a mob bestiary, the combat loop and leveling) with **all six
+skills** — Math, Reading (voice), Writing, Patterns, Cleaning and a
+Memory mini-game — plus saved progress, achievements and themes.
 
 > Not a 1:1 port of the original React app — Ow has no browser/React
 > target. See [`docs/PORTING.md`](docs/PORTING.md) for the full
@@ -97,6 +98,19 @@ Built on `GameTyped.ow`, a generic typed-combat loop that drives any skill
 implementing `next` / `prompt` / `check` / `target` — so new typed skills
 are just a small skill class.
 
+## Cleaning mode
+
+`src/main_clean.ow` is the **cleaning** skill (on brand for Code Wash):
+the word is shown "dirty" — its letters split by junk characters — and
+you type it clean to scrub it. The junk gets messier with difficulty.
+
+```bash
+ow run src/main_clean.ow
+```
+
+Also built on `GameTyped.ow`, using the string builtins to read through
+the noise.
+
 ## Memory match (mini-game)
 
 `src/main_mem.ow` is a standalone graphical **memory** game: a 4×4-ish grid
@@ -168,6 +182,8 @@ Delete the `save/` folder to start over. See
 | `src/GameTyped.ow`   | Generic typed-combat loop driving any skill (`next`/`prompt`/`check`/`target`). |
 | `src/PatternSkill.ow`| Pattern skill: arithmetic sequence, next number. |
 | `src/main_pat.ow`    | Patterns entry point. |
+| `src/CleaningSkill.ow`| Cleaning skill: read a word through inserted junk. |
+| `src/main_clean.ow`  | Cleaning entry point. |
 | `src/GameUI.ow`      | Graphical spelling game: renders a widget tree, reacts to events. |
 | `src/main_ui.ow`     | Graphical (windowed) entry point. |
 | `src/MemoryGame.ow`  | Memory match mini-game (clickable grid of cards). |
