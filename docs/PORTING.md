@@ -42,7 +42,7 @@ and documents the rest below rather than stubbing fake versions.
 | Writing skill | ✅ Ported | `WritingSkill.ow` + `main_wr.ow` — unscramble & type the word |
 | Memory skill | ✅ Ported | `MemoryGame.ow` + `main_mem.ow` — clickable match-pairs grid |
 | Patterns skill | ✅ Ported | `PatternSkill.ow` + `main_pat.ow` on the generic `GameTyped` loop |
-| Cleaning skill | ⛔ Not ported | asset-bound mini-game |
+| Cleaning skill | ✅ Ported | `CleaningSkill.ow` + `main_clean.ow` — scrub a word clean of junk |
 | React DOM UI, animations | ⛔ Not portable | OW has no browser/React target |
 | Graphical windowed UI (sprite + typed input) | ✅ Ported | `GameUI.ow` + `main_ui.ow` via `ui_image`/`ui_input` (web + native) |
 | Sound effects / music | ✅ Ported | `Sound.ow` via `audio_play` / `audio_music` (added to ow-lang) |

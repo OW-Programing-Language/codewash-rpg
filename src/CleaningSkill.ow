@@ -1,0 +1,48 @@
+import "ReadingWords.ow"
+
+# Cleaning skill (on-brand for Code Wash): a word is shown "dirty" — its
+# letters separated by junk characters — and you type the clean word to
+# scrub it. More junk at higher difficulty. Implements the GameTyped skill
+# contract (next / prompt / check / target).
+class CleaningSkill:
+  field words
+  field word
+  field dirty
+
+  fn new():
+    set this.words: new ReadingWords()
+    set this.word: "cat"
+    set this.dirty: "C.A.T"
+
+  fn next(d):
+    set this.word: this.words.pick()
+    set this.dirty: this.dirtify(this.word, d)
+
+  fn prompt():
+    return: "Scrub the code:  " + this.dirty
+
+  fn check(typed):
+    if: lower(trim(typed)) == this.word
+      return: 1
+    return: 0
+
+  fn target():
+    return: "it was '" + this.word + "'"
+
+  # Build a noisy, uppercased rendering of the word: letters joined by a
+  # separator that gets messier with difficulty.
+  fn dirtify(w, d):
+    set sep: "."
+    if: d > 1
+      set sep: "*"
+    if: d > 3
+      set sep: "~#"
+    set n int: len(w)
+    set out: ""
+    set i int: 0
+    while: i < n
+      set out: out + upper(char_at(w, i))
+      if: i < n - 1
+        set out: out + sep
+      set i: i + 1
+    return: out
