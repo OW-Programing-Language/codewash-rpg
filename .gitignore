@@ -4,3 +4,6 @@
 
 # Logs
 *.log
+
+# Game save files (written at runtime)
+save/
