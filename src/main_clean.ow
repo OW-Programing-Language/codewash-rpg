@@ -1,0 +1,24 @@
+import "GameTyped.ow"
+import "CleaningSkill.ow"
+
+# Cleaning mode: the foe's word is shown "dirty" (letters split by junk);
+# type the clean word to scrub it and attack. Shares engine + saved
+# progress with the other modes.
+#
+#   ow run src/main_clean.ow
+main:
+  set game: new GameTyped()
+  call: game.use(new CleaningSkill())
+  call: game.start(1)
+  print: "=== Code Wash RPG -- Cleaning skill ==="
+  print: "Read the word through the junk and type it clean. Reach level 6 to win."
+  print: "(Progress is saved -- you resume where you left off.)"
+  set playing int: 1
+  while: playing == 1
+    print: game.prompt_line()
+    set w: input("Clean > ")
+    call: game.answer(w)
+    print: game.message
+    if: game.hero.lvl() > 5
+      set playing: 0
+  print: "You reached level " + game.hero.lvl() + " with " + game.ach.count_unlocked() + "/5 achievements. Shift finished, washer!"
