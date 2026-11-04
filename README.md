@@ -68,6 +68,21 @@ ow run src/main_wr.ow
 Typed, so it needs no mic or audio — just a terminal. Shares the same
 engine and saved progress as the other modes.
 
+## Graphical mode
+
+A fourth entry point, `src/main_ui.ow`, runs the spelling skill in a
+**window**: it shows the foe as an image (`assets/foe.png`), the scrambled
+word, a text field, and a "New foe" button — built with the Ow
+`ui_image` / `ui_input` widgets.
+
+```bash
+ow run src/main_ui.ow                    # web page (default)
+OW_UI_MODE=native ow run src/main_ui.ow  # native desktop window
+```
+
+Type the unscrambled word and press Enter to attack. Same engine and
+saved progress as the other modes.
+
 ## Saves & achievements
 
 Both modes share the same saved progress (via the Ow `save`/`load`
@@ -103,6 +118,8 @@ Delete the `save/` folder to start over. See
 | `src/WritingSkill.ow`| Spelling skill: picks a word and scrambles its letters. |
 | `src/GameWriting.ow` | Spelling-mode combat loop (type the unscrambled word). |
 | `src/main_wr.ow`     | Spelling entry point. |
+| `src/GameUI.ow`      | Graphical spelling game: renders a widget tree, reacts to events. |
+| `src/main_ui.ow`     | Graphical (windowed) entry point. |
 
 ## Status
 
