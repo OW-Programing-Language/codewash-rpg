@@ -55,6 +55,19 @@ Sound effects live in `assets/*.wav` and are bundled in the repo. Running
 with no audio device? Construct `Sound` and call `mute` (the default
 `main_av` keeps sound on).
 
+## Spelling (writing) mode
+
+A third entry point, `src/main_wr.ow`, is the **Writing** skill: the foe's
+word is shown with its letters **scrambled**, and you type the correctly-
+spelled word to attack.
+
+```bash
+ow run src/main_wr.ow
+```
+
+Typed, so it needs no mic or audio — just a terminal. Shares the same
+engine and saved progress as the other modes.
+
 ## Saves & achievements
 
 Both modes share the same saved progress (via the Ow `save`/`load`
@@ -87,6 +100,9 @@ Delete the `save/` folder to start over. See
 | `src/main_av.ow`     | Voice + audio entry point. |
 | `src/store.ow`       | Save/load helpers for progress & achievements. |
 | `src/Achievements.ow`| Achievement flags: check / persist / count. |
+| `src/WritingSkill.ow`| Spelling skill: picks a word and scrambles its letters. |
+| `src/GameWriting.ow` | Spelling-mode combat loop (type the unscrambled word). |
+| `src/main_wr.ow`     | Spelling entry point. |
 
 ## Status
 
