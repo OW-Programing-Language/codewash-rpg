@@ -39,7 +39,7 @@ and documents the rest below rather than stubbing fake versions.
 | Combat loop + leveling | ✅ Ported | `Game.ow` |
 | Math skill end-to-end | ✅ Ported | console shell in `main.ow` |
 | Reading skill (voice) | ✅ Ported | `GameAV.ow` + `main_av.ow` — read the word aloud |
-| Writing skill | ⛔ Not ported | needs word/image assets |
+| Writing skill | ✅ Ported | `WritingSkill.ow` + `main_wr.ow` — unscramble & type the word |
 | Patterns / Memory / Cleaning skills | ⛔ Not ported | need sprites, grids of images |
 | React DOM UI, animations | ⛔ Not portable | OW has no browser/React target |
 | Sound effects / music | ✅ Ported | `Sound.ow` via `audio_play` / `audio_music` (added to ow-lang) |
