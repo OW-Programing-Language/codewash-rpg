@@ -83,6 +83,17 @@ OW_UI_MODE=native ow run src/main_ui.ow  # native desktop window
 Type the unscrambled word and press Enter to attack. Same engine and
 saved progress as the other modes.
 
+## Memory match (mini-game)
+
+`src/main_mem.ow` is a standalone graphical **memory** game: a 4×4-ish grid
+of face-down cards — click two to find matching pairs. Matches stay up,
+mismatches flip back on your next click; clear the board (shown with your
+move count), then click to reshuffle. Built from `ui_grid` + `ui_button`.
+
+```bash
+ow run src/main_mem.ow
+```
+
 ## Saves & achievements
 
 Both modes share the same saved progress (via the Ow `save`/`load`
@@ -120,6 +131,8 @@ Delete the `save/` folder to start over. See
 | `src/main_wr.ow`     | Spelling entry point. |
 | `src/GameUI.ow`      | Graphical spelling game: renders a widget tree, reacts to events. |
 | `src/main_ui.ow`     | Graphical (windowed) entry point. |
+| `src/MemoryGame.ow`  | Memory match mini-game (clickable grid of cards). |
+| `src/main_mem.ow`    | Memory match entry point. |
 
 ## Status
 
