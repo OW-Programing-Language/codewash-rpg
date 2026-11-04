@@ -42,6 +42,7 @@ and documents the rest below rather than stubbing fake versions.
 | Writing skill | ✅ Ported | `WritingSkill.ow` + `main_wr.ow` — unscramble & type the word |
 | Patterns / Memory / Cleaning skills | ⛔ Not ported | need sprites, grids of images |
 | React DOM UI, animations | ⛔ Not portable | OW has no browser/React target |
+| Graphical windowed UI (sprite + typed input) | ✅ Ported | `GameUI.ow` + `main_ui.ow` via `ui_image`/`ui_input` (web + native) |
 | Sound effects / music | ✅ Ported | `Sound.ow` via `audio_play` / `audio_music` (added to ow-lang) |
 | Microphone / speech recognition | ✅ Ported | `mic_transcribe` (offline Vosk, added to ow-lang) |
 | `localStorage` progress / saves | ✅ Ported | `store.ow` via `save`/`load` (added to ow-lang); resumes both modes |
