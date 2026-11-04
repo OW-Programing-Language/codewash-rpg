@@ -1,0 +1,12 @@
+import "MemoryGame.ow"
+
+# Memory match mini-game (graphical). Click two cards to find matching
+# pairs; clear the board, then click again to reshuffle.
+#
+#   ow run src/main_mem.ow                     (web page, default)
+#   OW_UI_MODE=native ow run src/main_mem.ow   (native desktop window)
+#
+# The global MUST be named `mem` so the "mem.pick" handler string resolves.
+main:
+  set mem: new MemoryGame()
+  call: ui_run("mem.view", "Memory Match")
