@@ -83,6 +83,20 @@ OW_UI_MODE=native ow run src/main_ui.ow  # native desktop window
 Type the unscrambled word and press Enter to attack. Same engine and
 saved progress as the other modes.
 
+## Patterns mode
+
+`src/main_pat.ow` is the **pattern-recognition** skill: read an arithmetic
+sequence and type the next number to attack. The step size grows with
+difficulty.
+
+```bash
+ow run src/main_pat.ow
+```
+
+Built on `GameTyped.ow`, a generic typed-combat loop that drives any skill
+implementing `next` / `prompt` / `check` / `target` — so new typed skills
+are just a small skill class.
+
 ## Memory match (mini-game)
 
 `src/main_mem.ow` is a standalone graphical **memory** game: a 4×4-ish grid
@@ -151,6 +165,9 @@ Delete the `save/` folder to start over. See
 | `src/WritingSkill.ow`| Spelling skill: picks a word and scrambles its letters. |
 | `src/GameWriting.ow` | Spelling-mode combat loop (type the unscrambled word). |
 | `src/main_wr.ow`     | Spelling entry point. |
+| `src/GameTyped.ow`   | Generic typed-combat loop driving any skill (`next`/`prompt`/`check`/`target`). |
+| `src/PatternSkill.ow`| Pattern skill: arithmetic sequence, next number. |
+| `src/main_pat.ow`    | Patterns entry point. |
 | `src/GameUI.ow`      | Graphical spelling game: renders a widget tree, reacts to events. |
 | `src/main_ui.ow`     | Graphical (windowed) entry point. |
 | `src/MemoryGame.ow`  | Memory match mini-game (clickable grid of cards). |
