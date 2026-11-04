@@ -217,6 +217,27 @@ effects. `mic_transcribe` recognition was verified separately with a Vosk
 model. Requires a current `ow-lang` build (audio/voice builtins + the
 function-scope fix).
 
+## Packaging as a standalone .exe
+
+`ow package` bundles the game (plus a Java runtime) into a double-click
+app — no `ow run` or Java install needed on the target machine:
+
+```bash
+ow package src/main.ow --name CodeWashRPG --type console --out dist
+# -> dist/CodeWashRPG/CodeWashRPG.exe  (self-contained app-image)
+```
+
+- `--type console` keeps a terminal for the typed modes (Math, Writing,
+  Patterns, Cleaning); `--type gui` runs the graphical mode in a window.
+- The packaged launcher runs the bundled `game/main.ow`, so swap which
+  mode ships by packaging that mode's entry (it's copied in as `main.ow`).
+
+> **Note / known limitation:** `ow package` bundles only `.ow` files, not
+> assets. So the **console modes package cleanly** (Math and friends need
+> no assets), but the **voice/graphical modes** would ship without their
+> `assets/*.wav` and foe images / Vosk model. Bundling non-`.ow` assets
+> would be a nice `ow-lang` improvement.
+
 ## Credits
 
 Ported from the "Code Wash" educational RPG (a JavaScript/React/Electron
