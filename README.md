@@ -160,7 +160,9 @@ Delete the `save/` folder to start over. See
 ## Cosmetics
 
 Earning achievements unlocks cosmetic **hero badges**. Open the wardrobe
-to equip one; the equipped badge shows in the graphical mode's HUD.
+to equip one; the equipped badge then shows in **every mode's HUD** — as
+a name tag (`<Veteran>`) in the console modes and as an emoji icon in the
+graphical mode.
 
 ```bash
 ow run src/main_cosmetics.ow   # view & equip unlocked badges

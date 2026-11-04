@@ -60,3 +60,11 @@ class Cosmetics:
 
   fn equip(id):
     call: save("save/cosmetic.json", id)
+
+  # A console-safe HUD tag for the equipped badge: "<Name> " or "" if none.
+  # (Use icon_of(equipped()) for the emoji form in the graphical UI.)
+  fn tag():
+    set e: this.equipped()
+    if: e == 0
+      return: ""
+    return: "<" + this.name_of(e) + "> "
