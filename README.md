@@ -94,6 +94,14 @@ move count), then click to reshuffle. Built from `ui_grid` + `ui_button`.
 ow run src/main_mem.ow
 ```
 
+## Difficulty
+
+Difficulty **scales with your level** — one tier harder every 2 levels,
+capped at tier 7. Higher tiers mean tougher problems/words and beefier
+foes (mob HP and your damage grow together, so fights stay ~5 hits but
+the numbers — and XP — climb). This is centralized in `Hero.scale()`, so
+every mode scales the same way. The current tier is shown in the HUD.
+
 ## Saves & achievements
 
 Both modes share the same saved progress (via the Ow `save`/`load`
