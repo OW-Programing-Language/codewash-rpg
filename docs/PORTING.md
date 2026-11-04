@@ -44,8 +44,9 @@ and documents the rest below rather than stubbing fake versions.
 | React DOM UI, animations | ⛔ Not portable | OW has no browser/React target |
 | Sound effects / music | ✅ Ported | `Sound.ow` via `audio_play` / `audio_music` (added to ow-lang) |
 | Microphone / speech recognition | ✅ Ported | `mic_transcribe` (offline Vosk, added to ow-lang) |
-| `localStorage` profiles / saves | ⛔ Not ported | no persistence used in this slice |
-| Themes / cosmetics / achievements | ⛔ Not ported | asset- and UI-bound |
+| `localStorage` progress / saves | ✅ Ported | `store.ow` via `save`/`load` (added to ow-lang); resumes both modes |
+| Achievements | ✅ Ported | `Achievements.ow`, persisted; see `docs/saves-achievements.md` |
+| Themes / cosmetics | ⛔ Not ported | asset- and UI-bound |
 
 ## Deliberate deviations (and why)
 

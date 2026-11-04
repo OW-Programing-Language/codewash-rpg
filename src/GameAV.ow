@@ -5,6 +5,8 @@ import "Mob.ow"
 import "Hero.ow"
 import "Sound.ow"
 import "ReadingWords.ow"
+import "store.ow"
+import "Achievements.ow"
 
 # Voice + audio variant of the combat loop: the player reads a word ALOUD
 # to attack (resolved by the host via mic_transcribe), and the Ow audio
@@ -19,6 +21,8 @@ class GameAV:
   field words
   field word
   field message
+  field ach
+  field kills
 
   fn new():
     set this.prog: new Progression()
@@ -27,15 +31,25 @@ class GameAV:
     set this.mob: new Mob()
     set this.sound: new Sound()
     set this.words: new ReadingWords()
+    set this.ach: new Achievements()
+    set this.kills: 0
     set this.word: "cat"
     set this.message: "Welcome to Code Wash RPG (voice)."
 
+  # Resumes saved progress + achievements (shared with the math game), or
+  # starts fresh.
   fn start(d):
-    call: this.hero.init(d)
+    set saved: load_progress()
+    if: saved == 0
+      call: this.hero.init(d)
+      set this.message: "A new washer clocks in. Read the word aloud!"
+    else:
+      call: this.hero.restore(saved[0], saved[1], saved[2])
+      set this.message: "Welcome back at level " + this.hero.lvl() + "! Read the word aloud!"
+    call: this.ach.load()
     call: this.spawn()
     call: this.next_word()
     call: this.sound.start_music()
-    set this.message: "A wild foe appears! Read the word aloud."
 
   fn spawn():
     set code int: this.prog.encounter(this.hero.lvl())
@@ -75,11 +89,18 @@ class GameAV:
       call: this.hero.level_up(need)
       set ups: ups + 1
       set need: this.prog.xp_to_level(this.hero.diff())
+    set this.kills: this.kills + 1
     call: this.sound.kill()
     set this.message: this.mob.label() + " defeated! +" + xp + " XP"
     if: ups > 0
       call: this.sound.levelup()
       set this.message: this.message + " -- Level up! Now level " + this.hero.lvl()
+    # Persist progress + unlock achievements (shared with the math game).
+    call: save_progress(this.hero.lvl(), this.hero.xp_v(), this.hero.diff())
+    set earned: this.ach.check(this.hero.lvl(), this.kills)
+    call: this.ach.persist()
+    if: len(earned) > 0
+      set this.message: this.message + " -- Achievement unlocked: " + earned
     call: this.spawn()
 
   fn prompt_line():
