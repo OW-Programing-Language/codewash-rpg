@@ -1,0 +1,22 @@
+import "GameWriting.ow"
+
+# Writing (spelling) entry point. The foe's word is shown with its letters
+# scrambled; type the correctly-spelled word to attack. Progress and
+# achievements are shared with the math and voice modes.
+#
+#   ow run src/main_wr.ow
+main:
+  set game: new GameWriting()
+  call: game.start(1)
+  print: "=== Code Wash RPG -- Spelling skill ==="
+  print: "Unscramble the letters and type the word. Reach level 6 to win."
+  print: "(Progress is saved -- you resume where you left off.)"
+  set playing int: 1
+  while: playing == 1
+    print: game.prompt_line()
+    set guess: input("Spell > ")
+    call: game.answer(guess)
+    print: game.message
+    if: game.hero.lvl() > 5
+      set playing: 0
+  print: "You reached level " + game.hero.lvl() + " with " + game.ach.count_unlocked() + "/5 achievements. Shift finished, washer!"

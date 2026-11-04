@@ -1,0 +1,47 @@
+import "ReadingWords.ow"
+
+# The Writing (spelling) skill: pick a word, show its letters scrambled,
+# and the player must type the correctly-spelled word. Uses the Ow string
+# builtins (char_at / upper / len).
+class WritingSkill:
+  field words
+  field word
+  field scrambled
+
+  fn new():
+    set this.words: new ReadingWords()
+    set this.word: "cat"
+    set this.scrambled: "CAT"
+
+  fn next():
+    set this.word: this.words.pick()
+    set this.scrambled: this.scramble(this.word)
+
+  fn prompt():
+    return: this.scrambled
+
+  fn target():
+    return: this.word
+
+  # Return `w` with its letters shuffled, uppercased.
+  fn scramble(w):
+    set n int: len(w)
+    set chars: array(n, "")
+    set i int: 0
+    while: i < n
+      set chars[i]: char_at(w, i)
+      set i: i + 1
+    # Fisher-Yates shuffle
+    set j int: n - 1
+    while: j > 0
+      set k int: rand(j + 1)
+      set tmp: chars[j]
+      set chars[j]: chars[k]
+      set chars[k]: tmp
+      set j: j - 1
+    set out: ""
+    set m int: 0
+    while: m < n
+      set out: out + chars[m]
+      set m: m + 1
+    return: upper(out)
