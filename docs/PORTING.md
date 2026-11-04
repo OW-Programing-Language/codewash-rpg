@@ -33,7 +33,7 @@ and documents the rest below rather than stubbing fake versions.
 | Original feature | Status in OW port | Note |
 |------------------|-------------------|------|
 | Progression maths (damage, mob HP, XP, difficulty) | ✅ Ported | `Progression.ow` |
-| Difficulty tiers 1–7 (math) | ✅ Ported | `MathSkill.ow` |
+| Difficulty tiers 1–7 (math) | ✅ Ported | `MathSkill.ow`; auto-scales with level via `Hero.scale()` |
 | Encounter cycle (hostile / miniboss / boss) | ✅ Ported | `Progression.encounter` + `MobPool` |
 | Mob bestiary (names) | ✅ Ported | `MobPool.ow`, names only |
 | Combat loop + leveling | ✅ Ported | `Game.ow` |
