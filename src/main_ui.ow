@@ -13,3 +13,4 @@ main:
   set gameui: new GameUI()
   call: gameui.start(1)
   call: ui_run("gameui.view", "Code Wash RPG")
+  call: gameui.sound.stop_music()

@@ -52,7 +52,7 @@ Requirements:
   Get a small English model from <https://alphacephei.com/vosk/models>,
   e.g. `vosk-model-small-en-us-0.15`, and rename its folder to `vosk-en`.
 
-Sound effects live in `assets/*.wav` and are bundled in the repo. Running
+Original sound effects live in `assets/sounds/` and are bundled in the repo. Running
 with no audio device? Construct `Sound` and call `mute` (the default
 `main_av` keeps sound on).
 
@@ -72,7 +72,7 @@ engine and saved progress as the other modes.
 ## Graphical mode
 
 A fourth entry point, `src/main_ui.ow`, runs the spelling skill in a
-**window**: it shows the foe as an image (`assets/foe.png`), the scrambled
+**window**: it shows the foe's original image, the scrambled
 word, a text field, and a "New foe" button — built with the Ow
 `ui_image` / `ui_input` widgets.
 
@@ -132,11 +132,11 @@ every mode scales the same way. The current tier is shown in the HUD.
 
 ## Themes
 
-The bestiary is **themed** rather than hardcoded. Pick a theme and it
+The bestiary is **themed**. New saves use the original mob artwork. Pick a theme and it
 applies to every mode — the foe names and the graphical foe image:
 
 ```bash
-ow run src/main_theme.ow   # choose 0 = Dungeon (fantasy) or 1 = Space (sci-fi)
+ow run src/main_theme.ow   # 0 = Dungeon, 1 = Space, 2 = Original (default)
 ```
 
 The choice is saved to `save/theme.json`. *Dungeon* fields goblins,
@@ -229,14 +229,62 @@ ow package src/main.ow --name CodeWashRPG --type console --out dist
 
 - `--type console` keeps a terminal for the typed modes (Math, Writing,
   Patterns, Cleaning); `--type gui` runs the graphical mode in a window.
-- The packaged launcher runs the bundled `game/main.ow`, so swap which
-  mode ships by packaging that mode's entry (it's copied in as `main.ow`).
+- The packaged launcher runs the exact entry selected on the command line,
+  even when `main.ow` is also present.
 
-> **Note / known limitation:** `ow package` bundles only `.ow` files, not
-> assets. So the **console modes package cleanly** (Math and friends need
-> no assets), but the **voice/graphical modes** would ship without their
-> `assets/*.wav` and foe images / Vosk model. Bundling non-`.ow` assets
-> would be a nice `ow-lang` improvement.
+The graphical build uses the original Code Wash assets:
+
+```bash
+ow package src/main_ui.ow --name CodeWashRPG --type gui --out dist
+```
+
+Requires an ow-lang build with asset packaging and selected-entry support.
+`assets/` and optional `models/` are copied recursively into `app/game/`.
+Distribute the **whole `dist/CodeWashRPG/` folder**, not just its executable.
+No Java installation is needed. Keep this folder writable: packaged saves are
+stored under `app/game/save/`. Relative media paths work from any launch folder.
+For voice mode, place the downloaded Vosk model in `models/vosk-en/` before
+packaging `src/main_av.ow --type console`; no speech model is included here.
+
+### Original artwork and audio
+
+All 240 asset files from the original React game's `public/assets/` are included
+byte-for-byte, excluding macOS `._*` metadata. `assets/original-manifest.json`
+records their sizes and SHA-256 hashes. The original asset set is about 241 MiB;
+the full app-image also includes its Java runtime.
+
+New saves default to the Original theme: each hostile, miniboss and boss uses its
+own original artwork. The graphical spelling game uses the original writing
+icon, badge art, mob hurt/death sounds, UI effects and one of the six music tracks.
+GIFs animate; `breeze.gif` is a 50-frame compatibility conversion of the retained
+original WebP. The Sound on/off button mutes audio, and unavailable audio devices
+do not prevent play. Existing Dungeon/Space saves keep their theme; select `2`
+with `src/main_theme.ow` to switch to Original.
+
+The complete asset set includes resources for React features not yet ported to
+Ow, such as the axolotl collection. Bundling them does not add those mechanics.
+To refresh the source assets and generated bestiary:
+
+```bash
+node scripts/import-original-assets.mjs /path/to/original/CodeWashGame
+```
+
+Keep `breeze.gif` alongside the imported WebP. No asset generation is needed.
+
+### Validation
+
+`node scripts/verify-assets.mjs` checks every original file by SHA-256 and all
+literal media references. Pass `dist/CodeWashRPG/app/game` to check the package.
+For a Windows GUI smoke check (requires a development JDK):
+
+```powershell
+javac -cp dist/CodeWashRPG/app/OwIDE.jar scripts/GuiSmoke.java
+java -Dow.ui.mode=native -cp "scripts;dist/CodeWashRPG/app/OwIDE.jar" GuiSmoke gui-check.png
+```
+
+The check opens the packaged game, verifies all three displayed images, submits
+wrong and correct answers, checks combat damage and the New foe button, saves
+a screenshot, and closes the window. It does not require a microphone.
 
 ## Credits
 

@@ -22,5 +22,8 @@ class MobPool:
   fn theme_image():
     return: this.theme.image()
 
+  fn mob_image(name):
+    return: this.theme.image_for(name)
+
   fn theme_title():
     return: this.theme.title()

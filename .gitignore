@@ -7,3 +7,6 @@
 
 # Game save files (written at runtime)
 save/
+dist/
+models/
+*.class
