@@ -1,0 +1,14 @@
+{
+  "name": "levelup-ow",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Level Up! — a JS/React game refactored and migrated to OW Lang (browser port).",
+  "scripts": {
+    "ow:build": "node ow/scripts/build-web.mjs",
+    "ow:test": "node ow/scripts/build-web.mjs && node ow/scripts/test.mjs"
+  },
+  "devDependencies": {
+    "electron": "^39.8.5"
+  }
+}
