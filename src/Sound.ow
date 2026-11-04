@@ -1,0 +1,38 @@
+# Sound effects and music for the voice/audio mode, using the Ow audio
+# builtins (audio_play / audio_music / audio_stop).
+#
+# Set enabled to 0 (via mute) to run silently -- useful on a machine with
+# no audio output device, since the audio builtins error if they cannot
+# open a line.
+class Sound:
+  field enabled
+
+  fn new():
+    set this.enabled: 1
+
+  fn mute():
+    set this.enabled: 0
+
+  fn hit():
+    if: this.enabled == 1
+      call: audio_play("assets/hit.wav")
+
+  fn kill():
+    if: this.enabled == 1
+      call: audio_play("assets/kill.wav")
+
+  fn wrong():
+    if: this.enabled == 1
+      call: audio_play("assets/wrong.wav")
+
+  fn levelup():
+    if: this.enabled == 1
+      call: audio_play("assets/levelup.wav")
+
+  fn start_music():
+    if: this.enabled == 1
+      call: audio_music("assets/music.wav")
+
+  fn stop_music():
+    if: this.enabled == 1
+      call: audio_stop()

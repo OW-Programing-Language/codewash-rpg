@@ -1,0 +1,27 @@
+import "GameAV.ow"
+
+# Voice + audio entry point. Read each word ALOUD to attack; correct
+# pronunciation damages the foe, and the Ow audio builtins play SFX + music.
+#
+# Requirements (see README):
+#   - speakers + a microphone
+#   - a Vosk model unzipped at  models/vosk-en
+#
+#   ow run src/main_av.ow
+#
+# The math game in main.ow has no such requirements and remains the default.
+main:
+  set game: new GameAV()
+  call: game.start(1)
+  print: "=== Code Wash RPG -- Voice mode ==="
+  print: "Read each word ALOUD to attack. Reach level 3 to win."
+  set playing int: 1
+  while: playing == 1
+    print: game.prompt_line()
+    set heard: mic_transcribe("models/vosk-en", 2500)
+    call: game.say(heard)
+    print: game.message
+    if: game.hero.lvl() > 2
+      set playing: 0
+  call: game.sound.stop_music()
+  print: "Great reading! You reached level " + game.hero.lvl() + "."
