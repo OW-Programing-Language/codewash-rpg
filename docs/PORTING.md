@@ -11,18 +11,22 @@ progression maths, difficulty tiers, mob bestiary, combat loop,
 leveling — as a clean modular OOP program (one class per file, exactly
 the convention of OW's own example games), runnable with `ow run`.
 
-**What CANNOT be ported** (and is deliberately not faked): the React
-DOM UI, Web Audio, the microphone / speech recognition, `localStorage`
-saves, themes, images / sprites, and animations. OW has no
-browser/React target, and its confirmed UI widgets
-(`ui_button`, `ui_text`, `ui_grid`, `ui_row`, `ui_col`, `ui_disc`)
-have **no free-text input field**, which the typed-answer skills
-require.
+**Now possible via new ow-lang builtins:** audio (SFX + music) and the
+microphone/speech reading skill. These were originally "not portable",
+but `audio_play` / `audio_music` / `audio_stop` and `mic_transcribe`
+(offline Vosk) were added to the language, so this repo now ships a
+**voice + audio mode** (`main_av.ow`). See the parity matrix below.
 
-Because of that, the port implements the **Math** skill as a complete,
-real vertical slice (it is the only skill that needs no image/audio
-assets), and documents the rest below rather than stubbing fake
-versions of them.
+**What still cannot be ported** (and is deliberately not faked): the
+React DOM UI, `localStorage` saves, themes, images / sprites, and
+animations. OW has no browser/React target, and its confirmed UI
+widgets (`ui_button`, `ui_text`, `ui_grid`, `ui_row`, `ui_col`,
+`ui_disc`) have **no free-text input field**, so typed-answer skills
+run as a console shell.
+
+The port implements the **Math** skill (typed, `main.ow`) and the
+**Reading** skill (spoken, `main_av.ow`) as complete vertical slices,
+and documents the rest below rather than stubbing fake versions.
 
 ## Feature parity matrix
 
@@ -34,11 +38,12 @@ versions of them.
 | Mob bestiary (names) | ✅ Ported | `MobPool.ow`, names only |
 | Combat loop + leveling | ✅ Ported | `Game.ow` |
 | Math skill end-to-end | ✅ Ported | console shell in `main.ow` |
-| Reading / Writing skills | ⛔ Not ported | need string compare + word/image assets |
-| Patterns / Memory / Cleaning skills | ⛔ Not ported | need sprites, grids of images, audio |
+| Reading skill (voice) | ✅ Ported | `GameAV.ow` + `main_av.ow` — read the word aloud |
+| Writing skill | ⛔ Not ported | needs word/image assets |
+| Patterns / Memory / Cleaning skills | ⛔ Not ported | need sprites, grids of images |
 | React DOM UI, animations | ⛔ Not portable | OW has no browser/React target |
-| Web Audio (music / SFX) | ⛔ Not portable | no audio API in OW |
-| Microphone / speech recognition | ⛔ Not portable | no Web Speech API in OW |
+| Sound effects / music | ✅ Ported | `Sound.ow` via `audio_play` / `audio_music` (added to ow-lang) |
+| Microphone / speech recognition | ✅ Ported | `mic_transcribe` (offline Vosk, added to ow-lang) |
 | `localStorage` profiles / saves | ⛔ Not ported | no persistence used in this slice |
 | Themes / cosmetics / achievements | ⛔ Not ported | asset- and UI-bound |
 
@@ -64,13 +69,21 @@ versions of them.
 
 - **Re-theme mob names** in `MobPool.ow` to neutral branding (tracked
   by the CodeWash brief).
-- **Port the Reading skill** once an OW string-equality check is
-  confirmed; it is the next-cleanest skill (word in, typed word out).
 - **A clickable UI** would require either an OW text-input widget (not
   currently available) or reworking answers into multiple-choice
   buttons using `ui_button` + `ui_grid`.
 - **Restore float XP scaling** if/when OW's float semantics are
   verified, to match the JS curve exactly.
+
+### Done since the first version
+
+- **Reading skill (voice)** — implemented in `GameAV.ow` / `main_av.ow`
+  using the `mic_transcribe` builtin that was added to `ow-lang`.
+- **Sound & music** — `Sound.ow` over `audio_play` / `audio_music`;
+  effects ship in `assets/*.wav`.
+- These closed the two biggest gaps from the original matrix (audio and
+  microphone/speech), which were previously "not portable" until the
+  builtins were added to the language.
 
 ## OW stdlib used (confirmed from official examples)
 
