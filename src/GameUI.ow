@@ -96,4 +96,4 @@ class GameUI:
 
   # Render function: called by ui_run to build the widget tree.
   fn view():
-    return: ui_col([ui_heading("Code Wash RPG"), ui_image("assets/foe.png"), ui_text(this.mob.label() + "  " + this.mob.cur_hp() + "/" + this.mob.max_hp() + " HP   (Lvl " + this.hero.lvl() + ",  " + this.ach.count_unlocked() + "/5)"), ui_text("Unscramble:  " + this.skill.prompt()), ui_input("", "gameui.submit"), ui_text(this.message), ui_button("New foe", "gameui.skip")])
+    return: ui_col([ui_heading("Code Wash RPG -- " + this.pool.theme_title()), ui_image(this.pool.theme_image()), ui_text(this.mob.label() + "  " + this.mob.cur_hp() + "/" + this.mob.max_hp() + " HP   (Lvl " + this.hero.lvl() + ",  " + this.ach.count_unlocked() + "/5)"), ui_text("Unscramble:  " + this.skill.prompt()), ui_input("", "gameui.submit"), ui_text(this.message), ui_button("New foe", "gameui.skip")])

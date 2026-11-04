@@ -1,0 +1,15 @@
+# Theme selector. Pick a theme; the choice is saved to save/theme.json and
+# then applies to every game mode (foe names + the graphical foe image).
+#
+#   ow run src/main_theme.ow
+main:
+  print: "=== Code Wash RPG -- choose a theme ==="
+  print: "  0 = Dungeon (fantasy: goblins, ogres, dragons)"
+  print: "  1 = Space   (sci-fi: drones, mechs, motherships)"
+  set choice int: int(input("Theme (0/1) > "))
+  set c int: clamp(choice, 0, 1)
+  call: save("save/theme.json", c)
+  if: c == 1
+    print: "Theme set to Space. Run any mode to play it."
+  else:
+    print: "Theme set to Dungeon. Run any mode to play it."
