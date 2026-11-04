@@ -1,0 +1,25 @@
+import "Cosmetics.ow"
+
+# Wardrobe: view cosmetic badges (unlocked by achievements) and equip one.
+# The choice is saved and shown in the graphical mode's HUD.
+#
+#   ow run src/main_cosmetics.ow
+main:
+  set c: new Cosmetics()
+  print: "=== Code Wash RPG -- Wardrobe ==="
+  print: "Currently equipped: " + c.name_of(c.equipped())
+  print: "Cosmetics (earn them by unlocking achievements):"
+  set i int: 0
+  while: i < 6
+    set tag: "LOCKED"
+    if: c.unlocked(i) == 1
+      set tag: "unlocked"
+    print: "  [" + i + "] " + c.name_of(i) + "  (" + tag + ")"
+    set i: i + 1
+  set choice int: int(input("Equip # (0-5) > "))
+  set pick int: clamp(choice, 0, 5)
+  if: c.unlocked(pick) == 1
+    call: c.equip(pick)
+    print: "Equipped: " + c.name_of(pick)
+  else:
+    print: "That cosmetic is locked -- earn its achievement first."
