@@ -40,6 +40,8 @@ class Sound:
     set folder: replace(lower(name), " ", "")
     if: name == "Enderman"
       set folder: "endermen"
+    if: name == "Wither Skeleton"
+      set folder: "wither_skeleton"
     set path: "assets/sounds/mob/mob/" + folder + "/" + event + ".wav"
     if: exists(path) == 1
       call: this.play(path)
