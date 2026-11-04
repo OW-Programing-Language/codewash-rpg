@@ -157,6 +157,19 @@ Achievements: **First Blood** (1st kill), **Apprentice** (lvl 2),
 Delete the `save/` folder to start over. See
 [`docs/saves-achievements.md`](docs/saves-achievements.md).
 
+## Cosmetics
+
+Earning achievements unlocks cosmetic **hero badges**. Open the wardrobe
+to equip one; the equipped badge shows in the graphical mode's HUD.
+
+```bash
+ow run src/main_cosmetics.ow   # view & equip unlocked badges
+```
+
+Badges map to the five achievements (e.g. *First Blood* → 🩸, *Veteran*
+→ 🛡). The choice is saved to `save/cosmetic.json`; locked badges can't be
+equipped until you earn their achievement.
+
 ## Module map (one class per file)
 
 | File | Responsibility |
@@ -191,6 +204,8 @@ Delete the `save/` folder to start over. See
 | `src/Theme.ow`       | Themed bestiary + foe image + title (selectable). |
 | `src/MobPool.ow`     | The bestiary — now sourced from the active `Theme`. |
 | `src/main_theme.ow`  | Theme selector (saves the choice). |
+| `src/Cosmetics.ow`   | Hero badges unlocked by achievements; equip/persist. |
+| `src/main_cosmetics.ow`| Wardrobe: view & equip cosmetic badges. |
 
 ## Status
 
