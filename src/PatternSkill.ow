@@ -1,0 +1,31 @@
+# Pattern-recognition skill: show an arithmetic sequence and ask for the
+# next number. The step grows with difficulty. Implements the GameTyped
+# skill contract (next / prompt / check / target).
+class PatternSkill:
+  field seq
+  field ans
+
+  fn new():
+    set this.seq: ""
+    set this.ans: 0
+
+  fn next(d):
+    set start int: rand(10)
+    set step int: rand(d + 1) + 1
+    set a0 int: start
+    set a1 int: start + step
+    set a2 int: start + step * 2
+    set a3 int: start + step * 3
+    set this.ans: start + step * 4
+    set this.seq: "" + a0 + ", " + a1 + ", " + a2 + ", " + a3 + ", ?"
+
+  fn prompt():
+    return: "Next number:  " + this.seq
+
+  fn check(typed):
+    if: int(typed) == this.ans
+      return: 1
+    return: 0
+
+  fn target():
+    return: "the answer was " + this.ans
