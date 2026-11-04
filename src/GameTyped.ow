@@ -5,6 +5,7 @@ import "Mob.ow"
 import "Hero.ow"
 import "store.ow"
 import "Achievements.ow"
+import "Cosmetics.ow"
 
 # A generic typed-combat loop, driven by any "skill" object that implements:
 #   next(difficulty)  -- advance to a new challenge
@@ -24,6 +25,7 @@ class GameTyped:
   field message
   field ach
   field kills
+  field cos
 
   fn new():
     set this.prog: new Progression()
@@ -33,6 +35,7 @@ class GameTyped:
     set this.ach: new Achievements()
     set this.kills: 0
     set this.skill: 0
+    set this.cos: new Cosmetics()
     set this.message: "Welcome to Code Wash RPG."
 
   fn use(s):
@@ -94,4 +97,4 @@ class GameTyped:
     call: this.spawn()
 
   fn prompt_line():
-    return: "[Lvl " + this.hero.lvl() + "  Diff " + this.hero.diff() + "  Foe: " + this.mob.label() + " " + this.mob.cur_hp() + "/" + this.mob.max_hp() + "]  " + this.skill.prompt()
+    return: this.cos.tag() + "[Lvl " + this.hero.lvl() + "  Diff " + this.hero.diff() + "  Foe: " + this.mob.label() + " " + this.mob.cur_hp() + "/" + this.mob.max_hp() + "]  " + this.skill.prompt()
