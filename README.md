@@ -28,7 +28,8 @@ tiers, a mob bestiary, the combat loop and leveling), driven by the
    Or open `src/main.ow` in **OwIDE** and click **Run ▶**.
 
 Solve each problem to damage the current foe; clear foes to earn XP and
-level up. Reach level 4 to finish the shift.
+level up. Reach level 6 to finish the shift. **Your progress is saved** —
+next run you resume where you left off (see Saves & achievements below).
 
 ## Voice + audio mode
 
@@ -54,6 +55,19 @@ Sound effects live in `assets/*.wav` and are bundled in the repo. Running
 with no audio device? Construct `Sound` and call `mute` (the default
 `main_av` keeps sound on).
 
+## Saves & achievements
+
+Both modes share the same saved progress (via the Ow `save`/`load`
+builtins). After every kill the hero's `[level, xp, difficulty]` is
+written to `save/progress.json`, and achievements are tracked in
+`save/achievements.json`. On start the game resumes automatically
+("Welcome back at level N!").
+
+Achievements: **First Blood** (1st kill), **Apprentice** (lvl 2),
+**Journeyman** (lvl 3), **Veteran** (lvl 5), **Sharpshooter** (10 kills).
+Delete the `save/` folder to start over. See
+[`docs/saves-achievements.md`](docs/saves-achievements.md).
+
 ## Module map (one class per file)
 
 | File | Responsibility |
@@ -71,6 +85,8 @@ with no audio device? Construct `Sound` and call `mute` (the default
 | `src/ReadingWords.ow`| Word bank for the voice reading skill. |
 | `src/GameAV.ow`      | Voice-mode combat loop (reads words aloud, plays sound). |
 | `src/main_av.ow`     | Voice + audio entry point. |
+| `src/store.ow`       | Save/load helpers for progress & achievements. |
+| `src/Achievements.ow`| Achievement flags: check / persist / count. |
 
 ## Status
 
