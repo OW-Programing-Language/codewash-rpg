@@ -1,0 +1,62 @@
+import "Achievements.ow"
+
+# Cosmetic hero badges, unlocked by earning achievements. Id 0 is "None"
+# (always available); ids 1-5 map to the five achievements. The equipped
+# id is saved to save/cosmetic.json and shown in the graphical HUD.
+#
+# Names are ASCII (for the console wardrobe); icons are emoji (for the web
+# UI, which renders UTF-8).
+class Cosmetics:
+  field ach
+  field names
+  field icons
+
+  fn new():
+    set this.ach: new Achievements()
+    call: this.ach.load()
+    set nm: array(6, "")
+    set nm[0]: "None"
+    set nm[1]: "Bloodied"
+    set nm[2]: "Apprentice Pin"
+    set nm[3]: "Scholar Tome"
+    set nm[4]: "Guardian Crest"
+    set nm[5]: "Marksman Badge"
+    set this.names: nm
+    set ic: array(6, "")
+    set ic[0]: "*"
+    set ic[1]: "🩸"
+    set ic[2]: "📌"
+    set ic[3]: "📘"
+    set ic[4]: "🛡"
+    set ic[5]: "🎯"
+    set this.icons: ic
+
+  # Is cosmetic id available? None (0) always; others need their achievement.
+  fn unlocked(id):
+    if: id < 1
+      return: 1
+    if: id > 5
+      return: 0
+    return: this.ach.has(id - 1)
+
+  fn name_of(id):
+    return: this.names[id]
+
+  fn icon_of(id):
+    return: this.icons[id]
+
+  # The equipped cosmetic id (0 if none/locked/missing).
+  fn equipped():
+    set e: load("save/cosmetic.json")
+    if: e == 0
+      return: 0
+    if: e < 1
+      return: 0
+    if: e > 5
+      return: 0
+    if: this.unlocked(e) == 1
+      return: e
+    return: 0
+
+  fn equip(id):
+    call: save("save/cosmetic.json", id)

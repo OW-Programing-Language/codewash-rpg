@@ -6,6 +6,7 @@ import "Hero.ow"
 import "WritingSkill.ow"
 import "store.ow"
 import "Achievements.ow"
+import "Cosmetics.ow"
 
 # Graphical variant of the spelling skill: renders a widget tree (foe image,
 # scrambled word, a text field and a button) and reacts to events. Runs in
@@ -22,6 +23,7 @@ class GameUI:
   field message
   field ach
   field kills
+  field cos
 
   fn new():
     set this.prog: new Progression()
@@ -30,6 +32,7 @@ class GameUI:
     set this.mob: new Mob()
     set this.skill: new WritingSkill()
     set this.ach: new Achievements()
+    set this.cos: new Cosmetics()
     set this.kills: 0
     set this.message: "Type the unscrambled word and press Enter."
 
@@ -96,4 +99,4 @@ class GameUI:
 
   # Render function: called by ui_run to build the widget tree.
   fn view():
-    return: ui_col([ui_heading("Code Wash RPG -- " + this.pool.theme_title()), ui_image(this.pool.theme_image()), ui_text(this.mob.label() + "  " + this.mob.cur_hp() + "/" + this.mob.max_hp() + " HP   (Lvl " + this.hero.lvl() + ",  " + this.ach.count_unlocked() + "/5)"), ui_text("Unscramble:  " + this.skill.prompt()), ui_input("", "gameui.submit"), ui_text(this.message), ui_button("New foe", "gameui.skip")])
+    return: ui_col([ui_heading(this.cos.icon_of(this.cos.equipped()) + "  Code Wash RPG -- " + this.pool.theme_title()), ui_image(this.pool.theme_image()), ui_text(this.mob.label() + "  " + this.mob.cur_hp() + "/" + this.mob.max_hp() + " HP   (Lvl " + this.hero.lvl() + ",  " + this.ach.count_unlocked() + "/5)"), ui_text("Unscramble:  " + this.skill.prompt()), ui_input("", "gameui.submit"), ui_text(this.message), ui_button("New foe", "gameui.skip")])
