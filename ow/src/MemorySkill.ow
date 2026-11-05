@@ -1,0 +1,116 @@
+import "Problem.ow"
+
+# Memory (concentration) skill, ported from the React memory mini-game.
+#
+# A board of 8 cards = 4 pairs. The player flips two cards; a match stays face
+# up and lands a hit on the current foe; a mismatch flips back on the next flip.
+# Clearing the board deals a fresh one. Card faces are short words so they render
+# in both the web and native backends. mode() == "memory" tells the UI to draw a
+# card grid instead of a question.
+class MemorySkill:
+  field cards
+  field revealed
+  field matched
+  field first
+  field pending
+  field a
+  field b
+
+  fn new():
+    call: this.start_board()
+
+  fn mode():
+    return: "memory"
+
+  # Game.start() calls generate(); for Memory it (re)builds the board and returns
+  # a placeholder Problem so the shared combat loop stays uniform.
+  fn generate(d):
+    call: this.start_board()
+    set p: new Problem()
+    call: p.init("Match the pairs!", "")
+    return: p
+
+  fn options(p):
+    return: [""]
+
+  fn count():
+    return: 8
+
+  # Build 4 pairs from a word pool, shuffle, and reset flip state.
+  fn start_board():
+    set pool: ["CAT", "DOG", "COW", "PIG", "FOX", "OWL", "BEE", "BAT"]
+    set pn int: len(pool)
+    set i int: pn - 1
+    while: i > 0
+      set j int: rand(i + 1)
+      set tmp: pool[i]
+      set pool[i]: pool[j]
+      set pool[j]: tmp
+      set i: i - 1
+    set cs: array(8, "")
+    set k int: 0
+    while: k < 4
+      set cs[k * 2]: pool[k]
+      set cs[k * 2 + 1]: pool[k]
+      set k: k + 1
+    set n int: 7
+    while: n > 0
+      set j2 int: rand(n + 1)
+      set t2: cs[n]
+      set cs[n]: cs[j2]
+      set cs[j2]: t2
+      set n: n - 1
+    set this.cards: cs
+    set this.revealed: array(8, 0)
+    set this.matched: array(8, 0)
+    set this.first: 8
+    set this.pending: 0
+    set this.a: 0
+    set this.b: 0
+
+  # Face shown for card i: the word if revealed/matched, otherwise "?".
+  fn face(i):
+    if: this.matched[i] == 1
+      return: this.cards[i]
+    if: this.revealed[i] == 1
+      return: this.cards[i]
+    return: "?"
+
+  # Flip card i. Returns: "match", "nomatch", "flip" or "noop".
+  fn flip(i):
+    if: this.matched[i] == 1
+      return: "noop"
+    # OW can't index-assign a field directly, so alias the arrays locally;
+    # they are the same references, so the mutations persist on the object.
+    set rev: this.revealed
+    set mt: this.matched
+    if: this.pending == 1
+      set rev[this.a]: 0
+      set rev[this.b]: 0
+      set this.pending: 0
+      set this.first: 8
+    if: rev[i] == 1
+      return: "noop"
+    set rev[i]: 1
+    if: this.first > 7
+      set this.first: i
+      return: "flip"
+    if: this.cards[i] == this.cards[this.first]
+      set mt[i]: 1
+      set mt[this.first]: 1
+      set this.first: 8
+      return: "match"
+    set this.a: this.first
+    set this.b: i
+    set this.pending: 1
+    set this.first: 8
+    return: "nomatch"
+
+  fn is_cleared():
+    set i int: 0
+    set all int: 1
+    while: i < 8
+      if: this.matched[i] == 0
+        set all: 0
+      set i: i + 1
+    return: all
