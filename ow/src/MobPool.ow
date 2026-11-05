@@ -1,0 +1,55 @@
+# The bestiary, ported from HOSTILE_MOBS / MINIBOSS_MOBS / BOSS_MOBS
+# in src/constants/gameData.jsx. Names only: the OW console port has
+# no sprites (see docs/PORTING.md). The original Minecraft-themed
+# names are kept verbatim for a faithful port; re-theming them is
+# tracked as debt in docs/PORTING.md.
+class MobPool:
+  field hostile
+  field mini
+  field boss
+
+  fn new():
+    set h: array(20, "")
+    set h[0]: "Blaze"
+    set h[1]: "Bogged"
+    set h[2]: "Breeze"
+    set h[3]: "Creeper"
+    set h[4]: "Drowned"
+    set h[5]: "Enderman"
+    set h[6]: "Evoker"
+    set h[7]: "Ghast"
+    set h[8]: "Guardian"
+    set h[9]: "Hoglin"
+    set h[10]: "Magma Cube"
+    set h[11]: "Parched"
+    set h[12]: "Phantom"
+    set h[13]: "Piglin"
+    set h[14]: "Pillager"
+    set h[15]: "Skeleton"
+    set h[16]: "Slime"
+    set h[17]: "Spider"
+    set h[18]: "Witch"
+    set h[19]: "Zombie"
+    set this.hostile: h
+    set m: array(4, "")
+    set m[0]: "Creaking"
+    set m[1]: "Elder Guardian"
+    set m[2]: "Ravager"
+    set m[3]: "Wither Skeleton"
+    set this.mini: m
+    set b: array(4, "")
+    set b[0]: "Ender Dragon"
+    set b[1]: "Herobrine"
+    set b[2]: "Warden"
+    set b[3]: "Wither"
+    set this.boss: b
+
+  # code: 2 = boss, 1 = miniboss, 0 = hostile.
+  fn pick(code):
+    switch: code
+      case 2:
+        return: this.boss[rand(4)]
+      case 1:
+        return: this.mini[rand(4)]
+      default:
+        return: this.hostile[rand(20)]
