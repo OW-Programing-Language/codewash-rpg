@@ -1,0 +1,239 @@
+import "Game.ow"
+import "MobArt.ow"
+import "ReadingSkill.ow"
+import "WritingSkill.ow"
+import "MemorySkill.ow"
+import "PatternsSkill.ow"
+import "CleaningSkill.ow"
+import "ThemeBank.ow"
+import "flow/App.ow"
+import "modules/sound/SoundModule.ow"
+import "modules/achievements/AchievementsModule.ow"
+
+# Graphical front-end for the Code Wash RPG engine.
+#
+# Renders two screens with the Ow UI runtime — a themed main menu and a battle
+# screen — mirroring the React app's flow. Answers are multiple-choice buttons
+# (as agreed), each wired to the engine's `answer()`. All game logic lives in
+# `Game` and its collaborators; this class only turns state into a widget tree
+# and handles UI events.
+#
+# Asset paths are resolved relative to the working directory. Run from the `ow/`
+# folder so `../public/assets/...` points at the original game art.
+class UiGame:
+  field game
+  field screen
+  field bg
+  field logo
+  field art
+  field themes
+  field theme
+  field app
+
+  fn new():
+    set this.game: new Game()
+    set this.screen: "menu"
+    set this.art: new MobArt()
+    set this.themes: new ThemeBank()
+    set this.theme: "minecraft"
+    set this.bg: this.themes.bg("minecraft")
+    set this.logo: this.themes.logo("minecraft")
+    # flOW application context: the SoundModule subscribes to the event bus and
+    # owns all audio, so gameplay just emits events (fully decoupled).
+    set this.app: new App()
+    call: this.app.use(new SoundModule())
+    call: this.app.use(new AchievementsModule())
+    call: this.app.boot()
+
+  # Switch the active theme: swaps the background and logo everywhere.
+  fn set_theme(id):
+    set this.theme: id
+    set this.bg: this.themes.bg(id)
+    set this.logo: this.themes.logo(id)
+
+  # Toggle sound by enabling/disabling the flOW sound module.
+  fn set_sound(v):
+    if: v == 0
+      call: this.app.disable("sound")
+    else:
+      call: this.app.enable("sound")
+    return: 0
+
+  # Unlocked-achievement count, read from the achievements module service.
+  fn ach_count():
+    set a: this.app.service("achievements")
+    return: a.total()
+
+  # Feedback after an action: a level-up jingle if the hero levelled, else a
+  # click. Emitted on the flOW bus; the SoundModule decides what to play.
+  # Emit domain events; the Sound and Achievements modules react independently.
+  fn feedback(before):
+    set now int: this.game.hero.lvl()
+    call: this.app.emit("turn", 0)
+    if: now > before
+      call: this.app.emit("hero.levelup", now)
+
+  # ---- UI event handlers ----
+  fn launch(s):
+    call: this.game.use_skill(s)
+    call: this.game.start(1)
+    set this.screen: "battle"
+    call: this.app.emit("music.start", 0)
+
+  fn begin_math():
+    call: this.launch(new MathSkill())
+
+  fn begin_reading():
+    call: this.launch(new ReadingSkill())
+
+  fn begin_writing():
+    call: this.launch(new WritingSkill())
+
+  fn begin_memory():
+    call: this.launch(new MemorySkill())
+
+  fn begin_patterns():
+    call: this.launch(new PatternsSkill())
+
+  fn begin_cleaning():
+    call: this.launch(new CleaningSkill())
+
+  # Cleaning: finishing a task clears the mess (a hit) and brings the next task.
+  fn complete():
+    set before int: this.game.hero.lvl()
+    call: this.game.hit()
+    call: this.game.next_problem()
+    call: this.feedback(before)
+
+  fn to_menu():
+    set this.screen: "menu"
+
+  fn pick(n):
+    set before int: this.game.hero.lvl()
+    call: this.game.answer(n)
+    call: this.feedback(before)
+
+  # Typed answer (Writing): normalise case/whitespace before comparing.
+  fn pick_text(v):
+    set before int: this.game.hero.lvl()
+    call: this.game.answer(upper(trim(v)))
+    call: this.feedback(before)
+
+  # Memory: flip a card; a matched pair lands a hit, a cleared board deals a new one.
+  fn flip_card(i):
+    set before int: this.game.hero.lvl()
+    set res: this.game.skill.flip(i)
+    if: res == "match"
+      call: this.game.hit()
+    if: this.game.skill.is_cleared() == 1
+      call: this.game.skill.start_board()
+    if: res == "match"
+      call: this.feedback(before)
+
+  # Answer choices come from the active skill (numbers for Math, words for
+  # Reading), so the same battle screen works for every skill.
+  fn opts():
+    return: this.game.skill.options(this.game.problem)
+
+  # XP progress toward the next level (used in both battle and memory HUDs).
+  fn xp_bar():
+    set g: this.game
+    return: ui_bar(g.hero.xp_v(), g.prog.xp_to_level(g.hero.diff()), "yellow")
+
+  # The foe's name and sprite. For Cleaning (mode "task") the foe is a chest.
+  fn foe_label():
+    if: this.game.skill.mode() == "task"
+      return: this.game.skill.chest_name()
+    return: this.game.mob.label()
+
+  fn foe_sprite_path():
+    if: this.game.skill.mode() == "task"
+      return: this.art.chest_path(this.game.skill.chest_name())
+    return: this.art.path(this.game.mob.label())
+
+  # ---- screens ----
+  # Note: the parser wants each expression on one line, so we build widgets into
+  # variables and compose single-line array literals (no multi-line brackets).
+  fn menu_view():
+    set logo: ui_image(this.logo, 420, 160)
+    set title: ui_heading("CODE WASH RPG")
+    set sub: ui_text("Clean your code or get fired", "yellow")
+    set play_math: ui_button("Math shift", "app.begin_math")
+    set play_read: ui_button("Reading shift", "app.begin_reading")
+    set play_write: ui_button("Writing shift", "app.begin_writing")
+    set play_mem: ui_button("Memory shift", "app.begin_memory")
+    set play_pat: ui_button("Patterns shift", "app.begin_patterns")
+    set play_clean: ui_button("Cleaning shift", "app.begin_cleaning")
+    set row1: ui_row([play_math, play_read])
+    set row2: ui_row([play_write, play_mem])
+    set row3: ui_row([play_pat, play_clean])
+    set tlabel: ui_text("Theme: " + this.themes.name(this.theme), "yellow")
+    set tb_mc: ui_button("Minecraft", "app.set_theme", "minecraft")
+    set tb_kp: ui_button("K-Pop", "app.set_theme", "kpop")
+    set tb_pk: ui_button("Pokemon", "app.set_theme", "pokemon")
+    set tb_sp: ui_button("Spy", "app.set_theme", "spy")
+    set tb_sf: ui_button("Sci-Fi", "app.set_theme", "scifi")
+    set tb_ft: ui_button("Fantasy", "app.set_theme", "fantasy")
+    set trow1: ui_row([tb_mc, tb_kp, tb_pk])
+    set trow2: ui_row([tb_sp, tb_sf, tb_ft])
+    set items: [logo, title, sub, ui_space(8), row1, row2, row3, ui_space(8), tlabel, trow1, trow2]
+    return: ui_backdrop(this.bg, ui_card(items))
+
+  # The answer widget depends on the skill: a row of choice buttons, or a text
+  # field for skills answered by typing (Writing).
+  fn answers_widget():
+    if: this.game.skill.mode() == "text"
+      return: ui_input("", "app.pick_text")
+    if: this.game.skill.mode() == "task"
+      return: ui_button("Complete!", "app.complete")
+    set o: this.opts()
+    set b0: ui_button(str(o[0]), "app.pick", o[0])
+    set b1: ui_button(str(o[1]), "app.pick", o[1])
+    set b2: ui_button(str(o[2]), "app.pick", o[2])
+    set b3: ui_button(str(o[3]), "app.pick", o[3])
+    return: ui_row([b0, b1, b2, b3])
+
+  fn battle_view():
+    set g: this.game
+    set name: ui_heading(this.foe_label(), "red")
+    set sprite: ui_image(this.foe_sprite_path(), 160, 160)
+    set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
+    set q: ui_heading(g.problem.ask())
+    set row: this.answers_widget()
+    set msg: ui_text(g.message, "yellow")
+    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff() + "     Achievements " + this.ach_count())
+    set xp: this.xp_bar()
+    set back: ui_button("Back to menu", "app.to_menu")
+    set items: [name, sprite, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, xp, ui_space(6), back]
+    return: ui_backdrop(this.bg, ui_card(items))
+
+  # Memory mini-game: a 4-column grid of flip cards over the foe's HUD.
+  fn memory_view():
+    set g: this.game
+    set s: g.skill
+    set name: ui_heading(g.mob.label(), "red")
+    set sprite: ui_image(this.art.path(g.mob.label()), 120, 120)
+    set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
+    set instr: ui_heading("Match the pairs!")
+    set c0: ui_button(s.face(0), "app.flip_card", 0)
+    set c1: ui_button(s.face(1), "app.flip_card", 1)
+    set c2: ui_button(s.face(2), "app.flip_card", 2)
+    set c3: ui_button(s.face(3), "app.flip_card", 3)
+    set c4: ui_button(s.face(4), "app.flip_card", 4)
+    set c5: ui_button(s.face(5), "app.flip_card", 5)
+    set c6: ui_button(s.face(6), "app.flip_card", 6)
+    set c7: ui_button(s.face(7), "app.flip_card", 7)
+    set grid: ui_grid(4, [c0, c1, c2, c3, c4, c5, c6, c7])
+    set msg: ui_text(g.message, "yellow")
+    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff() + "     Achievements " + this.ach_count())
+    set xp: this.xp_bar()
+    set back: ui_button("Back to menu", "app.to_menu")
+    set items: [name, sprite, hp, ui_space(6), instr, grid, ui_space(8), msg, hud, xp, ui_space(6), back]
+    return: ui_backdrop(this.bg, ui_card(items))
+
+  fn render():
+    if: this.screen == "menu"
+      return: this.menu_view()
+    if: this.game.skill.mode() == "memory"
+      return: this.memory_view()
+    return: this.battle_view()
