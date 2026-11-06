@@ -1,0 +1,114 @@
+import "Helpers.ow"
+
+class Rules:
+  fn multiplier(d):
+    return: pow(3, d - 1)
+
+  fn damage(d):
+    return: 12 * this.multiplier(d)
+
+  fn health(d):
+    return: 60 * this.multiplier(d)
+
+  fn expected(level):
+    return: min(7, (level - 1) / 20 + 1)
+
+  fn encounter(level):
+    if: mod(level, 20) == 0
+      return: "boss"
+    if: mod(level, 20) == 10
+      return: "miniboss"
+    return: "hostile"
+
+  fn xp_needed(level):
+    return: floor(100 * repeat_power(1.035, level - 1) * this.multiplier(this.expected(level)))
+
+  fn reward(d, level):
+    set full: floor(100 * repeat_power(1.035, level - 1) * this.multiplier(d))
+    if: d < this.expected(level)
+      return: floor(full * repeat_power(0.3, this.expected(level) - d))
+    return: full
+
+  fn challenge_difficulty(s):
+    if: this.encounter(s.level) == "miniboss"
+      return: min(7, s.difficulty + 1)
+    return: s.difficulty
+
+  # Stable per-skill mob; never reroll during rendering.
+  fn spawn(s, index, data):
+    if: index == 3
+      set n: mod(s.level - 1, 4)
+      if: mod(s.level, 5) == 0
+        set n: 4
+      if: mod(s.level, 20) == 0
+        set n: 5
+      set s.mob: data.chests[n]
+    else:
+      if: index == 4
+        set s.mob: pick(data.friendly)
+      else:
+        set pool: data.hostile
+        if: this.encounter(s.level) == "boss"
+          set pool: data.bosses
+        if: this.encounter(s.level) == "miniboss"
+          set pool: data.minibosses
+        set s.mob: pick(pool)
+    set s.aura: pick(["rainbow", "frost", "shadow", "lava", "gradient", "sparkle", "plasma", "nature"])
+    set s.hpMax: this.health(s.difficulty)
+    set s.hp: s.hpMax
+
+  fn skill(index, data):
+    set s: {level: 1, xp: 0, difficulty: 1, badges: [], lostLevel: false, recoveryDifficulty: 1, mob: {}, aura: "", hp: 60, hpMax: 60}
+    call: this.spawn(s, index, data)
+    return: s
+
+  # Same per-hit XP split, boss healing, recovery and tier progression as JS.
+  fn hit(s, index, data):
+    set damage: this.damage(s.difficulty)
+    if: index == 3
+      set damage: s.hp
+    if: index == 4
+      set damage: s.hp
+    if: this.encounter(s.level) == "miniboss"
+      set damage: s.hp
+    set effective: this.damage(s.difficulty)
+    if: damage == s.hp
+      if: index == 3
+        set effective: s.hpMax
+      if: index == 4
+        set effective: s.hpMax
+      if: this.encounter(s.level) == "miniboss"
+        set effective: s.hpMax
+    set hits: ceil(s.hpMax * 1.0 / effective)
+    set reward: this.reward(s.difficulty, s.level)
+    set partial: reward / hits
+    set awarded: partial
+    set dead: s.hp - damage < 1
+    if: dead
+      set dealt: ceil((s.hpMax - s.hp) * 1.0 / effective)
+      set awarded: reward - dealt * partial
+    set s.xp: s.xp + awarded
+    set s.hp: max(0, s.hp - damage)
+    set result: {damage: damage, defeated: dead, levels: 0, restored: false, badge: 0, xp: awarded, mob: s.mob, encounter: this.encounter(s.level)}
+    if: dead
+      if: s.lostLevel
+        set s.level: s.level + 1
+        set s.lostLevel: false
+        set result.restored: true
+      set need: this.xp_needed(s.level)
+      if: s.xp > (need - 1)
+        set old: s.level
+        set result.levels: s.xp / need
+        set s.level: s.level + result.levels
+        set s.xp: mod(s.xp, need)
+        while: old < s.level
+          if: index != 3
+            if: mod(old, 20) == 0
+              set s.difficulty: min(7, s.difficulty + 1)
+              set tier: old / 20
+              if: tier < 9
+                set s.badges: unique(s.badges, tier)
+                set result.badge: tier
+          set old: old + 1
+      call: this.spawn(s, index, data)
+    return: result
