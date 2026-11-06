@@ -1,0 +1,128 @@
+import "../src/full/GameView.ow"
+
+main:
+  set data: load("generated/catalog.json")
+  set rules: new Rules()
+  set parity: load("generated/parity.json")
+  set i: 0
+  while: i < len(parity)
+    set row: parity[i]
+    call: assert(rules.damage(row.difficulty) == row.damage, "Damage parity")
+    call: assert(rules.health(row.difficulty) == row.health, "HP parity")
+    call: assert(rules.xp_needed(row.level) == row.needed, "XP threshold parity at " + str(row.level))
+    call: assert(rules.reward(row.difficulty, row.level) == row.reward, "XP reward parity at " + str(row.level))
+    call: assert(rules.encounter(row.level) == row.encounter, "Encounter parity")
+    set i: i + 1
+  set w: new World("generated/test-save.json")
+  set w.profiles: [w.new_profile(0), w.new_profile(1), w.new_profile(2)]
+  set w.current: 0
+  set p: w.profile()
+  call: w.begin(1)
+  set s: p.skills[1]
+  set i: 0
+  while: i < 4
+    call: w.act("answer", w.challenge.answer)
+    set i: i + 1
+  call: assert(s.hp == 12, "Four answers leave 12 HP")
+  call: assert(s.xp == 80, "Partial XP")
+  call: w.act("answer", w.challenge.answer)
+  call: assert(s.level == 2, "Five hits give one level")
+  call: assert(s.xp == 0, "XP remainder")
+  call: assert(s.hp == 60, "New foe health")
+  set s.level: 20
+  call: rules.spawn(s, 1, data)
+  call: w.begin(1)
+  call: w.act("answer", w.challenge.answer)
+  call: w.act("answer", "wrong")
+  call: assert(s.hp == 60, "Wrong answer fully heals boss")
+  call: assert(w.hp == 10, "Boss does not hurt player")
+  set s.xp: 0
+  set i: 0
+  while: i < 5
+    call: w.act("answer", w.challenge.answer)
+    set i: i + 1
+  call: assert(s.level == 21, "Boss advances level")
+  call: assert(s.difficulty == 2, "Boss unlocks difficulty")
+  call: assert(has(s.badges, 1), "Boss awards badge")
+  set s.level: 10
+  set s.xp: 0
+  set s.difficulty: 1
+  call: rules.spawn(s, 1, data)
+  call: w.begin(1)
+  call: assert(w.battleDifficulty == 2, "Miniboss challenge is harder")
+  call: w.act("answer", w.challenge.answer)
+  call: assert(s.level == 11, "Miniboss takes one hit")
+  set w.hp: 1
+  call: w.act("answer", "wrong")
+  call: assert(s.level == 10, "Death loses a level")
+  call: assert(w.battle == (0 - 1), "Death exits battle")
+  call: assert(s.lostLevel, "Recovery flag")
+  call: w.begin(1)
+  call: w.act("answer", w.challenge.answer)
+  call: assert(s.lostLevel == false, "Next victory restores lost level")
+  set c: new Challenges(data)
+  set d: 1
+  while: d < 8
+    call: c.memory(d)
+    call: assert(len(c.deck) == data.memory[d - 1].pairs * 2, "Memory deck size")
+    set j: 0
+    while: j < len(c.deck)
+      set count: 0
+      set k: 0
+      while: k < len(c.deck)
+        if: c.deck[k].name == c.deck[j].name
+          set count: count + 1
+        set k: k + 1
+      call: assert(count == 2, "Exactly two of each memory card")
+      set j: j + 1
+    call: c.next(0, d)
+    call: assert(c.correct(0, lower(c.answer)), "Reading case insensitive")
+    call: c.next(2, d)
+    call: assert(c.correct(2, replace(lower(c.answer), " ", "")), "Writing spaces and case")
+    call: c.next(1, d)
+    call: assert(c.correct(1, c.answer), "Math answer")
+    call: c.simon(d)
+    call: assert(c.press(c.sequence[0]) == "ignored", "Ignore input during playback")
+    set c.showing: false
+    call: assert(c.press(c.sequence[0]) == "round", "Simon round completion")
+    call: assert(len(c.sequence) == 2, "Simon sequence grows")
+    set c.showing: false
+    call: assert(c.press(mod(c.sequence[0] + 1, d + 1)) == "wrong", "Simon mistake")
+    set d: d + 1
+  call: w.begin(4)
+  set c: w.challenge
+  set j: 0
+  while: j < len(c.deck)
+    if: has(c.matched, c.deck[j].name) == 0
+      call: w.act("flip", str(j))
+      set k: j + 1
+      while: k < len(c.deck)
+        if: c.deck[k].name == c.deck[j].name
+          call: w.act("flip", str(k))
+        set k: k + 1
+    set j: j + 1
+  call: assert(p.skills[4].level == 2, "Memory completion rewards")
+  call: assert(p.stats.perfect == 1, "Perfect memory achievement")
+  call: w.begin(3)
+  call: w.act("clean", "")
+  call: w.act("verify", "no")
+  call: assert(p.skills[3].level == 1, "Cleaning requires parent")
+  call: w.act("verify", "floppy disk")
+  call: assert(p.skills[3].level == 2, "Cleaning verified reward")
+  call: w.act("theme", "3")
+  call: w.act("rename", "<script>alert(1)</script>")
+  call: w.act("profile", "1")
+  call: assert(w.profile().theme == 0, "Profiles isolate themes")
+  call: assert(w.profile().skills[1].level == 1, "Profiles isolate levels")
+  call: w.act("profile", "0")
+  set view: new GameView(w)
+  call: assert(contains(view.render(), "&lt;script&gt;"), "Profile names are escaped")
+  call: assert(contains(view.render(), "<script>alert") == 0, "No HTML injection")
+  call: w.persist()
+  set restored: new World("generated/test-save.json")
+  call: assert(restored.profile().theme == 3, "Saved theme reloads")
+  call: assert(restored.profile().skills[3].level == 2, "Saved levels reload")
+  call: w.act("reset", "")
+  call: w.act("confirm-reset", "")
+  call: assert(w.profile().skills[1].level == 1, "Reset clears selected profile")
+  print: "PASS: 1400 JS parity cases, six skills, boss/miniboss, death/recovery, profiles, achievements, persistence, HTML escaping."
