@@ -1,0 +1,24 @@
+import "Game.ow"
+
+# Console entry point. Mirrors the shell style of the official
+# Guess-the-Number example (logic in classes, I/O only here).
+#
+#   Run:  ow run src/main.ow
+#
+# Answer each problem; correct answers damage the current foe.
+# Clearing a foe grants XP; enough XP levels you up. Reach level 4
+# to finish the shift.
+main:
+  set game: new Game()
+  call: game.start(1)
+  print: "=== Code Wash RPG (OW port) -- Math skill ==="
+  print: "Solve problems to defeat foes and level up. Reach level 4 to win."
+  set playing int: 1
+  while: playing == 1
+    print: game.prompt_line()
+    set n int: int(input("Answer > "))
+    call: game.answer(n)
+    print: game.message
+    if: game.hero.lvl() > 3
+      set playing: 0
+  print: "You reached level " + game.hero.lvl() + ". Shift finished, washer!"
