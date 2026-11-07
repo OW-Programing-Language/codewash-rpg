@@ -1,0 +1,287 @@
+import "World.ow"
+
+class GameView:
+  field world
+
+  fn new(world):
+    set this.world: world
+
+  fn text(en, fr):
+    if: this.world.profile().language == "fr"
+      return: fr
+    return: en
+
+  fn meter(value, maximum, css):
+    set width: clamp(round(value * 100.0 / maximum), 0, 100)
+    return: "<div class='meter " + css + "'><span style='width:" + str(width) + "%'></span></div>"
+
+  fn input(action, label, value, kind):
+    return: "<form data-action='" + action + "'><label>" + label + "<input name='value' type='" + kind + "' value='" + escape_html(value) + "' autocomplete='off' required></label><button type='submit'>" + this.text("Confirm", "Valider") + "</button></form>"
+
+  fn card(index, offset):
+    set w: this.world
+    set p: w.profile()
+    set s: p.skills[index]
+    set cfg: w.data.skills[index]
+    set theme: w.data.themes[p.theme]
+    set active: w.battle == index
+    set css: "skill-card"
+    set scale: 0.85
+    set y: 20
+    set opacity: "0.3"
+    set z: 1
+    if: abs(offset) == 1
+      set y: 0 - 30
+      set opacity: "0.6"
+      set z: 2
+    if: offset == 0
+      set css: css + " center border-effect-" + p.border
+      set scale: 1.1
+      set y: 0 - 55
+      set opacity: "1"
+      set z: 3
+    if: active
+      set css: css + " battling"
+      set z: 12
+    set color: p.color
+    if: p.border == "solid"
+      set color: "#FFD700"
+    set style: "--border-color:" + color + ";--card-bg:" + cfg.colorStyle.background + ";transform:translateX(" + str(offset * 320) + "px) translateY(" + str(y) + "px) scale(" + str(scale) + ");opacity:" + opacity + ";z-index:" + str(z)
+    set html: "<article class='" + css + "' data-skill='" + cfg.id + "' style='" + escape_html(style) + "'>"
+    set name: s.mob.name
+    set portraitClass: "mob-image"
+    if: active
+      set portraitClass: portraitClass + " aura-" + s.aura
+    set heading: "<div class='card-title'><div><small>" + escape_html(theme.names[index]) + "</small><strong>" + escape_html(cfg.fantasyName) + "</strong></div><b>Lvl " + str(s.level) + "</b></div>"
+    if: active
+      set heading: heading + button("×", "end", "", "exit-battle")
+    if: active
+      if: index == 4
+        set html: html + "<div class='memory-heading'>" + heading + "</div><div class='card-bottom memory-bottom'>" + this.memory() + "</div></article>"
+        return: html
+    set sprite: s.mob.image
+    if: index == 4
+      set sprite: cfg.img
+    set html: html + "<div class='card-art'>" + heading + picture(sprite, name, portraitClass) + "<div class='mob-name'>" + escape_html(name) + "</div></div>"
+    set html: html + "<div class='hp-wrap'><div class='meter-label'><span>HP</span><span>" + str(s.hp) + "/" + str(s.hpMax) + "</span></div>" + this.meter(s.hp, s.hpMax, "health") + "</div><div class='card-bottom'>"
+    if: active
+      set html: html + this.challenge()
+    else:
+      set html: html + "<p class='description'>" + escape_html(cfg.taskDescription) + "</p>"
+      if: offset == 0
+        set html: html + button(escape_html(cfg.actionName), "begin", "", "action-button")
+      else:
+        set html: html + button(escape_html(cfg.actionName), "select", index, "action-button")
+    set html: html + "<div class='xp-label'>XP " + str(s.xp) + " / " + str(w.rules.xp_needed(s.level)) + "</div>" + this.meter(s.xp, w.rules.xp_needed(s.level), "xp")
+    if: offset == 0
+      if: active == false
+        if: index != 3
+          set html: html + "<label class='difficulty'>" + this.text("Difficulty", "Difficulté") + " <select data-action='difficulty'>"
+          set i: 1
+          while: i < 8
+            set attrs: ""
+            if: i == s.difficulty
+              set attrs: " selected"
+            if: i > min(7, s.level / 20 + 1)
+              set attrs: attrs + " disabled"
+            set html: html + "<option value='" + str(i) + "'" + attrs + ">" + str(i) + "</option>"
+            set i: i + 1
+          set html: html + "</select></label>"
+    return: html + "</div></article>"
+
+  fn challenge():
+    set w: this.world
+    set c: w.challenge
+    if: w.battle == 5
+      return: this.simon()
+    if: w.battle == 3
+      return: "<p>" + this.text("Tidy up your space, then ask a parent to confirm.", "Range tes affaires, puis demande à un parent de confirmer.") + "</p>" + button(this.text("Task complete!", "Rangement terminé !"), "clean", "", "action-button")
+    set html: "<div class='question' data-question>" + escape_html(c.question) + "</div>"
+    if: w.battle == 2
+      set html: picture(c.image, this.text("Item to spell", "Objet à écrire"), "writing-image")
+    set attrs: ""
+    if: w.battle == 1
+      set attrs: " inputmode='numeric'"
+    set html: html + "<form data-action='answer' class='answer-form'><input aria-label='" + this.text("Answer", "Réponse") + "' name='value' id='answer' autocomplete='off' autofocus" + attrs + "><button type='submit'>" + this.text("Answer", "Valider") + "</button></form>"
+    if: w.battle == 0
+      set html: html + "<button data-client='microphone' class='mic-button'>🎙 " + this.text("Read aloud", "Lire à voix haute") + "</button><small id='speech-status' role='status'></small>"
+    return: html + "<p class='feedback' role='status'>" + escape_html(w.message) + "</p>"
+
+  fn memory():
+    set c: this.world.challenge
+    set cols: this.world.data.memory[c.difficulty - 1].gridCols
+    set html: "<h2>" + this.text("Find the pairs!", "Trouve les paires !") + "</h2><div class='memory-grid' style='grid-template-columns:repeat(" + str(cols) + ",1fr)'>"
+    set i: 0
+    while: i < len(c.deck)
+      set card: c.deck[i]
+      set visible: has(c.flipped, i)
+      set css: "memory-card"
+      if: has(c.matched, card.name)
+        set visible: 1
+        set css: css + " matched"
+      set image: "assets/themes/memorycard.jpg"
+      set alt: this.text("Hidden card", "Carte cachée")
+      if: visible
+        set image: card.image
+        set alt: card.name
+      set html: html + button(picture(image, alt, ""), "flip", i, css)
+      set i: i + 1
+    return: html + "</div><p>" + str(len(c.matched)) + " / " + str(len(c.deck) / 2) + " · " + this.text("Mistakes", "Erreurs") + ": " + str(c.mistakes) + "</p>"
+
+  fn simon():
+    set w: this.world
+    set c: w.challenge
+    set html: "<h3>Simon Says · " + this.text("Round", "Tour") + " " + str(c.rounds + 1) + "</h3><div class='axolotls'>"
+    set i: 0
+    while: i < (c.difficulty + 1)
+      set ax: w.data.axolotls[i]
+      set html: html + "<button class='axolotl' data-action='axolotl' data-value='" + str(i) + "' data-note='" + str(i) + "'>" + picture(ax.image, ax.name, "") + "</button>"
+      set i: i + 1
+    set html: html + "</div>"
+    if: c.active == false
+      return: html + button(this.text("Try again", "Recommencer"), "retry", "", "action-button")
+    if: c.showing
+      return: html + "<p>" + this.text("Watch and listen…", "Regarde et écoute…") + "</p>"
+    return: html + "<p>" + this.text("Your turn!", "À toi !") + " " + str(c.cursor) + "/" + str(len(c.sequence)) + "</p>"
+
+  fn settings():
+    set w: this.world
+    set p: w.profile()
+    set html: "<h2>" + this.text("Settings", "Réglages") + "</h2><h3>" + this.text("Select profile", "Choisir un profil") + "</h3><div class='profiles'>"
+    set i: 0
+    while: i < 3
+      set profile: w.profiles[i]
+      set total: 0
+      set j: 0
+      while: j < 6
+        set total: total + profile.skills[j].level
+        set j: j + 1
+      set css: "profile"
+      if: i == w.current
+        set css: css + " chosen"
+      set html: html + "<div>" + button("<b>P" + str(i + 1) + " · " + escape_html(profile.name) + "</b><small>Lv. " + str(total) + "</small>", "profile", i, css) + button(this.text("Parent?", "Parent ?"), "parent", i, "subtle") + "</div>"
+      set i: i + 1
+    set html: html + "</div>" + this.input("rename", this.text("Profile name", "Nom du profil"), p.name, "text")
+    set html: html + "<h3>Audio</h3><label>" + this.text("Music", "Musique") + " " + str(p.bgm) + "%<input type='range' min='0' max='100' value='" + str(p.bgm) + "' data-action='bgm'></label>"
+    set html: html + "<label>" + this.text("Sound effects", "Effets sonores") + " " + str(p.sfx) + "%<input type='range' min='0' max='100' value='" + str(p.sfx) + "' data-action='sfx'></label>"
+    set html: html + "<h3>" + this.text("Language", "Langue") + "</h3>" + button("English", "language", "en", "") + button("Français", "language", "fr", "")
+    return: html + "<h3>" + this.text("Profile data", "Données du profil") + "</h3><button data-client='export'>" + this.text("Export save", "Exporter la sauvegarde") + "</button>" + button(this.text("Reset this profile", "Réinitialiser ce profil"), "reset", "", "danger")
+
+  fn cosmetics():
+    set w: this.world
+    set p: w.profile()
+    set html: "<h2>" + this.text("Themes & Cosmetics", "Thèmes et apparences") + "</h2><div class='themes'>"
+    set i: 0
+    while: i < 6
+      set theme: w.data.themes[i]
+      set css: "theme-choice"
+      if: p.theme == i
+        set css: css + " chosen"
+      set html: html + button(picture(theme.img, theme.name, "") + "<span>" + theme.name + "</span>", "theme", i, css)
+      set i: i + 1
+    set html: html + "</div><h3>" + this.text("Border effects", "Effets de bordure") + "</h3><div class='borders'>"
+    set ids: ["solid", "solid-picker", "gradient", "sparkle", "electric", "lifestream", "frost", "fire", "shadow", "rainbow", "livewire", "void", "toxic", "holo", "crystal"]
+    set names: ["Default", "Custom color", "Copper", "Cloudy", "Lightning Rod", "Lifestream", "Frost", "Lava", "Nether Portal", "Legendary!", "Live Wire", "Cosmic Void", "Toxin", "Hologram", "Crystalline"]
+    set i: 0
+    while: i < len(ids)
+      set css: "border-choice border-effect-" + ids[i]
+      set label: names[i]
+      if: w.border_unlocked(ids[i]) == 0
+        set css: css + " locked"
+        set label: "🔒 " + label
+      if: p.border == ids[i]
+        set css: css + " chosen"
+      set html: html + button(escape_html(label), "border", ids[i], css)
+      set i: i + 1
+    set html: html + "</div>"
+    if: w.border_unlocked("solid-picker")
+      set html: html + "<label>" + this.text("Border color", "Couleur de bordure") + " <input type='color' value='" + escape_html(p.color) + "' data-action='color'></label>"
+    return: html
+
+  fn achievements():
+    set w: this.world
+    set p: w.profile()
+    set html: "<h2>" + this.text("Achievements", "Succès") + "</h2><div class='badge-skills'>"
+    set i: 0
+    while: i < 6
+      set s: p.skills[i]
+      set html: html + "<section><h3>" + w.data.skills[i].name + " · Lvl " + str(s.level) + "</h3><div class='badges'>"
+      set j: 0
+      while: j < 8
+        set css: "badge locked"
+        if: has(s.badges, j + 1)
+          set css: "badge"
+        set html: html + picture(w.data.badges[j].image, w.data.badges[j].name, css)
+        set j: j + 1
+      set html: html + "</div></section>"
+      set i: i + 1
+    set html: html + "</div><div class='award-list'>"
+    set all: w.awards.evaluate(p)
+    set i: 0
+    while: i < len(all)
+      set a: all[i]
+      set css: "award locked"
+      if: a.unlocked
+        set css: "award"
+      set html: html + "<div class='" + css + "'><b>" + a.name + "</b><span>" + str(a.progress) + " / " + str(a.target) + "</span>" + this.meter(a.progress, a.target, "xp") + "</div>"
+      set i: i + 1
+    return: html + "</div>"
+
+  fn modal():
+    set w: this.world
+    set content: ""
+    if: w.modal == "reset"
+      set content: "<h2>" + this.text("Reset this profile?", "Réinitialiser ce profil ?") + "</h2><p>" + escape_html(w.profile().name) + "</p>" + button(this.text("Delete progress", "Effacer la progression"), "confirm-reset", "", "danger")
+    else:
+      set content: "<div class='floppy' aria-label='Save icon'>💾</div><h2>" + this.text("What is this?", "Quel est cet objet ?") + "</h2><p>" + this.text("Parent verification — name this object in English.", "Vérification parentale — nomme cet objet en anglais.") + "</p>" + this.input("verify", this.text("Answer", "Réponse"), "", "text")
+    return: "<div class='modal-shade'><section class='modal'>" + button("×", "dismiss", "", "close") + content + "</section></div>"
+
+  fn render():
+    set w: this.world
+    set p: w.profile()
+    set theme: w.data.themes[p.theme]
+    set html: "<div class='scene' style='--scene-bg:url(&quot;" + escape_html(asset(theme.img)) + "&quot;)' lang='" + p.language + "'><div class='scene-background'></div>"
+    set html: html + "<nav class='toolbar'><div>" + button("⚙", "panel", "settings", "icon-button") + button("✧", "panel", "cosmetics", "icon-button cosmetics-icon") + "</div><div class='hearts' aria-label='Health " + str(w.hp) + " of 10'>"
+    if: w.battle > (0 - 1)
+      set i: 0
+      while: i < 10
+        set css: "heart empty"
+        if: i < w.hp
+          set css: "heart"
+        set html: html + "<span class='" + css + "'>♥</span>"
+        set i: i + 1
+    set html: html + "</div><div><button class='icon-button' data-client='fullscreen' aria-label='Fullscreen'>⛶</button>" + button("☰", "panel", "achievements", "icon-button") + "</div></nav>"
+    set html: html + "<header class='brand'>" + picture(theme.logo, theme.name, "logo") + "<h1>LEVEL UP!</h1></header>"
+    if: w.battle > (0 - 1)
+      set html: html + "<div class='battle-shade' data-action='end' data-value=''></div>"
+    set html: html + "<main class='carousel'>"
+    set offset: 0 - 2
+    while: offset < 3
+      set index: mod(w.selected + offset + 6, 6)
+      set html: html + this.card(index, offset)
+      set offset: offset + 1
+    set html: html + "</main>"
+    if: w.battle < 0
+      set html: html + button("❮", "navigate", "-1", "carousel-arrow left") + button("❯", "navigate", "1", "carousel-arrow right")
+    set html: html + "<footer>" + escape_html(p.name) + " · " + button(this.text("Help", "Aide"), "panel", "help", "subtle") + "</footer>"
+    if: w.panel != ""
+      set content: ""
+      if: w.panel == "settings"
+        set content: this.settings()
+      if: w.panel == "cosmetics"
+        set content: this.cosmetics()
+      if: w.panel == "achievements"
+        set content: this.achievements()
+      if: w.panel == "help"
+        set content: "<h2>" + this.text("How to play", "Comment jouer") + "</h2><p>" + this.text("Choose a card, then start an activity. Correct answers earn XP. Every tenth level brings a miniboss; every twentieth a boss. Reading supports a microphone or typed answers. Cleaning needs a parent to confirm. Progress is saved automatically for each profile.", "Choisis une carte et lance une activité. Les bonnes réponses rapportent de l’XP. Un miniboss apparaît tous les dix niveaux, un boss tous les vingt. La lecture accepte le micro ou le clavier. Le rangement nécessite une confirmation parentale. Chaque profil est sauvegardé automatiquement.") + "</p><button data-client='report'>" + this.text("Download bug report", "Télécharger un rapport de bug") + "</button>"
+      set html: html + "<div class='drawer-shade' data-action='panel' data-value=''></div><aside class='drawer'>" + button("×", "panel", "", "close") + content + "</aside>"
+    if: w.modal != ""
+      set html: html + this.modal()
+    return: html + "</div>"
+
+  fn state():
+    set w: this.world
+    set p: w.profile()
+    set tracks: w.data.themes[p.theme].music
+    set music: tracks[mod(w.musicIndex, len(tracks))]
+    return: {html: this.render(), revision: w.revision, token: w.token, effects: w.effects, bgm: p.bgm, sfx: p.sfx, music: music, battle: w.battle}
