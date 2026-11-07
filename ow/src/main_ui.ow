@@ -1,0 +1,28 @@
+import "full/GameView.ow"
+
+# Full browser game. Build its catalog/page with node scripts/build-web.mjs.
+# The launcher selects a runtime supporting web_ui and sets the asset cwd.
+fn media_view():
+  return: ui_text("Level Up media")
+
+main:
+  set world: new World("save/profiles.json")
+  set view: new GameView(world)
+  set page: load("generated/page.json")
+  call: web_ui("/media", "media_view", "Level Up", "../public")
+  route "GET /":
+    respond: page
+  route "GET /api/state":
+    set world.effects: []
+    respond: view.state()
+  route "POST /api/event":
+    set request: body_json()
+    if: request.token != world.token
+      respond: response(403, {error: "Invalid session"})
+    if: request.revision != world.revision
+      respond: response(409, {error: "State changed; refresh"})
+    call: world.dispatch(request.action, request.value)
+    respond: view.state()
+  route "GET /api/export":
+    respond: {schema: 1, current: world.current, profiles: world.profiles}
+  serve: 5180
