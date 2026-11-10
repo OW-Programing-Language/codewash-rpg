@@ -78,11 +78,22 @@ from this `ow/` folder.
 | `src/MobArt.ow`      | Maps each mob name to its sprite file (ported from the JS asset maps). |
 | `src/ThemeBank.ow`   | Theme registry: background, logo and name per theme (ported from THEME_CONFIG). |
 | `src/UiGame.ow`      | Graphical front-end: builds the menu/battle widget trees and handles UI events. |
+| `src/SoundModule.ow` | flOW module that owns all audio; reacts to sound events on the bus. |
+| `src/flow/`          | Vendored [flOW](https://github.com/OW-Programing-Language/flOW---OW-Modular-Framework) core (App, Registry, EventBus, Module, Listener). |
 | `src/main_ui.ow`     | Graphical entry point (opens the UI). |
 
 The design follows the official OW example games (`tictactoe`,
 `connect4`, `guess-the-number`): logic lives in classes, I/O lives in
 `main`, and free helper functions sit in their own file.
+
+### flOW integration
+
+Audio is wired through the [flOW](https://github.com/OW-Programing-Language/flOW---OW-Modular-Framework)
+modular framework: `UiGame` owns a flOW `App` that boots a `SoundModule`. Instead
+of calling the audio builtins directly, the game **emits events**
+(`music.start`, `sound.click`, `sound.levelup`) on the flOW event bus, and the
+`SoundModule` (a bus listener) decides what to play. Gameplay and sound are fully
+decoupled — a small, concrete demonstration of flOW in a real app.
 
 ## Source of truth
 

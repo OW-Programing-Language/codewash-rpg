@@ -6,6 +6,8 @@ import "MemorySkill.ow"
 import "PatternsSkill.ow"
 import "CleaningSkill.ow"
 import "ThemeBank.ow"
+import "flow/App.ow"
+import "SoundModule.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -23,10 +25,9 @@ class UiGame:
   field bg
   field logo
   field art
-  field snd
-  field music_on
   field themes
   field theme
+  field app
 
   fn new():
     set this.game: new Game()
@@ -36,8 +37,11 @@ class UiGame:
     set this.theme: "minecraft"
     set this.bg: this.themes.bg("minecraft")
     set this.logo: this.themes.logo("minecraft")
-    set this.snd: 1
-    set this.music_on: 0
+    # flOW application context: the SoundModule subscribes to the event bus and
+    # owns all audio, so gameplay just emits events (fully decoupled).
+    set this.app: new App()
+    call: this.app.use(new SoundModule())
+    call: this.app.boot()
 
   # Switch the active theme: swaps the background and logo everywhere.
   fn set_theme(id):
@@ -45,43 +49,26 @@ class UiGame:
     set this.bg: this.themes.bg(id)
     set this.logo: this.themes.logo(id)
 
-  # Toggle sound effects on (1) / off (0).
+  # Toggle sound effects on (1) / off (0) via the sound module.
   fn set_sound(v):
-    set this.snd: v
+    set snd: this.app.service("sound")
+    call: snd.set_sound(v)
 
-  # ---- sound (native backend plays the original .wav assets) ----
-  # Start looping background music once (on the first shift launched).
-  fn start_music():
-    if: this.music_on == 1
-      return: 0
-    set this.music_on: 1
-    call: audio_music("../public/assets/sounds/bgm/calm1.wav")
-
-  # Play a one-shot UI sound. Kept last in handlers so a missing/unsupported
-  # file (e.g. in the web backend) never aborts the game logic before it.
-  fn play(name):
-    if: this.snd == 0
-      return: 0
-    set base: "../public/assets/sounds/ui/ui/"
-    if: name == "levelup"
-      call: audio_play(base + "levelup.wav")
-    if: name == "click"
-      call: audio_play(base + "click.wav")
-
-  # Feedback after an action: a level-up jingle if the hero levelled, else a click.
+  # Feedback after an action: a level-up jingle if the hero levelled, else a
+  # click. Emitted on the flOW bus; the SoundModule decides what to play.
   fn feedback(before):
     set now int: this.game.hero.lvl()
     if: now > before
-      call: this.play("levelup")
+      call: this.app.emit("sound.levelup", 0)
     else:
-      call: this.play("click")
+      call: this.app.emit("sound.click", 0)
 
   # ---- UI event handlers ----
   fn launch(s):
     call: this.game.use_skill(s)
     call: this.game.start(1)
     set this.screen: "battle"
-    call: this.start_music()
+    call: this.app.emit("music.start", 0)
 
   fn begin_math():
     call: this.launch(new MathSkill())

@@ -1,0 +1,56 @@
+# A flOW module that owns all audio. It subscribes to the app event bus and
+# reacts to sound events, so the rest of the game never calls the audio builtins
+# directly — gameplay and sound are decoupled (the point of the flOW event bus).
+#
+# Events it handles:
+#   "music.start"   -> begin looping background music (once)
+#   "sound.click"   -> a short click on each action
+#   "sound.levelup" -> a jingle when the hero levels up
+class SoundModule:
+  field snd
+  field music_on
+
+  fn new():
+    set this.snd: 1
+    set this.music_on: 0
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "sound"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.on(this)
+    call: app.provide("sound", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  # ---- flOW Listener contract ----
+  fn on_event(type, payload):
+    if: type == "music.start"
+      call: this.start_music()
+    if: type == "sound.click"
+      call: this.sfx("click.wav")
+    if: type == "sound.levelup"
+      call: this.sfx("levelup.wav")
+    return: 0
+
+  # ---- audio (native backend plays the original .wav assets) ----
+  fn set_sound(v):
+    set this.snd: v
+
+  fn start_music():
+    if: this.music_on == 1
+      return: 0
+    set this.music_on: 1
+    call: audio_music("../public/assets/sounds/bgm/calm1.wav")
+
+  # Kept last so a missing/unsupported file never aborts the caller.
+  fn sfx(file):
+    if: this.snd == 0
+      return: 0
+    call: audio_play("../public/assets/sounds/ui/ui/" + file)
