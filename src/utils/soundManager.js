@@ -97,6 +97,21 @@ class BGMManager {
         }
     }
 
+    /**
+     * Swap the active playlist (used to change music per theme).
+     * If the currently playing track is not in the new list, the next track
+     * will be picked from the new list when the current one ends.
+     */
+    setTracks(tracks) {
+        if (!Array.isArray(tracks) || tracks.length === 0) return;
+        this.tracks = [...tracks];
+        const current = this.audio && this.audio.src;
+        const stillValid = current && this.tracks.some((t) => current.endsWith(t));
+        if (!stillValid) {
+            this.currentTrackIndex = -1; // force a fresh pick from the new list
+        }
+    }
+
     getRandomTrack() {
         // Get a random track that's different from the current one
         const availableIndices = this.tracks

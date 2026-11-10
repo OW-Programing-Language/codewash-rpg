@@ -186,7 +186,7 @@ export const THEME_CONFIG = {
         name: 'K-Pop Demon Hunters',
 		style: { backgroundImage: `url('assets/themes/kpop.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center' },
         assets: { 
-			logo: 'assets/themes/kpop_logo.png', cardBack: 'assets/themes/kpop_memorycard.jpg', 
+			logo: 'assets/themes/kpop_logo.png', 
 			mobs: {} 
 		},
         skills: { reading: { name: 'Decryption', boss: 'Cyborg King' }, math: { name: 'Engineering', boss: 'Mecha-Brain' }, writing: { name: 'Hacking', boss: 'Mainframe' }, cleaning: { name: 'Waste Mgmt', boss: 'Trash Bot' }, memory: { name: 'Droid Repair', boss: 'Droid' }, patterns: { name: 'Navigation', boss: 'Star Map' } }
@@ -195,23 +195,37 @@ export const THEME_CONFIG = {
         name: 'Pokemon', 
 		style: { backgroundImage: `url('assets/themes/pokemon.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center' },
         assets: { 
-			logo: 'assets/themes/pokemon_logo.png', cardBack: 'assets/themes/pokemon_memorycard.jpg', 
+			logo: 'assets/themes/pokemon_logo.png', 
 			mobs: {} 
 		},
         skills: { reading: { name: 'Spellcasting', boss: 'Lich King' }, math: { name: 'Alchemy', boss: 'Golem' }, writing: { name: 'Scribing', boss: 'Dragon' }, cleaning: { name: 'Looting', boss: 'Mimic' }, memory: { name: 'Runes', boss: 'Wisp' }, patterns: { name: 'Rituals', boss: 'Cultist' } }
     },
     'spy': {
-        name: 'Spy', 
-		style: { backgroundImage: `url('assets/themes/minecraft.png')`, backgroundSize: 'cover', backgroundPosition: 'center' },
-        assets: { 
-			logo: 'assets/themes/spy_logo.png', cardBack: 'assets/themes/spy_memorycard.jpg', 
-			mobs: {} 
-		},
+        name: 'Spy',
+        // Fixed: was pointing at minecraft.png. spy_logo/spy_memorycard don't exist,
+        // so those keys are omitted and inherited from the base theme (utils/themeUtils.js).
+        style: { backgroundImage: `url('assets/themes/spy.png')`, backgroundSize: 'cover', backgroundPosition: 'center' },
+        assets: { mobs: {} },
         skills: { reading: { name: 'Intel Analysis', boss: 'Double Agent' }, math: { name: 'Gadgetry', boss: 'Mad Scientist' }, writing: { name: 'Forgery', boss: 'Bureaucrat' }, cleaning: { name: 'Evidence', boss: 'Safe' }, memory: { name: 'Identities', boss: 'Mole' }, patterns: { name: 'Code Breaking', boss: 'Hacker' } }
+    },
+    'scifi': {
+        name: 'Sci-Fi',
+        // New theme. Uses the existing Scifi.png background; logo/cardBack/mobs
+        // inherit from the base theme until themed art is added (DEBT-13).
+        style: { backgroundImage: `url('assets/themes/Scifi.png')`, backgroundSize: 'cover', backgroundPosition: 'center' },
+        assets: { mobs: {} },
+        skills: { reading: { name: 'Data Decryption', boss: 'Rogue AI' }, math: { name: 'Astro-Engineering', boss: 'Mothership' }, writing: { name: 'Signal Encoding', boss: 'The Mainframe' }, cleaning: { name: 'Hull Salvage', boss: 'Derelict Pod' }, memory: { name: 'Nav Systems', boss: 'Star Chart' }, patterns: { name: 'Sensor Arrays', boss: 'Anomaly' } }
+    },
+    'fantasy': {
+        name: 'Fantasy',
+        // New theme. Uses the existing fantasy.png background.
+        style: { backgroundImage: `url('assets/themes/fantasy.png')`, backgroundSize: 'cover', backgroundPosition: 'center' },
+        assets: { mobs: {} },
+        skills: { reading: { name: 'Spellcasting', boss: 'Lich King' }, math: { name: 'Alchemy', boss: 'Stone Golem' }, writing: { name: 'Runescribing', boss: 'Ancient Dragon' }, cleaning: { name: 'Dungeon Delving', boss: 'Treasure Mimic' }, memory: { name: 'Arcana', boss: 'Will-o-Wisp' }, patterns: { name: 'Rituals', boss: 'Dark Cultist' } }
     }
 };
 
-export const THEMES_LIST = [ { id: 'minecraft', name: 'Minecraft', img: 'assets/themes/minecraft.png' }, { id: 'kpop', name: 'K-Pop Demon Hunters', img: 'assets/themes/kpop.jpg' }, { id: 'pokemon', name: 'Pokemon', img: 'assets/themes/pokemon.jpg' }, { id: 'spy', name: 'Spy', img: 'assets/themes/spy.png' } ];
+export const THEMES_LIST = [ { id: 'minecraft', name: 'Minecraft', img: 'assets/themes/minecraft.png' }, { id: 'kpop', name: 'K-Pop Demon Hunters', img: 'assets/themes/kpop.jpg' }, { id: 'pokemon', name: 'Pokemon', img: 'assets/themes/pokemon.jpg' }, { id: 'spy', name: 'Spy', img: 'assets/themes/spy.png' }, { id: 'scifi', name: 'Sci-Fi', img: 'assets/themes/Scifi.png' }, { id: 'fantasy', name: 'Fantasy', img: 'assets/themes/fantasy.png' } ];
 export const BADGE_TIERS = [ { level: 20, title: "Wood" }, { level: 40, title: "Stone" }, { level: 60, title: "Gold" }, { level: 80, title: "Iron" }, { level: 100, title: "Emerald" }, { level: 120, title: "Diamond" }, { level: 140, title: "Netherite" }, { level: 160, title: "Obsidian" } ];
 
 // Reading words organized by character length for difficulty scaling
