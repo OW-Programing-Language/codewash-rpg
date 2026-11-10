@@ -1,0 +1,44 @@
+{
+  "common": {
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "language": {
+    "label": "Langue",
+    "choose": "Choisir une langue"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "selectFile": "Choisir un profil",
+    "audio": "Configuration audio",
+    "musicVolume": "Volume musique",
+    "sfxVolume": "Volume effets",
+    "dangerZone": "Zone de danger",
+    "deleteProgress": "SUPPRIMER LA PROGRESSION DU PROFIL"
+  },
+  "bugReport": {
+    "title": "Signaler un bug",
+    "subtitle": "Dites-nous ce qui ne va pas. Les captures d'écran, votre sauvegarde et les journaux d'erreurs récents nous aident à corriger vite.",
+    "whatHappened": "Que s'est-il passé ?",
+    "descriptionPlaceholder": "Décrivez le bug et ce que vous faisiez quand il est survenu…",
+    "yourEmail": "Votre email (facultatif)",
+    "emailPlaceholder": "pour qu'on puisse vous recontacter",
+    "attach": "Joindre des captures d'écran",
+    "removeAttachment": "Retirer {name}",
+    "includeSave": "Inclure mes fichiers de sauvegarde",
+    "includeLogs": "Inclure les journaux d'erreurs récents ({count})",
+    "configure": "Configurer la destination du rapport",
+    "hide": "Masquer la destination du rapport",
+    "endpointLabel": "URL du point d'envoi",
+    "endpointPlaceholder": "https://votre-webhook.exemple/rapports-bugs",
+    "contactLabel": "Email de contact du support",
+    "contactPlaceholder": "support@codewash.exemple",
+    "reportsTo": "Les rapports sont envoyés à {email}",
+    "send": "Envoyer le rapport",
+    "sending": "Envoi…",
+    "sendingStatus": "Envoi de votre rapport…",
+    "thankYou": "Merci !",
+    "reference": "Rapport reçu. Référence : {ticketId}"
+  }
+}

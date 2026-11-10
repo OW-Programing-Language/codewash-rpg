@@ -1,0 +1,44 @@
+{
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "language": {
+    "label": "Language",
+    "choose": "Choose a language"
+  },
+  "settings": {
+    "title": "Settings",
+    "selectFile": "Select File",
+    "audio": "Audio Configuration",
+    "musicVolume": "Music Volume",
+    "sfxVolume": "SFX Volume",
+    "dangerZone": "Danger Zone",
+    "deleteProgress": "DELETE PROFILE PROGRESS"
+  },
+  "bugReport": {
+    "title": "Report a bug",
+    "subtitle": "Tell us what went wrong. Screenshots, your save file and recent error logs help us fix it fast.",
+    "whatHappened": "What happened?",
+    "descriptionPlaceholder": "Describe the bug, and what you were doing when it happened…",
+    "yourEmail": "Your email (optional)",
+    "emailPlaceholder": "so we can follow up",
+    "attach": "Attach screenshot(s)",
+    "removeAttachment": "Remove {name}",
+    "includeSave": "Include my game save files",
+    "includeLogs": "Include recent error logs ({count})",
+    "configure": "Configure report destination",
+    "hide": "Hide report destination",
+    "endpointLabel": "Report endpoint URL",
+    "endpointPlaceholder": "https://your-webhook.example/bug-reports",
+    "contactLabel": "Support contact email",
+    "contactPlaceholder": "support@codewash.example",
+    "reportsTo": "Reports go to {email}",
+    "send": "Send report",
+    "sending": "Sending…",
+    "sendingStatus": "Sending your report…",
+    "thankYou": "Thank you!",
+    "reference": "Report received. Reference: {ticketId}"
+  }
+}
