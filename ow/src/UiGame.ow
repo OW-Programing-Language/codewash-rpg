@@ -7,7 +7,8 @@ import "PatternsSkill.ow"
 import "CleaningSkill.ow"
 import "ThemeBank.ow"
 import "flow/App.ow"
-import "SoundModule.ow"
+import "modules/sound/SoundModule.ow"
+import "modules/achievements/AchievementsModule.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -41,6 +42,7 @@ class UiGame:
     # owns all audio, so gameplay just emits events (fully decoupled).
     set this.app: new App()
     call: this.app.use(new SoundModule())
+    call: this.app.use(new AchievementsModule())
     call: this.app.boot()
 
   # Switch the active theme: swaps the background and logo everywhere.
@@ -49,19 +51,27 @@ class UiGame:
     set this.bg: this.themes.bg(id)
     set this.logo: this.themes.logo(id)
 
-  # Toggle sound effects on (1) / off (0) via the sound module.
+  # Toggle sound by enabling/disabling the flOW sound module.
   fn set_sound(v):
-    set snd: this.app.service("sound")
-    call: snd.set_sound(v)
+    if: v == 0
+      call: this.app.disable("sound")
+    else:
+      call: this.app.enable("sound")
+    return: 0
+
+  # Unlocked-achievement count, read from the achievements module service.
+  fn ach_count():
+    set a: this.app.service("achievements")
+    return: a.total()
 
   # Feedback after an action: a level-up jingle if the hero levelled, else a
   # click. Emitted on the flOW bus; the SoundModule decides what to play.
+  # Emit domain events; the Sound and Achievements modules react independently.
   fn feedback(before):
     set now int: this.game.hero.lvl()
+    call: this.app.emit("turn", 0)
     if: now > before
-      call: this.app.emit("sound.levelup", 0)
-    else:
-      call: this.app.emit("sound.click", 0)
+      call: this.app.emit("hero.levelup", now)
 
   # ---- UI event handlers ----
   fn launch(s):
@@ -191,7 +201,7 @@ class UiGame:
     set q: ui_heading(g.problem.ask())
     set row: this.answers_widget()
     set msg: ui_text(g.message, "yellow")
-    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff())
+    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff() + "     Achievements " + this.ach_count())
     set xp: this.xp_bar()
     set back: ui_button("Back to menu", "app.to_menu")
     set items: [name, sprite, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, xp, ui_space(6), back]
@@ -215,7 +225,7 @@ class UiGame:
     set c7: ui_button(s.face(7), "app.flip_card", 7)
     set grid: ui_grid(4, [c0, c1, c2, c3, c4, c5, c6, c7])
     set msg: ui_text(g.message, "yellow")
-    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff())
+    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff() + "     Achievements " + this.ach_count())
     set xp: this.xp_bar()
     set back: ui_button("Back to menu", "app.to_menu")
     set items: [name, sprite, hp, ui_space(6), instr, grid, ui_space(8), msg, hud, xp, ui_space(6), back]

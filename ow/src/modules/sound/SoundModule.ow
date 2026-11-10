@@ -1,14 +1,17 @@
-# A flOW module that owns all audio. It subscribes to the app event bus and
-# reacts to sound events, so the rest of the game never calls the audio builtins
-# directly — gameplay and sound are decoupled (the point of the flOW event bus).
+# A flOW module that owns all audio. The App delivers events to it (while it is
+# enabled), so the rest of the game never calls the audio builtins directly —
+# gameplay and sound stay decoupled.
 #
+# Config:
+#   "sound.track" -> background music file stem (default "calm1")
 # Events it handles:
-#   "music.start"   -> begin looping background music (once)
-#   "sound.click"   -> a short click on each action
-#   "sound.levelup" -> a jingle when the hero levels up
+#   "music.start"  -> begin looping background music (once)
+#   "turn"         -> a short click on each action
+#   "hero.levelup" -> a jingle when the hero levels up
 class SoundModule:
   field snd
   field music_on
+  field app
 
   fn new():
     set this.snd: 1
@@ -22,21 +25,25 @@ class SoundModule:
     return: array(0, 0)
 
   fn register(app):
-    call: app.on(this)
+    set this.app: app
     call: app.provide("sound", this)
     return: 0
 
   fn start(app):
     return: 0
 
-  # ---- flOW Listener contract ----
   fn on_event(type, payload):
     if: type == "music.start"
       call: this.start_music()
-    if: type == "sound.click"
+    if: type == "turn"
       call: this.sfx("click.wav")
-    if: type == "sound.levelup"
+    if: type == "hero.levelup"
       call: this.sfx("levelup.wav")
+    return: 0
+
+  # Reset so music can start again (e.g. after a theme/config change).
+  fn reload(app):
+    set this.music_on: 0
     return: 0
 
   # ---- audio (native backend plays the original .wav assets) ----
@@ -47,7 +54,8 @@ class SoundModule:
     if: this.music_on == 1
       return: 0
     set this.music_on: 1
-    call: audio_music("../public/assets/sounds/bgm/calm1.wav")
+    set track: this.app.config_or("sound.track", "calm1")
+    call: audio_music("../public/assets/sounds/bgm/" + track + ".wav")
 
   # Kept last so a missing/unsupported file never aborts the caller.
   fn sfx(file):

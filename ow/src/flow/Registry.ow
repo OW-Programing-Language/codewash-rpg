@@ -1,7 +1,10 @@
-# flOW — the application context's service registry.
-# A small name -> service store (Ow has no dynamic-key maps, so this is a
-# fixed-capacity pair of arrays with a linear scan). Services are how modules
-# share capabilities without depending on each other's internals.
+# flOW — the application context's service/config store.
+# A small name -> value map (Ow has no dynamic-key maps, so this is a
+# fixed-capacity pair of arrays with a linear scan).
+#
+# Note: local variables are prefixed `fl_` on purpose. Ow leaks a method's
+# locals into the caller's scope when names collide, so framework code uses
+# distinctive names to never clobber a user's variables.
 class Registry:
   field keys
   field vals
@@ -13,37 +16,35 @@ class Registry:
     set this.count: 0
 
   fn has(name):
-    set i int: 0
-    set found int: 0
-    while: i < this.count
-      if: this.keys[i] == name
-        set found: 1
-      set i: i + 1
-    return: found
+    set fl_i int: 0
+    set fl_found int: 0
+    while: fl_i < this.count
+      if: this.keys[fl_i] == name
+        set fl_found: 1
+      set fl_i: fl_i + 1
+    return: fl_found
 
-  # Register or replace a service under `name`.
   fn put(name, val):
-    set ks: this.keys
-    set vs: this.vals
-    set i int: 0
-    set done int: 0
-    while: i < this.count
-      if: ks[i] == name
-        set vs[i]: val
-        set done: 1
-      set i: i + 1
-    if: done == 0
-      set ks[this.count]: name
-      set vs[this.count]: val
+    set fl_ks: this.keys
+    set fl_vs: this.vals
+    set fl_i int: 0
+    set fl_done int: 0
+    while: fl_i < this.count
+      if: fl_ks[fl_i] == name
+        set fl_vs[fl_i]: val
+        set fl_done: 1
+      set fl_i: fl_i + 1
+    if: fl_done == 0
+      set fl_ks[this.count]: name
+      set fl_vs[this.count]: val
       set this.count: this.count + 1
     return: 0
 
-  # Resolve a service by name (returns 0 if absent — check has() first).
   fn get(name):
-    set i int: 0
-    set out: 0
-    while: i < this.count
-      if: this.keys[i] == name
-        set out: this.vals[i]
-      set i: i + 1
-    return: out
+    set fl_i int: 0
+    set fl_out: 0
+    while: fl_i < this.count
+      if: this.keys[fl_i] == name
+        set fl_out: this.vals[fl_i]
+      set fl_i: fl_i + 1
+    return: fl_out
