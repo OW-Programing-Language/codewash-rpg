@@ -5,6 +5,7 @@ import "WritingSkill.ow"
 import "MemorySkill.ow"
 import "PatternsSkill.ow"
 import "CleaningSkill.ow"
+import "ThemeBank.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -24,15 +25,25 @@ class UiGame:
   field art
   field snd
   field music_on
+  field themes
+  field theme
 
   fn new():
     set this.game: new Game()
     set this.screen: "menu"
     set this.art: new MobArt()
-    set this.bg: "../public/assets/themes/minecraft.png"
-    set this.logo: "../public/assets/themes/minecraft_logo.png"
+    set this.themes: new ThemeBank()
+    set this.theme: "minecraft"
+    set this.bg: this.themes.bg("minecraft")
+    set this.logo: this.themes.logo("minecraft")
     set this.snd: 1
     set this.music_on: 0
+
+  # Switch the active theme: swaps the background and logo everywhere.
+  fn set_theme(id):
+    set this.theme: id
+    set this.bg: this.themes.bg(id)
+    set this.logo: this.themes.logo(id)
 
   # Toggle sound effects on (1) / off (0).
   fn set_sound(v):
@@ -159,7 +170,16 @@ class UiGame:
     set row1: ui_row([play_math, play_read])
     set row2: ui_row([play_write, play_mem])
     set row3: ui_row([play_pat, play_clean])
-    set items: [logo, title, sub, ui_space(8), row1, row2, row3]
+    set tlabel: ui_text("Theme: " + this.themes.name(this.theme), "yellow")
+    set tb_mc: ui_button("Minecraft", "app.set_theme", "minecraft")
+    set tb_kp: ui_button("K-Pop", "app.set_theme", "kpop")
+    set tb_pk: ui_button("Pokemon", "app.set_theme", "pokemon")
+    set tb_sp: ui_button("Spy", "app.set_theme", "spy")
+    set tb_sf: ui_button("Sci-Fi", "app.set_theme", "scifi")
+    set tb_ft: ui_button("Fantasy", "app.set_theme", "fantasy")
+    set trow1: ui_row([tb_mc, tb_kp, tb_pk])
+    set trow2: ui_row([tb_sp, tb_sf, tb_ft])
+    set items: [logo, title, sub, ui_space(8), row1, row2, row3, ui_space(8), tlabel, trow1, trow2]
     return: ui_backdrop(this.bg, ui_card(items))
 
   # The answer widget depends on the skill: a row of choice buttons, or a text

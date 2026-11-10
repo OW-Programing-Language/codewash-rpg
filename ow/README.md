@@ -40,8 +40,10 @@ Or open `src/main_ui.ow` in **OwIDE** and click **UI Web ▶** (browser) or
 **UI Native ▶** (desktop window with the original art). The flow mirrors the
 React app:
 
-- **Menu** — themed background, the game logo, and a skill choice:
-  **Math**, **Reading**, **Writing**, **Memory**, **Patterns** or **Cleaning** shift.
+- **Menu** — themed background, the game logo, a skill choice (**Math**,
+  **Reading**, **Writing**, **Memory**, **Patterns** or **Cleaning** shift), and a
+  **theme picker** (Minecraft, K-Pop, Pokémon, Spy, Sci-Fi, Fantasy) that swaps
+  the background and logo everywhere.
 - **Battle** — the foe's name, its **sprite** (the original per-mob artwork), a
   red **HP bar**, the current problem, and the answer input — four **buttons**
   for Math/Reading, or a **text field** for Writing (type the word, press Enter;
@@ -74,6 +76,7 @@ from this `ow/` folder.
 | `src/Game.ow`        | Orchestrates the combat loop and leveling. |
 | `src/main.ow`        | Console entry point (I/O only). |
 | `src/MobArt.ow`      | Maps each mob name to its sprite file (ported from the JS asset maps). |
+| `src/ThemeBank.ow`   | Theme registry: background, logo and name per theme (ported from THEME_CONFIG). |
 | `src/UiGame.ow`      | Graphical front-end: builds the menu/battle widget trees and handles UI events. |
 | `src/main_ui.ow`     | Graphical entry point (opens the UI). |
 
