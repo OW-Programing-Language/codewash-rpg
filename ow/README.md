@@ -6,9 +6,9 @@ It reimplements the game's progression maths, difficulty tiers, mob
 bestiary and combat loop as a modular, one-class-per-file OW program,
 runnable from the command line.
 
-> **Scope:** a faithful port of the *engine* with the **Math** and **Reading**
-> skills playable, and a **graphical UI** (menu + battle screen) built on the
-> Ow UI runtime. Skills plug into one shared combat loop. It renders in the browser (web) and as a native desktop window
+> **Scope:** a faithful port of the *engine* with the **Math**, **Reading** and
+> **Writing** skills playable, and a **graphical UI** (menu + battle screen) built
+> on the Ow UI runtime. Skills plug into one shared combat loop. It renders in the browser (web) and as a native desktop window
 > showing the original game art. See [`docs/PORTING.md`](docs/PORTING.md) for
 > exactly what is and isn't ported, and why.
 
@@ -40,10 +40,11 @@ Or open `src/main_ui.ow` in **OwIDE** and click **UI Web ▶** (browser) or
 React app:
 
 - **Menu** — themed background, the game logo, and a skill choice:
-  **Math shift** or **Reading shift**.
+  **Math**, **Reading** or **Writing** shift.
 - **Battle** — the foe's name, its **sprite** (the original per-mob artwork), a
-  red **HP bar**, the current problem, and four answer **buttons** (click the
-  correct result). Correct answers damage the foe; clearing foes grants XP and
+  red **HP bar**, the current problem, and the answer input — four **buttons**
+  for Math/Reading, or a **text field** for Writing (type the word, press Enter;
+  case-insensitive). Correct answers damage the foe; clearing foes grants XP and
   levels you up, with a live HUD.
 
 The screens are built from the Ow UI primitives (`ui_backdrop`, `ui_card`,
@@ -60,6 +61,7 @@ from this `ow/` folder.
 | `src/Problem.ow`     | Value object: a question string + its integer answer. |
 | `src/MathSkill.ow`   | Generates math problems + answer options per difficulty tier (1–7). |
 | `src/ReadingSkill.ow`| Reading word challenge + word options per difficulty (word length 3–8). |
+| `src/WritingSkill.ow`| Writing/spelling challenge: type the word (text input), per-length pools. |
 | `src/Mob.ow`         | A single enemy: name + hit points. |
 | `src/MobPool.ow`     | The bestiary (hostile / miniboss / boss name pools). |
 | `src/Hero.ow`        | The player: level, XP, difficulty, health. |

@@ -22,6 +22,9 @@ class ReadingSkill:
     set this.pools: ps
     set this.curpool: ps[1]
 
+  fn mode():
+    return: "choice"
+
   # Select the word pool for difficulty d (1-7) and return a target word.
   fn generate(d):
     set idx int: d

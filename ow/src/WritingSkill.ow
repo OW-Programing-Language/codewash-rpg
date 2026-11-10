@@ -1,0 +1,43 @@
+import "Problem.ow"
+
+# Writing / spelling skill, ported from getWordForDifficulty() +
+# WRITING_DIFFICULTY_POOLS / WRITING_WORD_INDEX in the JS source.
+#
+# The React version has the player type the word; here the battle screen shows a
+# text input (ui_input) and the player writes the word, then presses Enter.
+# Difficulty selects a word-length pool (1: short ... 5: long; 6-7 reuse pool 5).
+# A representative subset of the original word index is used (see docs/PORTING.md).
+class WritingSkill:
+  field pools
+  field curpool
+
+  fn new():
+    set ps: array(6, 0)
+    set ps[1]: ["CAT", "COW", "PIG", "FISH", "FROG", "GOAT", "WOLF", "BUNNY", "CAMEL", "HORSE", "PANDA", "SHEEP", "SQUID", "ALLAY"]
+    set ps[2]: ["ALLAY", "CAMEL", "HORSE", "PANDA", "SHEEP", "SQUID", "BLAZE", "GHAST", "EVOKER", "HOGLIN", "TURTLE", "CHICKEN", "DROWNED", "CREEPER", "STRIDER"]
+    set ps[3]: ["EVOKER", "HOGLIN", "TURTLE", "BOGGED", "BREEZE", "SNIFFER", "CHICKEN", "DROWNED", "CREEPER", "STRIDER", "ENDERMAN", "GUARDIAN", "NAUTILUS"]
+    set ps[4]: ["CHICKEN", "DROWNED", "CREEPER", "STRIDER", "ENDERMAN", "GUARDIAN", "ARMADILLO", "MAGMACUBE", "POLARBEAR", "SNOWGOLEM", "GLOWSQUID", "IRONGOLEM", "MOOSHROOM"]
+    set ps[5]: ["ARMADILLO", "MAGMACUBE", "POLARBEAR", "SNOWGOLEM", "GLOWSQUID", "IRONGOLEM", "MOOSHROOM", "COPPERGOLEM"]
+    set this.pools: ps
+    set this.curpool: ps[1]
+
+  # Writing is answered by typing, not by multiple choice.
+  fn mode():
+    return: "text"
+
+  fn generate(d):
+    set idx int: d
+    if: idx < 1
+      set idx: 1
+    if: idx > 5
+      set idx: 5
+    set this.curpool: this.pools[idx]
+    set n int: len(this.curpool)
+    set word: this.curpool[rand(n)]
+    set p: new Problem()
+    call: p.init(word, word)
+    return: p
+
+  # Not used in text mode, but kept so every skill shares one interface.
+  fn options(p):
+    return: [p.solution()]

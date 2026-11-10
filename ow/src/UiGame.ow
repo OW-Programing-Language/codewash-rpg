@@ -1,6 +1,7 @@
 import "Game.ow"
 import "MobArt.ow"
 import "ReadingSkill.ow"
+import "WritingSkill.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -37,11 +38,20 @@ class UiGame:
     call: this.game.start(1)
     set this.screen: "battle"
 
+  fn begin_writing():
+    call: this.game.use_skill(new WritingSkill())
+    call: this.game.start(1)
+    set this.screen: "battle"
+
   fn to_menu():
     set this.screen: "menu"
 
   fn pick(n):
     call: this.game.answer(n)
+
+  # Typed answer (Writing): normalise case/whitespace before comparing.
+  fn pick_text(v):
+    call: this.game.answer(upper(trim(v)))
 
   # Answer choices come from the active skill (numbers for Math, words for
   # Reading), so the same battle screen works for every skill.
@@ -57,22 +67,30 @@ class UiGame:
     set sub: ui_text("Clean your code or get fired", "yellow")
     set play_math: ui_button("Math shift", "app.begin_math")
     set play_read: ui_button("Reading shift", "app.begin_reading")
-    set row: ui_row([play_math, play_read])
+    set play_write: ui_button("Writing shift", "app.begin_writing")
+    set row: ui_row([play_math, play_read, play_write])
     set items: [logo, title, sub, ui_space(8), row]
     return: ui_backdrop(this.bg, ui_card(items))
 
-  fn battle_view():
-    set g: this.game
+  # The answer widget depends on the skill: a row of choice buttons, or a text
+  # field for skills answered by typing (Writing).
+  fn answers_widget():
+    if: this.game.skill.mode() == "text"
+      return: ui_input("app.pick_text", "type the word, then Enter")
     set o: this.opts()
-    set name: ui_heading(g.mob.label(), "red")
-    set sprite: ui_image(this.art.path(g.mob.label()), 160, 160)
-    set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
-    set q: ui_heading(g.problem.ask())
     set b0: ui_button(str(o[0]), "app.pick", o[0])
     set b1: ui_button(str(o[1]), "app.pick", o[1])
     set b2: ui_button(str(o[2]), "app.pick", o[2])
     set b3: ui_button(str(o[3]), "app.pick", o[3])
-    set row: ui_row([b0, b1, b2, b3])
+    return: ui_row([b0, b1, b2, b3])
+
+  fn battle_view():
+    set g: this.game
+    set name: ui_heading(g.mob.label(), "red")
+    set sprite: ui_image(this.art.path(g.mob.label()), 160, 160)
+    set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
+    set q: ui_heading(g.problem.ask())
+    set row: this.answers_widget()
     set msg: ui_text(g.message, "yellow")
     set hud: ui_text("Level " + g.hero.lvl() + "     XP " + g.hero.xp_v() + "     Diff " + g.hero.diff())
     set back: ui_button("Back to menu", "app.to_menu")

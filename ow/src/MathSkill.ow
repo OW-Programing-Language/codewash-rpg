@@ -10,6 +10,9 @@ class MathSkill:
   fn new():
     set this.ready: 1
 
+  fn mode():
+    return: "choice"
+
   # Random int in [lo, hi].
   fn between(lo, hi):
     return: rand(hi - lo + 1) + lo
