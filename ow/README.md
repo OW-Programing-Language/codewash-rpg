@@ -7,9 +7,9 @@ bestiary and combat loop as a modular, one-class-per-file OW program,
 runnable from the command line.
 
 > **Scope:** a faithful port of the *engine* with the **Math**, **Reading**,
-> **Writing** and **Memory** skills playable, and a **graphical UI** (menu +
-> battle screen) built on the Ow UI runtime. Skills plug into one shared combat
-> loop. It renders in the browser (web) and as a native desktop window
+> **Writing**, **Memory** and **Patterns** skills playable, and a **graphical UI**
+> (menu + battle screen) built on the Ow UI runtime. Skills plug into one shared
+> combat loop. It renders in the browser (web) and as a native desktop window
 > showing the original game art. See [`docs/PORTING.md`](docs/PORTING.md) for
 > exactly what is and isn't ported, and why.
 
@@ -41,7 +41,7 @@ Or open `src/main_ui.ow` in **OwIDE** and click **UI Web ▶** (browser) or
 React app:
 
 - **Menu** — themed background, the game logo, and a skill choice:
-  **Math**, **Reading**, **Writing** or **Memory** shift.
+  **Math**, **Reading**, **Writing**, **Memory** or **Patterns** shift.
 - **Battle** — the foe's name, its **sprite** (the original per-mob artwork), a
   red **HP bar**, the current problem, and the answer input — four **buttons**
   for Math/Reading, or a **text field** for Writing (type the word, press Enter;
@@ -64,6 +64,7 @@ from this `ow/` folder.
 | `src/ReadingSkill.ow`| Reading word challenge + word options per difficulty (word length 3–8). |
 | `src/WritingSkill.ow`| Writing/spelling challenge: type the word (text input), per-length pools. |
 | `src/MemorySkill.ow` | Memory mini-game: a 4-pair card board; each match lands a hit. |
+| `src/PatternsSkill.ow`| Pattern recognition: complete a repeating colour sequence (pick next). |
 | `src/Mob.ow`         | A single enemy: name + hit points. |
 | `src/MobPool.ow`     | The bestiary (hostile / miniboss / boss name pools). |
 | `src/Hero.ow`        | The player: level, XP, difficulty, health. |

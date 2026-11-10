@@ -3,6 +3,7 @@ import "MobArt.ow"
 import "ReadingSkill.ow"
 import "WritingSkill.ow"
 import "MemorySkill.ow"
+import "PatternsSkill.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -49,6 +50,11 @@ class UiGame:
     call: this.game.start(1)
     set this.screen: "battle"
 
+  fn begin_patterns():
+    call: this.game.use_skill(new PatternsSkill())
+    call: this.game.start(1)
+    set this.screen: "battle"
+
   fn to_menu():
     set this.screen: "menu"
 
@@ -83,9 +89,11 @@ class UiGame:
     set play_read: ui_button("Reading shift", "app.begin_reading")
     set play_write: ui_button("Writing shift", "app.begin_writing")
     set play_mem: ui_button("Memory shift", "app.begin_memory")
+    set play_pat: ui_button("Patterns shift", "app.begin_patterns")
     set row1: ui_row([play_math, play_read])
     set row2: ui_row([play_write, play_mem])
-    set items: [logo, title, sub, ui_space(8), row1, row2]
+    set row3: ui_row([play_pat])
+    set items: [logo, title, sub, ui_space(8), row1, row2, row3]
     return: ui_backdrop(this.bg, ui_card(items))
 
   # The answer widget depends on the skill: a row of choice buttons, or a text

@@ -1,0 +1,76 @@
+import "Problem.ow"
+
+# Patterns / "Pattern Recognition" skill. The React version is a Simon-Says
+# colour game; the Ow UI runtime has no timed flash playback, so this ports the
+# skill's stated goal ("decipher the sequence") as sequence completion: a
+# repeating colour pattern is shown with the next item missing, and the player
+# picks the colour that comes next. Difficulty widens the palette and the period.
+class PatternsSkill:
+  field palette
+  field allcolors
+
+  fn new():
+    set this.allcolors: ["RED", "BLUE", "GREEN", "YELLOW", "PURPLE", "ORANGE"]
+    set this.palette: ["RED", "BLUE"]
+
+  fn mode():
+    return: "choice"
+
+  # Number of distinct colours for difficulty d (2..6).
+  fn palette_size(d):
+    set c int: d + 1
+    if: c < 2
+      set c: 2
+    if: c > 6
+      set c: 6
+    return: c
+
+  fn generate(d):
+    set count int: this.palette_size(d)
+    set pal: array(count, "")
+    set i int: 0
+    while: i < count
+      set pal[i]: this.allcolors[i]
+      set i: i + 1
+    set this.palette: pal
+    set period int: 2
+    if: d > 3
+      set period: 3
+    set base: array(period, "")
+    set k int: 0
+    while: k < period
+      set base[k]: pal[rand(count)]
+      set k: k + 1
+    set shown int: period + 1 + rand(period + 1)
+    set q: ""
+    set si int: 0
+    while: si < shown
+      set q: q + base[mod(si, period)] + " "
+      set si: si + 1
+    set q: q + "?"
+    set ans: base[mod(shown, period)]
+    set p: new Problem()
+    call: p.init(q, ans)
+    return: p
+
+  # Four colour choices including the correct next colour (at index 1).
+  fn options(p):
+    set correct: p.solution()
+    set a: this.other(correct, correct, correct)
+    set b: this.other(correct, a, a)
+    set c: this.other(correct, a, b)
+    return: [a, correct, b, c]
+
+  # A colour from the full palette that differs from x, y and z.
+  fn other(x, y, z):
+    set cand: this.allcolors[rand(6)]
+    set tries int: 0
+    while: tries < 40
+      if: cand != x
+        if: cand != y
+          if: cand != z
+            set tries: 999
+      if: tries < 100
+        set cand: this.allcolors[rand(6)]
+        set tries: tries + 1
+    return: cand
