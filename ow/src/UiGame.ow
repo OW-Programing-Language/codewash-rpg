@@ -1,0 +1,76 @@
+import "Game.ow"
+
+# Graphical front-end for the Code Wash RPG engine.
+#
+# Renders two screens with the Ow UI runtime — a themed main menu and a battle
+# screen — mirroring the React app's flow. Answers are multiple-choice buttons
+# (as agreed), each wired to the engine's `answer()`. All game logic lives in
+# `Game` and its collaborators; this class only turns state into a widget tree
+# and handles UI events.
+#
+# Asset paths are resolved relative to the working directory. Run from the `ow/`
+# folder so `../public/assets/...` points at the original game art.
+class UiGame:
+  field game
+  field screen
+  field bg
+  field logo
+
+  fn new():
+    set this.game: new Game()
+    set this.screen: "menu"
+    set this.bg: "../public/assets/themes/minecraft.png"
+    set this.logo: "../public/assets/themes/minecraft_logo.png"
+
+  # ---- UI event handlers ----
+  fn begin():
+    call: this.game.start(1)
+    set this.screen: "battle"
+
+  fn to_menu():
+    set this.screen: "menu"
+
+  fn pick(n):
+    call: this.game.answer(n)
+
+  # Four answer choices including the correct one (not in first position).
+  fn opts():
+    set s int: this.game.problem.solution()
+    set lo int: s - 1
+    if: lo < 0
+      set lo: s + 3
+    return: [s + 1, lo, s, s + 2]
+
+  # ---- screens ----
+  # Note: the parser wants each expression on one line, so we build widgets into
+  # variables and compose single-line array literals (no multi-line brackets).
+  fn menu_view():
+    set logo: ui_image(this.logo, 420, 160)
+    set title: ui_heading("CODE WASH RPG")
+    set sub: ui_text("Clean your code or get fired", "yellow")
+    set play: ui_button("Play  (Math shift)", "app.begin")
+    set items: [logo, title, sub, ui_space(8), play]
+    return: ui_backdrop(this.bg, ui_card(items))
+
+  fn battle_view():
+    set g: this.game
+    set o: this.opts()
+    set name: ui_heading(g.mob.label(), "red")
+    set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
+    set q: ui_heading(g.problem.ask())
+    set b0: ui_button(str(o[0]), "app.pick", o[0])
+    set b1: ui_button(str(o[1]), "app.pick", o[1])
+    set b2: ui_button(str(o[2]), "app.pick", o[2])
+    set b3: ui_button(str(o[3]), "app.pick", o[3])
+    set row: ui_row([b0, b1, b2, b3])
+    set msg: ui_text(g.message, "yellow")
+    set hud: ui_text("Level " + g.hero.lvl() + "     XP " + g.hero.xp_v() + "     Diff " + g.hero.diff())
+    set back: ui_button("Back to menu", "app.to_menu")
+    set items: [name, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, ui_space(6), back]
+    return: ui_backdrop(this.bg, ui_card(items))
+
+  fn render():
+    if: this.screen == "menu"
+      return: this.menu_view()
+    else:
+      return: this.battle_view()

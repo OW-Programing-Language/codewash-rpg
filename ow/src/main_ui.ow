@@ -1,0 +1,13 @@
+import "UiGame.ow"
+
+# Graphical entry point for the Code Wash RPG (OW port).
+#
+#   Run from the `ow/` folder:  ow run src/main_ui.ow
+#   (OwIDE: open this file and click UI Web ▶ or UI Native ▶)
+#
+# Opens a themed menu; press Play to start the Math shift and answer by clicking
+# the correct result. The native backend shows the original art from
+# ../public/assets; the web backend renders the same widget tree in the browser.
+main:
+  set app: new UiGame()
+  call: ui_run("app.render", "Code Wash RPG")

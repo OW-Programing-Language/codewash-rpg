@@ -6,11 +6,11 @@ It reimplements the game's progression maths, difficulty tiers, mob
 bestiary and combat loop as a modular, one-class-per-file OW program,
 runnable from the command line.
 
-> **Scope:** this is a faithful port of the *engine*, driven by the
-> **Math** skill as a complete vertical slice. It is **not** a 1:1
-> rewrite of the React app — OW has no browser/React target. See
-> [`docs/PORTING.md`](docs/PORTING.md) for exactly what is and isn't
-> ported, and why.
+> **Scope:** a faithful port of the *engine*, driven by the **Math** skill as a
+> vertical slice, now with a **graphical UI** (menu + battle screen) built on the
+> Ow UI runtime. It renders in the browser (web) and as a native desktop window
+> showing the original game art. See [`docs/PORTING.md`](docs/PORTING.md) for
+> exactly what is and isn't ported, and why.
 
 ## Run it
 
@@ -29,6 +29,26 @@ You'll get a console loop: solve each problem to damage the current
 foe, clear foes to earn XP, and level up. Reach level 4 to finish the
 shift.
 
+## Graphical version (menu + battle screen)
+
+```bash
+ow run src/main_ui.ow
+```
+
+Or open `src/main_ui.ow` in **OwIDE** and click **UI Web ▶** (browser) or
+**UI Native ▶** (desktop window with the original art). The flow mirrors the
+React app:
+
+- **Menu** — themed background, the game logo, and a **Play** button.
+- **Battle** — the foe's name, a red **HP bar**, the current problem, and four
+  answer **buttons** (click the correct result). Correct answers damage the foe;
+  clearing foes grants XP and levels you up, with a live HUD.
+
+The screens are built from the Ow UI primitives (`ui_backdrop`, `ui_card`,
+`ui_image`, `ui_bar`, `ui_button`, …) in `UiGame.ow`; all game logic stays in the
+engine classes. The native backend loads art from `../public/assets`, so run it
+from this `ow/` folder.
+
 ## Module map (one class per file)
 
 | File | Responsibility |
@@ -42,6 +62,8 @@ shift.
 | `src/Hero.ow`        | The player: level, XP, difficulty, health. |
 | `src/Game.ow`        | Orchestrates the combat loop and leveling. |
 | `src/main.ow`        | Console entry point (I/O only). |
+| `src/UiGame.ow`      | Graphical front-end: builds the menu/battle widget trees and handles UI events. |
+| `src/main_ui.ow`     | Graphical entry point (opens the UI). |
 
 The design follows the official OW example games (`tictactoe`,
 `connect4`, `guess-the-number`): logic lives in classes, I/O lives in
