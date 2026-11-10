@@ -4,6 +4,7 @@ import "ReadingSkill.ow"
 import "WritingSkill.ow"
 import "MemorySkill.ow"
 import "PatternsSkill.ow"
+import "CleaningSkill.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -55,6 +56,16 @@ class UiGame:
     call: this.game.start(1)
     set this.screen: "battle"
 
+  fn begin_cleaning():
+    call: this.game.use_skill(new CleaningSkill())
+    call: this.game.start(1)
+    set this.screen: "battle"
+
+  # Cleaning: finishing a task clears the mess (a hit) and brings the next task.
+  fn complete():
+    call: this.game.hit()
+    call: this.game.next_problem()
+
   fn to_menu():
     set this.screen: "menu"
 
@@ -90,9 +101,10 @@ class UiGame:
     set play_write: ui_button("Writing shift", "app.begin_writing")
     set play_mem: ui_button("Memory shift", "app.begin_memory")
     set play_pat: ui_button("Patterns shift", "app.begin_patterns")
+    set play_clean: ui_button("Cleaning shift", "app.begin_cleaning")
     set row1: ui_row([play_math, play_read])
     set row2: ui_row([play_write, play_mem])
-    set row3: ui_row([play_pat])
+    set row3: ui_row([play_pat, play_clean])
     set items: [logo, title, sub, ui_space(8), row1, row2, row3]
     return: ui_backdrop(this.bg, ui_card(items))
 
@@ -101,6 +113,8 @@ class UiGame:
   fn answers_widget():
     if: this.game.skill.mode() == "text"
       return: ui_input("app.pick_text", "type the word, then Enter")
+    if: this.game.skill.mode() == "task"
+      return: ui_button("Complete!", "app.complete")
     set o: this.opts()
     set b0: ui_button(str(o[0]), "app.pick", o[0])
     set b1: ui_button(str(o[1]), "app.pick", o[1])

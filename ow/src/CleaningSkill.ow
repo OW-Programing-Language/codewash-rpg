@@ -1,0 +1,25 @@
+import "Problem.ow"
+
+# Cleaning skill, ported from the React "Cleaning" skill. It is not a quiz: the
+# child does a real chore and taps "Complete!" (the React version then asks a
+# parent to confirm). Here it is a task card with a single Complete button that
+# clears the mess (lands a hit). Tasks are code-washing themed for flavour.
+# mode() == "task" tells the UI to render the Complete button.
+class CleaningSkill:
+  field tasks
+
+  fn new():
+    set this.tasks: ["Scrub the legacy code", "Wipe the stale cache", "Mop up the memory leaks", "Sweep the dead code", "Polish the pull request", "Degrease the spaghetti code", "Rinse the merge conflicts", "Dust off the docs", "Buff the flaky build", "Sanitize the inputs"]
+
+  fn mode():
+    return: "task"
+
+  fn generate(d):
+    set n int: len(this.tasks)
+    set t: this.tasks[rand(n)]
+    set p: new Problem()
+    call: p.init(t, "DONE")
+    return: p
+
+  fn options(p):
+    return: ["DONE"]
