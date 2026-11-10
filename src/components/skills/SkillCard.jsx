@@ -4,7 +4,8 @@ import { Mic, Plus, Minus } from 'lucide-react';
 import SafeImage from '../ui/SafeImage';
 import MobWithAura from '../ui/MobWithAura';
 import ParentalVerificationModal from '../ui/ParentalVerificationModal';
-import { BASE_ASSETS, FRIENDLY_MOBS, HOSTILE_MOBS, CHEST_BLOCKS, BOSS_MOBS, MINIBOSS_MOBS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT, HOMOPHONES } from '../../constants/gameData';
+import { BASE_ASSETS, FRIENDLY_MOBS, DIFFICULTY_IMAGES, DIFFICULTY_CONTENT, HOMOPHONES } from '../../constants/gameData';
+import { resolveMobImage } from '../../utils/themeUtils';
 import { playClick, getSfxVolume } from '../../utils/soundManager';
 import { calculateXPToLevel } from '../../utils/gameUtils';
 import { AURA_ADJECTIVES } from '../../utils/mobDisplayUtils';
@@ -156,32 +157,10 @@ const SkillCard = ({ config, data, themeData, isCenter, isBattling, mobName, mob
     const skillThemeConfig = themeData.skills[config.id] || {};
     const skillName = skillThemeConfig.name || config.name;
     
-    // Determine valid mob source and display name based on skill type
-    let mobSrc;
-    let displayMobName = mobName;
-    
-    if (config.id === 'memory') {
-        mobSrc = 'assets/skills/farm_icon.png';
-    } else if (config.id === 'cleaning') {
-        mobSrc = CHEST_BLOCKS[mobName] || themeData.assets.mobs[mobName] || BASE_ASSETS.axolotls.Pink;
-    } else if (config.id === 'patterns') {
-        // Patterns skill uses hostile mobs like other combat skills
-        mobSrc = HOSTILE_MOBS[mobName] || BOSS_MOBS[mobName] || MINIBOSS_MOBS[mobName] || themeData.assets.mobs[mobName];
-        if (!mobSrc) {
-            // Fallback to Zombie if the provided name is invalid (should not happen with proper state management)
-            displayMobName = 'Zombie';
-            mobSrc = HOSTILE_MOBS[displayMobName] || BASE_ASSETS.axolotls.Pink;
-        }
-    } else {
-        // Combat skills (reading, writing, math) - validate mob exists
-        // Check hostile mobs, boss mobs, and miniboss mobs
-        mobSrc = HOSTILE_MOBS[mobName] || BOSS_MOBS[mobName] || MINIBOSS_MOBS[mobName] || themeData.assets.mobs[mobName];
-        if (!mobSrc) {
-            // Fallback to Zombie if the provided name is invalid (should not happen with proper state management)
-            displayMobName = 'Zombie';
-            mobSrc = HOSTILE_MOBS[displayMobName] || BASE_ASSETS.axolotls.Pink;
-        }
-    }
+    // Resolve the mob image + display name via the pure theme layer.
+    // THEME FIRST, then the global maps, then a safe fallback — so a theme that
+    // ships its own art actually overrides the images (see utils/themeUtils.js).
+    const { src: mobSrc, displayName: displayMobName } = resolveMobImage(config.id, mobName, themeData);
     
     // Add aura adjective to mob name when battling
     const displayMobNameWithAura = isBattling && mobAura && AURA_ADJECTIVES[mobAura]

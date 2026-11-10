@@ -19,8 +19,9 @@ import AchievementToast from './components/ui/AchievementToast';
 // Utils & Constants
 import { getRandomMob, getRandomFriendlyMob, getRandomMiniboss, getRandomBoss, getMobForSkill, getEncounterType, generateMathProblem, getReadingWord, getWordForDifficulty, calculateDamage, calculateMobHealth, calculateXPReward, calculateXPToLevel } from './utils/gameUtils';
 import { getRandomAura } from './utils/mobDisplayUtils';
+import { resolveTheme, resolveThemeBgm } from './utils/themeUtils';
 import { 
-    BASE_ASSETS, THEME_CONFIG, SKILL_DATA, 
+    BASE_ASSETS, SKILL_DATA,
     HOMOPHONES, DIFFICULTY_CONTENT, HOSTILE_MOBS, BOSS_MOBS, MINIBOSS_MOBS
 } from './constants/gameData';
 import { 
@@ -839,7 +840,12 @@ const App = () => {
             });
         }
     }, [activeTheme, skills, checkAchievements]);
-    
+
+    // Swap the background music playlist to match the active theme.
+    useEffect(() => {
+        getBGMManager().setTracks(resolveThemeBgm(activeTheme));
+    }, [activeTheme]);
+
     // Wrapper for setSelectedBorder to track border changes
     const handleBorderChange = useCallback((newBorder) => {
         if (newBorder !== selectedBorder) {
@@ -1137,7 +1143,7 @@ const App = () => {
         }
         return items;
     };
-    const currentThemeData = THEME_CONFIG[activeTheme] || THEME_CONFIG.minecraft;
+    const currentThemeData = resolveTheme(activeTheme);
     const containerStyle = { ...currentThemeData.style, fontFamily: '"VT323", monospace' };
 
     // Drag handlers for carousel navigation
