@@ -26,6 +26,8 @@ export default defineConfig({
         'src/i18n/translate.js',
         'src/i18n/config.js',
         'src/utils/themeUtils.js',
+        'src/utils/assetPreloader.js',
+        'src/utils/perf.js',
       ],
       // Baseline thresholds for the modules under test. Raise, never lower,
       // without logging a debt entry (subject: "no merge on red").
