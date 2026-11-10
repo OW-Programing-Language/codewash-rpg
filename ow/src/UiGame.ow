@@ -1,4 +1,5 @@
 import "Game.ow"
+import "MobArt.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -15,10 +16,12 @@ class UiGame:
   field screen
   field bg
   field logo
+  field art
 
   fn new():
     set this.game: new Game()
     set this.screen: "menu"
+    set this.art: new MobArt()
     set this.bg: "../public/assets/themes/minecraft.png"
     set this.logo: "../public/assets/themes/minecraft_logo.png"
 
@@ -56,6 +59,7 @@ class UiGame:
     set g: this.game
     set o: this.opts()
     set name: ui_heading(g.mob.label(), "red")
+    set sprite: ui_image(this.art.path(g.mob.label()), 160, 160)
     set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
     set q: ui_heading(g.problem.ask())
     set b0: ui_button(str(o[0]), "app.pick", o[0])
@@ -66,7 +70,7 @@ class UiGame:
     set msg: ui_text(g.message, "yellow")
     set hud: ui_text("Level " + g.hero.lvl() + "     XP " + g.hero.xp_v() + "     Diff " + g.hero.diff())
     set back: ui_button("Back to menu", "app.to_menu")
-    set items: [name, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, ui_space(6), back]
+    set items: [name, sprite, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, ui_space(6), back]
     return: ui_backdrop(this.bg, ui_card(items))
 
   fn render():

@@ -40,9 +40,10 @@ Or open `src/main_ui.ow` in **OwIDE** and click **UI Web ▶** (browser) or
 React app:
 
 - **Menu** — themed background, the game logo, and a **Play** button.
-- **Battle** — the foe's name, a red **HP bar**, the current problem, and four
-  answer **buttons** (click the correct result). Correct answers damage the foe;
-  clearing foes grants XP and levels you up, with a live HUD.
+- **Battle** — the foe's name, its **sprite** (the original per-mob artwork), a
+  red **HP bar**, the current problem, and four answer **buttons** (click the
+  correct result). Correct answers damage the foe; clearing foes grants XP and
+  levels you up, with a live HUD.
 
 The screens are built from the Ow UI primitives (`ui_backdrop`, `ui_card`,
 `ui_image`, `ui_bar`, `ui_button`, …) in `UiGame.ow`; all game logic stays in the
@@ -62,6 +63,7 @@ from this `ow/` folder.
 | `src/Hero.ow`        | The player: level, XP, difficulty, health. |
 | `src/Game.ow`        | Orchestrates the combat loop and leveling. |
 | `src/main.ow`        | Console entry point (I/O only). |
+| `src/MobArt.ow`      | Maps each mob name to its sprite file (ported from the JS asset maps). |
 | `src/UiGame.ow`      | Graphical front-end: builds the menu/battle widget trees and handles UI events. |
 | `src/main_ui.ow`     | Graphical entry point (opens the UI). |
 

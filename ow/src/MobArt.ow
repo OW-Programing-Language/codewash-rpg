@@ -1,0 +1,70 @@
+# Maps a mob name to its sprite file, ported from the JS asset maps
+# (HOSTILE_MOBS / MINIBOSS_MOBS / BOSS_MOBS in src/constants/gameData.jsx).
+# Paths are relative to the `ow/` working directory so the GUI finds the
+# original art in ../public/assets. Unknown names fall back to the Zombie sprite.
+class MobArt:
+  field base
+
+  fn new():
+    set this.base: "../public/assets/mobs/"
+
+  fn path(name):
+    switch: name
+      case "Blaze":
+        return: this.base + "hostile/blaze.gif"
+      case "Bogged":
+        return: this.base + "hostile/bogged.png"
+      case "Breeze":
+        return: this.base + "hostile/breeze.webp"
+      case "Creeper":
+        return: this.base + "hostile/creeper.png"
+      case "Drowned":
+        return: this.base + "hostile/drowned.png"
+      case "Enderman":
+        return: this.base + "hostile/enderman.png"
+      case "Evoker":
+        return: this.base + "hostile/evoker.png"
+      case "Ghast":
+        return: this.base + "hostile/ghast.gif"
+      case "Guardian":
+        return: this.base + "hostile/guardian.gif"
+      case "Hoglin":
+        return: this.base + "hostile/hoglin.png"
+      case "Magma Cube":
+        return: this.base + "hostile/magmacube.png"
+      case "Parched":
+        return: this.base + "hostile/parched.png"
+      case "Phantom":
+        return: this.base + "hostile/phantom.gif"
+      case "Piglin":
+        return: this.base + "hostile/piglin.png"
+      case "Pillager":
+        return: this.base + "hostile/pillager.png"
+      case "Skeleton":
+        return: this.base + "hostile/skeleton.png"
+      case "Slime":
+        return: this.base + "hostile/slime.png"
+      case "Spider":
+        return: this.base + "hostile/spider.png"
+      case "Witch":
+        return: this.base + "hostile/witch.png"
+      case "Zombie":
+        return: this.base + "hostile/zombie.png"
+      case "Creaking":
+        return: this.base + "miniboss/creaking.png"
+      case "Elder Guardian":
+        return: this.base + "miniboss/elderguardian.gif"
+      case "Ravager":
+        return: this.base + "miniboss/ravager.png"
+      case "Wither Skeleton":
+        return: this.base + "miniboss/witherskeleton.png"
+      case "Ender Dragon":
+        return: this.base + "boss/enderdragon.gif"
+      case "Herobrine":
+        return: this.base + "boss/Herobrine.png"
+      case "Warden":
+        return: this.base + "boss/warden.gif"
+      case "Wither":
+        return: this.base + "boss/wither.png"
+      default:
+        return: this.base + "hostile/zombie.png"
