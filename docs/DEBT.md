@@ -120,6 +120,7 @@ Effort: S (<½ day) / M (~1 day) / L (multi-day).
 | DEBT-10 | content & identifiers | Hardcoded **Minecraft**-themed names/assets | Theming can't fully swap them | IP/branding + Themes mission blocked | M | P3 | todo |
 | DEBT-11 | `ow/`, `.packaging/`, `docs/OW-PACKAGING.md` | Out-of-scope rewrite of the game into a custom "OW" language | Dead weight; contradicts refactor mandate | Confuses handover | S | P2 | todo (decide: remove / archive) |
 | DEBT-12 | `App.jsx`, `SkillCard.jsx`, drawers | Most in-game strings still hardcoded English | i18n infra exists but coverage of strings is partial | Mixed-language UI until migrated | M | P3 | in-progress (Settings + Bug Report + selector translated; rest incremental) |
+| DEBT-13 | `THEME_CONFIG`, `public/assets/themes` | New/non-base themes reuse default (Minecraft) monster & chest art; no themed audio | Theming engine fixed, but mobs/crafting-table art not yet per-theme | Partially-themed look | M | P3 | in-progress (engine + 2 themes + music done; themed art pending) |
 
 > **Note on DEBT-11:** the CodeWash subject is a *legacy refactoring* mission
 > (small reversible steps, preserve public contracts). It lists the allowed

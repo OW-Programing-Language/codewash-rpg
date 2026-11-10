@@ -88,3 +88,34 @@ breaks the UI.
 - React binding: `src/i18n/I18nContext.jsx` (`useI18n()` → `t(key, vars)`),
   `src/components/ui/LanguageSelector.jsx`.
 - Design rationale: `docs/adr/0003-i18n.md`.
+
+---
+
+## Themes
+
+**Where:** the **Themes & Cosmetics** panel (the ✨ sparkles menu) → **Theme
+Select** (a scrollable list).
+
+Ships **six** themes: Minecraft (default), K-Pop Demon Hunters, Pokémon, Spy,
+**Sci-Fi** and **Fantasy** (the last two are new). Picking a theme updates the
+background, logo, skill names and **background music** immediately, and the
+choice is saved per profile.
+
+### What was fixed
+- Themes can now actually **override** images (previously the default art always
+  won). A theme inherits anything it doesn't provide, so no more broken images.
+- Fixed the Spy theme's background (was showing the Minecraft background) and the
+  broken logo/memory-card references.
+- **Music now changes with the theme.**
+
+### Adding a theme
+Non-developer guide: **`docs/THEMES.md`** (two files + a few images, no coding).
+
+### Implementation
+- Pure engine: `src/utils/themeUtils.js` — `resolveTheme` (base-merge),
+  `resolveMobImage` (theme-first), `resolveThemeBgm` (themed music). 100% line
+  coverage.
+- Music swap: `BGMManager.setTracks()` in `src/utils/soundManager.js`.
+- Design rationale: `docs/adr/0004-theming.md`.
+- Known limitation: new themes reuse default monster art until themed images are
+  added (DEBT-13).

@@ -6,6 +6,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com).
 ## [Unreleased] — CodeWash cleanup
 
 ### Added
+- **Themes feature** (mission): a pure theme engine (`src/utils/themeUtils.js`,
+  100% line coverage) that resolves themes by **merging onto a base theme** (so
+  missing keys inherit) and resolves monster art **theme-first** (themes can now
+  actually override images). **Music changes with the theme**
+  (`resolveThemeBgm` + `BGMManager.setTracks`). Two new themes — **Sci-Fi** and
+  **Fantasy** — plus a scrollable theme menu. Non-developer guide in
+  `docs/THEMES.md`; rationale in `docs/adr/0004-theming.md`.
 - **Translation feature** (mission): switch the game's display language from the
   Settings panel (new **Language** selector — a button per language). Ships
   **English + Français**. Lightweight dependency-free i18n: pure core
