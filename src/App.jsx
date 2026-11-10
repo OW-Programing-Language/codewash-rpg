@@ -20,8 +20,11 @@ import AchievementToast from './components/ui/AchievementToast';
 import { getRandomMob, getRandomFriendlyMob, getRandomMiniboss, getRandomBoss, getMobForSkill, getEncounterType, generateMathProblem, getReadingWord, getWordForDifficulty, calculateDamage, calculateMobHealth, calculateXPReward, calculateXPToLevel } from './utils/gameUtils';
 import { getRandomAura } from './utils/mobDisplayUtils';
 import { resolveTheme, resolveThemeBgm } from './utils/themeUtils';
-import { 
-    BASE_ASSETS, SKILL_DATA,
+import { preloadImages } from './utils/assetPreloader';
+import { perf } from './utils/perf';
+import LoadingScreen from './components/ui/LoadingScreen';
+import {
+    BASE_ASSETS, SKILL_DATA, THEMES_LIST,
     HOMOPHONES, DIFFICULTY_CONTENT, HOSTILE_MOBS, BOSS_MOBS, MINIBOSS_MOBS
 } from './constants/gameData';
 import { 
@@ -253,6 +256,9 @@ const App = () => {
     const [isCosmeticsOpen, setIsCosmeticsOpen] = useState(false);
     const [isResetOpen, setIsResetOpen] = useState(false);
     const [isBugReportOpen, setIsBugReportOpen] = useState(false);
+    // Startup loading screen (see utils/assetPreloader.js + docs/PERFORMANCE.md)
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadProgress, setLoadProgress] = useState(0);
     const [isListening, setIsListening] = useState(false);
     const [spokenText, setSpokenText] = useState("");
     const [damageNumbers, setDamageNumbers] = useState([]);
@@ -846,6 +852,32 @@ const App = () => {
         getBGMManager().setTracks(resolveThemeBgm(activeTheme));
     }, [activeTheme]);
 
+    // Preload the heavy theme/background art on first mount and show a real
+    // loading percentage, so startup feels instant instead of a blank wait.
+    useEffect(() => {
+        perf.mark('app-mount');
+        const critical = [
+            ...THEMES_LIST.map(t => t.img),
+            'assets/themes/minecraft_logo.png',
+            BASE_ASSETS?.axolotls?.Pink,
+        ].filter(Boolean);
+        let cancelled = false;
+        const finish = () => {
+            if (cancelled) return;
+            perf.mark('assets-loaded');
+            setLoadProgress(100);
+            setIsLoading(false);
+            const ms = perf.measure('app-mount', 'assets-loaded');
+            if (ms != null) console.info(`[perf] startup assets ready in ${Math.round(ms)}ms`);
+        };
+        // Safety net: never let a slow/missing asset block startup.
+        const timeout = setTimeout(finish, 3000);
+        preloadImages(critical, {
+            onProgress: (_l, _t, pct) => { if (!cancelled) setLoadProgress(pct); },
+        }).then(() => { clearTimeout(timeout); finish(); });
+        return () => { cancelled = true; clearTimeout(timeout); };
+    }, []);
+
     // Wrapper for setSelectedBorder to track border changes
     const handleBorderChange = useCallback((newBorder) => {
         if (newBorder !== selectedBorder) {
@@ -1210,6 +1242,7 @@ const App = () => {
     return (
         <div className="min-h-screen overflow-hidden relative flex flex-col bg-cover bg-center bg-no-repeat font-sans text-stone-100" style={containerStyle}>
             <GlobalStyles />
+            {isLoading && <LoadingScreen progress={loadProgress} />}
             <div className="absolute inset-0 bg-black/30 pointer-events-none z-0"></div>
             
             {/* Top Left Buttons */}
