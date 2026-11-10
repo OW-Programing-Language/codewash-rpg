@@ -115,7 +115,7 @@ Effort: S (<½ day) / M (~1 day) / L (multi-day).
 | DEBT-05 | `App.jsx` (1492 LOC, `loadSkills` CC 31) | God component; mixed concerns, backward-compat sprawl | Hard to reason about, high coupling | Change ripple, regressions | L | P2 | todo |
 | DEBT-06 | `GlobalStyles.jsx` (1302 LOC) | Giant inline style/CSS blob | Styling changes are risky & slow | Theme bugs (see Themes mission) | M | P2 | todo |
 | DEBT-07 | `drawers/MenuDrawer_old.jsx` | Dead/duplicated code kept alongside `MenuDrawer.jsx` | Confusion, double maintenance | Edits to wrong file | S | P2 | todo |
-| DEBT-08 | `modals/BugReportModal.jsx` (19 LOC stub) | Feature button that does nothing | Users can't report bugs | — (also a chosen mission) | M | P2 | todo |
+| DEBT-08 | `modals/BugReportModal.jsx` (19 LOC stub) | Feature button that does nothing | Users can't report bugs | — (also a chosen mission) | M | P2 | **done** (Bug Reporting mission — see `docs/adr/0002`) |
 | DEBT-09 | whole repo | Duplication not yet measured | Unknown hidden duplication | Blind refactors | S | P3 | todo |
 | DEBT-10 | content & identifiers | Hardcoded **Minecraft**-themed names/assets | Theming can't fully swap them | IP/branding + Themes mission blocked | M | P3 | todo |
 | DEBT-11 | `ow/`, `.packaging/`, `docs/OW-PACKAGING.md` | Out-of-scope rewrite of the game into a custom "OW" language | Dead weight; contradicts refactor mandate | Confuses handover | S | P2 | todo (decide: remove / archive) |

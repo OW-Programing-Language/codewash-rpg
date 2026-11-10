@@ -6,6 +6,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com).
 ## [Unreleased] — CodeWash cleanup
 
 ### Added
+- **Bug Reporting feature** (mission, DEBT-08): the main-menu Bug button now
+  opens a real report form — description, optional email, screenshot
+  attachments, and opt-in game-save + error-log bundling. The destination
+  webhook and contact email are **configurable** (not hardcoded). Logic lives in
+  `src/utils/bugReport.js` + `src/utils/errorLog.js` (pure, injectable transport,
+  100% line coverage); UI in `BugReportModal.jsx`. See `docs/FEATURES.md` and
+  `docs/adr/0002-bug-reporting.md`. Runtime errors are captured from startup
+  (`main.jsx`).
 - **Test suite** (Vitest 3 + v8 coverage) runnable in one command:
   `npm test` / `npm run coverage`. First **characterization tests** freeze the
   RPG progression, achievement and mob-display logic (56 tests). (DEBT-01)
