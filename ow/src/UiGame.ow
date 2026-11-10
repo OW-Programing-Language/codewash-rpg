@@ -1,5 +1,6 @@
 import "Game.ow"
 import "MobArt.ow"
+import "ReadingSkill.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -26,7 +27,13 @@ class UiGame:
     set this.logo: "../public/assets/themes/minecraft_logo.png"
 
   # ---- UI event handlers ----
-  fn begin():
+  fn begin_math():
+    call: this.game.use_skill(new MathSkill())
+    call: this.game.start(1)
+    set this.screen: "battle"
+
+  fn begin_reading():
+    call: this.game.use_skill(new ReadingSkill())
     call: this.game.start(1)
     set this.screen: "battle"
 
@@ -36,13 +43,10 @@ class UiGame:
   fn pick(n):
     call: this.game.answer(n)
 
-  # Four answer choices including the correct one (not in first position).
+  # Answer choices come from the active skill (numbers for Math, words for
+  # Reading), so the same battle screen works for every skill.
   fn opts():
-    set s int: this.game.problem.solution()
-    set lo int: s - 1
-    if: lo < 0
-      set lo: s + 3
-    return: [s + 1, lo, s, s + 2]
+    return: this.game.skill.options(this.game.problem)
 
   # ---- screens ----
   # Note: the parser wants each expression on one line, so we build widgets into
@@ -51,8 +55,10 @@ class UiGame:
     set logo: ui_image(this.logo, 420, 160)
     set title: ui_heading("CODE WASH RPG")
     set sub: ui_text("Clean your code or get fired", "yellow")
-    set play: ui_button("Play  (Math shift)", "app.begin")
-    set items: [logo, title, sub, ui_space(8), play]
+    set play_math: ui_button("Math shift", "app.begin_math")
+    set play_read: ui_button("Reading shift", "app.begin_reading")
+    set row: ui_row([play_math, play_read])
+    set items: [logo, title, sub, ui_space(8), row]
     return: ui_backdrop(this.bg, ui_card(items))
 
   fn battle_view():

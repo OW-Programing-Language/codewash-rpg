@@ -6,9 +6,9 @@ It reimplements the game's progression maths, difficulty tiers, mob
 bestiary and combat loop as a modular, one-class-per-file OW program,
 runnable from the command line.
 
-> **Scope:** a faithful port of the *engine*, driven by the **Math** skill as a
-> vertical slice, now with a **graphical UI** (menu + battle screen) built on the
-> Ow UI runtime. It renders in the browser (web) and as a native desktop window
+> **Scope:** a faithful port of the *engine* with the **Math** and **Reading**
+> skills playable, and a **graphical UI** (menu + battle screen) built on the
+> Ow UI runtime. Skills plug into one shared combat loop. It renders in the browser (web) and as a native desktop window
 > showing the original game art. See [`docs/PORTING.md`](docs/PORTING.md) for
 > exactly what is and isn't ported, and why.
 
@@ -39,7 +39,8 @@ Or open `src/main_ui.ow` in **OwIDE** and click **UI Web ▶** (browser) or
 **UI Native ▶** (desktop window with the original art). The flow mirrors the
 React app:
 
-- **Menu** — themed background, the game logo, and a **Play** button.
+- **Menu** — themed background, the game logo, and a skill choice:
+  **Math shift** or **Reading shift**.
 - **Battle** — the foe's name, its **sprite** (the original per-mob artwork), a
   red **HP bar**, the current problem, and four answer **buttons** (click the
   correct result). Correct answers damage the foe; clearing foes grants XP and
@@ -57,7 +58,8 @@ from this `ow/` folder.
 | `src/mathlib.ow`     | Free integer helpers (`imod`, `idiv`, `ipow`, `imin`) — no floats. |
 | `src/Progression.ow` | Progression maths: damage, mob HP, XP, difficulty, encounter cycle. |
 | `src/Problem.ow`     | Value object: a question string + its integer answer. |
-| `src/MathSkill.ow`   | Generates problems per difficulty tier (1–7). |
+| `src/MathSkill.ow`   | Generates math problems + answer options per difficulty tier (1–7). |
+| `src/ReadingSkill.ow`| Reading word challenge + word options per difficulty (word length 3–8). |
 | `src/Mob.ow`         | A single enemy: name + hit points. |
 | `src/MobPool.ow`     | The bestiary (hostile / miniboss / boss name pools). |
 | `src/Hero.ow`        | The player: level, XP, difficulty, health. |

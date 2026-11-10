@@ -27,6 +27,12 @@ class Game:
     set this.problem: new Problem()
     set this.message: "Welcome to Code Wash RPG."
 
+  # Swap the active skill (e.g. Math or Reading) before starting a run.
+  # Any skill exposing generate(difficulty) -> Problem and options(problem)
+  # plugs in here, so the same combat loop drives every skill.
+  fn use_skill(s):
+    set this.skill: s
+
   # Begin a run at the given difficulty (1-7).
   fn start(d):
     call: this.hero.init(d)

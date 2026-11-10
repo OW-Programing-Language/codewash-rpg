@@ -21,6 +21,15 @@ class MathSkill:
       return: this.nightmare()
     return: this.basic(d)
 
+  # Four multiple-choice answers (ints) including the correct one, which is
+  # placed off the first position. Used by the GUI's answer buttons.
+  fn options(p):
+    set s int: p.solution()
+    set lo int: s - 1
+    if: lo < 0
+      set lo: s + 3
+    return: [s + 1, lo, s, s + 2]
+
   # Difficulties 1-5: pick an operator allowed at this tier, then
   # build a problem whose answer is a non-negative integer.
   fn basic(d):
