@@ -2,6 +2,7 @@ import "Game.ow"
 import "MobArt.ow"
 import "ReadingSkill.ow"
 import "WritingSkill.ow"
+import "MemorySkill.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -43,6 +44,11 @@ class UiGame:
     call: this.game.start(1)
     set this.screen: "battle"
 
+  fn begin_memory():
+    call: this.game.use_skill(new MemorySkill())
+    call: this.game.start(1)
+    set this.screen: "battle"
+
   fn to_menu():
     set this.screen: "menu"
 
@@ -52,6 +58,14 @@ class UiGame:
   # Typed answer (Writing): normalise case/whitespace before comparing.
   fn pick_text(v):
     call: this.game.answer(upper(trim(v)))
+
+  # Memory: flip a card; a matched pair lands a hit, a cleared board deals a new one.
+  fn flip_card(i):
+    set res: this.game.skill.flip(i)
+    if: res == "match"
+      call: this.game.hit()
+    if: this.game.skill.is_cleared() == 1
+      call: this.game.skill.start_board()
 
   # Answer choices come from the active skill (numbers for Math, words for
   # Reading), so the same battle screen works for every skill.
@@ -68,8 +82,10 @@ class UiGame:
     set play_math: ui_button("Math shift", "app.begin_math")
     set play_read: ui_button("Reading shift", "app.begin_reading")
     set play_write: ui_button("Writing shift", "app.begin_writing")
-    set row: ui_row([play_math, play_read, play_write])
-    set items: [logo, title, sub, ui_space(8), row]
+    set play_mem: ui_button("Memory shift", "app.begin_memory")
+    set row1: ui_row([play_math, play_read])
+    set row2: ui_row([play_write, play_mem])
+    set items: [logo, title, sub, ui_space(8), row1, row2]
     return: ui_backdrop(this.bg, ui_card(items))
 
   # The answer widget depends on the skill: a row of choice buttons, or a text
@@ -97,8 +113,32 @@ class UiGame:
     set items: [name, sprite, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, ui_space(6), back]
     return: ui_backdrop(this.bg, ui_card(items))
 
+  # Memory mini-game: a 4-column grid of flip cards over the foe's HUD.
+  fn memory_view():
+    set g: this.game
+    set s: g.skill
+    set name: ui_heading(g.mob.label(), "red")
+    set sprite: ui_image(this.art.path(g.mob.label()), 120, 120)
+    set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
+    set instr: ui_heading("Match the pairs!")
+    set c0: ui_button(s.face(0), "app.flip_card", 0)
+    set c1: ui_button(s.face(1), "app.flip_card", 1)
+    set c2: ui_button(s.face(2), "app.flip_card", 2)
+    set c3: ui_button(s.face(3), "app.flip_card", 3)
+    set c4: ui_button(s.face(4), "app.flip_card", 4)
+    set c5: ui_button(s.face(5), "app.flip_card", 5)
+    set c6: ui_button(s.face(6), "app.flip_card", 6)
+    set c7: ui_button(s.face(7), "app.flip_card", 7)
+    set grid: ui_grid(4, [c0, c1, c2, c3, c4, c5, c6, c7])
+    set msg: ui_text(g.message, "yellow")
+    set hud: ui_text("Level " + g.hero.lvl() + "     XP " + g.hero.xp_v() + "     Diff " + g.hero.diff())
+    set back: ui_button("Back to menu", "app.to_menu")
+    set items: [name, sprite, hp, ui_space(6), instr, grid, ui_space(8), msg, hud, ui_space(6), back]
+    return: ui_backdrop(this.bg, ui_card(items))
+
   fn render():
     if: this.screen == "menu"
       return: this.menu_view()
-    else:
-      return: this.battle_view()
+    if: this.game.skill.mode() == "memory"
+      return: this.memory_view()
+    return: this.battle_view()
