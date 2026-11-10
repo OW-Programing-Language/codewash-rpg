@@ -9,6 +9,7 @@ import {
   fileToAttachment,
 } from '../../utils/bugReport';
 import { getErrorLogs } from '../../utils/errorLog';
+import { useI18n } from '../../i18n/I18nContext';
 
 const APP_VERSION = '1.0.0-codewash';
 
@@ -22,6 +23,7 @@ const APP_VERSION = '1.0.0-codewash';
  * `sendImpl` is injectable for tests/Storybook; defaults to the real sender.
  */
 const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
+  const { t } = useI18n();
   const [description, setDescription] = useState('');
   const [reporterEmail, setReporterEmail] = useState('');
   const [includeSave, setIncludeSave] = useState(true);
@@ -66,7 +68,7 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
 
   const handleSend = async () => {
     const saved = persistConfig();
-    setStatus({ state: 'sending', message: 'Sending your report…', ticketId: null });
+    setStatus({ state: 'sending', message: t('bugReport.sendingStatus'), ticketId: null });
 
     const report = buildBugReport({
       description,
@@ -83,7 +85,7 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
     if (result.ok) {
       setStatus({
         state: 'success',
-        message: `Report received. Reference: ${result.ticketId}`,
+        message: t('bugReport.reference', { ticketId: result.ticketId }),
         ticketId: result.ticketId,
       });
       setDescription('');
@@ -109,44 +111,42 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
 
         <div className="flex flex-col items-center text-center mb-5">
           <Bug size={40} className="text-red-400 mb-2" />
-          <h2 className="text-3xl font-bold text-slate-300 uppercase tracking-wider">Report a bug</h2>
-          <p className="text-stone-400 text-sm mt-1">
-            Tell us what went wrong. Screenshots, your save file and recent error logs help us fix it fast.
-          </p>
+          <h2 className="text-3xl font-bold text-slate-300 uppercase tracking-wider">{t('bugReport.title')}</h2>
+          <p className="text-stone-400 text-sm mt-1">{t('bugReport.subtitle')}</p>
         </div>
 
         {status.state === 'success' ? (
           <div className="flex flex-col items-center text-center gap-3 py-6">
             <CheckCircle size={48} className="text-green-400" />
-            <p className="text-green-300 text-lg font-bold">Thank you!</p>
+            <p className="text-green-300 text-lg font-bold">{t('bugReport.thankYou')}</p>
             <p className="text-stone-300 text-sm break-all">{status.message}</p>
             <button
               onClick={onClose}
               className="mt-2 bg-stone-700 hover:bg-stone-600 text-white px-6 py-2 rounded-lg font-bold"
             >
-              Close
+              {t('common.close')}
             </button>
           </div>
         ) : (
           <div className="flex flex-col gap-4 text-slate-200">
             <label className="flex flex-col gap-1">
-              <span className="text-sm font-bold uppercase text-blue-300">What happened? *</span>
+              <span className="text-sm font-bold uppercase text-blue-300">{t('bugReport.whatHappened')} *</span>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                placeholder="Describe the bug, and what you were doing when it happened…"
+                placeholder={t('bugReport.descriptionPlaceholder')}
                 className="bg-stone-800 border-2 border-stone-600 rounded-lg p-3 text-slate-100 focus:border-blue-400 outline-none resize-none"
               />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-sm font-bold uppercase text-blue-300">Your email (optional)</span>
+              <span className="text-sm font-bold uppercase text-blue-300">{t('bugReport.yourEmail')}</span>
               <input
                 type="email"
                 value={reporterEmail}
                 onChange={(e) => setReporterEmail(e.target.value)}
-                placeholder="so we can follow up"
+                placeholder={t('bugReport.emailPlaceholder')}
                 className="bg-stone-800 border-2 border-stone-600 rounded-lg p-2 text-slate-100 focus:border-blue-400 outline-none"
               />
             </label>
@@ -157,7 +157,7 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
                 onClick={() => fileInputRef.current?.click()}
                 className="flex items-center justify-center gap-2 bg-stone-800 hover:bg-stone-700 border-2 border-stone-600 rounded-lg p-2 text-sm font-bold"
               >
-                <Paperclip size={16} /> Attach screenshot(s)
+                <Paperclip size={16} /> {t('bugReport.attach')}
               </button>
               <input
                 ref={fileInputRef}
@@ -175,7 +175,7 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
                       className="flex items-center gap-1 bg-stone-800 border border-stone-600 rounded px-2 py-1 text-xs"
                     >
                       {a.name}
-                      <button onClick={() => removeAttachment(i)} aria-label={`Remove ${a.name}`}>
+                      <button onClick={() => removeAttachment(i)} aria-label={t('bugReport.removeAttachment', { name: a.name })}>
                         <X size={12} className="text-stone-400 hover:text-red-400" />
                       </button>
                     </span>
@@ -187,11 +187,11 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
             <div className="flex flex-col gap-2 bg-stone-800/50 rounded-lg p-3 border border-stone-700">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={includeSave} onChange={(e) => setIncludeSave(e.target.checked)} className="accent-blue-400" />
-                Include my game save files
+                {t('bugReport.includeSave')}
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={includeLogs} onChange={(e) => setIncludeLogs(e.target.checked)} className="accent-blue-400" />
-                Include recent error logs ({getErrorLogs().length})
+                {t('bugReport.includeLogs', { count: getErrorLogs().length })}
               </label>
             </div>
 
@@ -202,34 +202,34 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
                 onClick={() => setShowConfig((v) => !v)}
                 className="flex items-center gap-2 text-xs text-stone-400 hover:text-blue-300"
               >
-                <Settings size={14} /> {showConfig ? 'Hide' : 'Configure'} report destination
+                <Settings size={14} /> {showConfig ? t('bugReport.hide') : t('bugReport.configure')}
               </button>
               {showConfig && (
                 <div className="flex flex-col gap-2 mt-2 bg-stone-800/50 rounded-lg p-3 border border-stone-700">
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-bold uppercase text-stone-400">Report endpoint URL</span>
+                    <span className="text-xs font-bold uppercase text-stone-400">{t('bugReport.endpointLabel')}</span>
                     <input
                       type="url"
                       value={config.endpoint}
                       onChange={(e) => setConfig((c) => ({ ...c, endpoint: e.target.value }))}
-                      placeholder="https://your-webhook.example/bug-reports"
+                      placeholder={t('bugReport.endpointPlaceholder')}
                       className="bg-stone-900 border-2 border-stone-600 rounded-lg p-2 text-slate-100 text-sm focus:border-blue-400 outline-none"
                     />
                   </label>
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-bold uppercase text-stone-400">Support contact email</span>
+                    <span className="text-xs font-bold uppercase text-stone-400">{t('bugReport.contactLabel')}</span>
                     <input
                       type="email"
                       value={config.contactEmail}
                       onChange={(e) => setConfig((c) => ({ ...c, contactEmail: e.target.value }))}
-                      placeholder="support@codewash.example"
+                      placeholder={t('bugReport.contactPlaceholder')}
                       className="bg-stone-900 border-2 border-stone-600 rounded-lg p-2 text-slate-100 text-sm focus:border-blue-400 outline-none"
                     />
                   </label>
                 </div>
               )}
               {config.contactEmail && !showConfig && (
-                <p className="text-xs text-stone-500 mt-1">Reports go to {config.contactEmail}</p>
+                <p className="text-xs text-stone-500 mt-1">{t('bugReport.reportsTo', { email: config.contactEmail })}</p>
               )}
             </div>
 
@@ -246,7 +246,7 @@ const BugReportModal = ({ isOpen, onClose, sendImpl = sendBugReport }) => {
               className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-stone-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-bold uppercase tracking-wider transition-all"
             >
               {sending ? <Loader size={18} className="animate-spin" /> : <Send size={18} />}
-              {sending ? 'Sending…' : 'Send report'}
+              {sending ? t('bugReport.sending') : t('bugReport.send')}
             </button>
           </div>
         )}
