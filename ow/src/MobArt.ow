@@ -68,3 +68,21 @@ class MobArt:
         return: this.base + "boss/wither.png"
       default:
         return: this.base + "hostile/zombie.png"
+
+  # Chest/block sprites for the Cleaning skill (ported from CHEST_BLOCKS).
+  fn chest_path(name):
+    switch: name
+      case "Chest":
+        return: "../public/assets/items/chests/chest.gif"
+      case "Trapped Chest":
+        return: "../public/assets/items/chests/trapped_chest.gif"
+      case "Barrel":
+        return: "../public/assets/items/chests/barrel.png"
+      case "Bundle":
+        return: "../public/assets/items/bundle.png"
+      case "Shulker Box":
+        return: "../public/assets/items/chests/shulker_box.png"
+      case "Ender Chest":
+        return: "../public/assets/items/chests/ender_chest.gif"
+      default:
+        return: "../public/assets/items/chests/chest.gif"

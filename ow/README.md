@@ -67,7 +67,7 @@ from this `ow/` folder.
 | `src/WritingSkill.ow`| Writing/spelling challenge: type the word (text input), per-length pools. |
 | `src/MemorySkill.ow` | Memory mini-game: a 4-pair card board; each match lands a hit. |
 | `src/PatternsSkill.ow`| Pattern recognition: complete a repeating colour sequence (pick next). |
-| `src/CleaningSkill.ow`| Cleaning: a themed chore card with a Complete! button (one-tap task). |
+| `src/CleaningSkill.ow`| Cleaning: a themed chore card with a Complete! button; the foe is a chest sprite. |
 | `src/Mob.ow`         | A single enemy: name + hit points. |
 | `src/MobPool.ow`     | The bestiary (hostile / miniboss / boss name pools). |
 | `src/Hero.ow`        | The player: level, XP, difficulty, health. |

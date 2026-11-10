@@ -132,6 +132,17 @@ class UiGame:
     set g: this.game
     return: ui_bar(g.hero.xp_v(), g.prog.xp_to_level(g.hero.diff()), "yellow")
 
+  # The foe's name and sprite. For Cleaning (mode "task") the foe is a chest.
+  fn foe_label():
+    if: this.game.skill.mode() == "task"
+      return: this.game.skill.chest_name()
+    return: this.game.mob.label()
+
+  fn foe_sprite_path():
+    if: this.game.skill.mode() == "task"
+      return: this.art.chest_path(this.game.skill.chest_name())
+    return: this.art.path(this.game.mob.label())
+
   # ---- screens ----
   # Note: the parser wants each expression on one line, so we build widgets into
   # variables and compose single-line array literals (no multi-line brackets).
@@ -167,8 +178,8 @@ class UiGame:
 
   fn battle_view():
     set g: this.game
-    set name: ui_heading(g.mob.label(), "red")
-    set sprite: ui_image(this.art.path(g.mob.label()), 160, 160)
+    set name: ui_heading(this.foe_label(), "red")
+    set sprite: ui_image(this.foe_sprite_path(), 160, 160)
     set hp: ui_bar(g.mob.cur_hp(), g.mob.max_hp(), "red")
     set q: ui_heading(g.problem.ask())
     set row: this.answers_widget()
