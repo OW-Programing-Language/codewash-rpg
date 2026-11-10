@@ -22,6 +22,8 @@ class UiGame:
   field bg
   field logo
   field art
+  field snd
+  field music_on
 
   fn new():
     set this.game: new Game()
@@ -29,65 +31,106 @@ class UiGame:
     set this.art: new MobArt()
     set this.bg: "../public/assets/themes/minecraft.png"
     set this.logo: "../public/assets/themes/minecraft_logo.png"
+    set this.snd: 1
+    set this.music_on: 0
+
+  # Toggle sound effects on (1) / off (0).
+  fn set_sound(v):
+    set this.snd: v
+
+  # ---- sound (native backend plays the original .wav assets) ----
+  # Start looping background music once (on the first shift launched).
+  fn start_music():
+    if: this.music_on == 1
+      return: 0
+    set this.music_on: 1
+    call: audio_music("../public/assets/sounds/bgm/calm1.wav")
+
+  # Play a one-shot UI sound. Kept last in handlers so a missing/unsupported
+  # file (e.g. in the web backend) never aborts the game logic before it.
+  fn play(name):
+    if: this.snd == 0
+      return: 0
+    set base: "../public/assets/sounds/ui/ui/"
+    if: name == "levelup"
+      call: audio_play(base + "levelup.wav")
+    if: name == "click"
+      call: audio_play(base + "click.wav")
+
+  # Feedback after an action: a level-up jingle if the hero levelled, else a click.
+  fn feedback(before):
+    set now int: this.game.hero.lvl()
+    if: now > before
+      call: this.play("levelup")
+    else:
+      call: this.play("click")
 
   # ---- UI event handlers ----
-  fn begin_math():
-    call: this.game.use_skill(new MathSkill())
+  fn launch(s):
+    call: this.game.use_skill(s)
     call: this.game.start(1)
     set this.screen: "battle"
+    call: this.start_music()
+
+  fn begin_math():
+    call: this.launch(new MathSkill())
 
   fn begin_reading():
-    call: this.game.use_skill(new ReadingSkill())
-    call: this.game.start(1)
-    set this.screen: "battle"
+    call: this.launch(new ReadingSkill())
 
   fn begin_writing():
-    call: this.game.use_skill(new WritingSkill())
-    call: this.game.start(1)
-    set this.screen: "battle"
+    call: this.launch(new WritingSkill())
 
   fn begin_memory():
-    call: this.game.use_skill(new MemorySkill())
-    call: this.game.start(1)
-    set this.screen: "battle"
+    call: this.launch(new MemorySkill())
 
   fn begin_patterns():
-    call: this.game.use_skill(new PatternsSkill())
-    call: this.game.start(1)
-    set this.screen: "battle"
+    call: this.launch(new PatternsSkill())
 
   fn begin_cleaning():
-    call: this.game.use_skill(new CleaningSkill())
-    call: this.game.start(1)
-    set this.screen: "battle"
+    call: this.launch(new CleaningSkill())
 
   # Cleaning: finishing a task clears the mess (a hit) and brings the next task.
   fn complete():
+    set before int: this.game.hero.lvl()
     call: this.game.hit()
     call: this.game.next_problem()
+    call: this.feedback(before)
 
   fn to_menu():
     set this.screen: "menu"
 
   fn pick(n):
+    set before int: this.game.hero.lvl()
     call: this.game.answer(n)
+    call: this.feedback(before)
 
   # Typed answer (Writing): normalise case/whitespace before comparing.
   fn pick_text(v):
+    set before int: this.game.hero.lvl()
     call: this.game.answer(upper(trim(v)))
+    call: this.feedback(before)
 
   # Memory: flip a card; a matched pair lands a hit, a cleared board deals a new one.
   fn flip_card(i):
+    set before int: this.game.hero.lvl()
     set res: this.game.skill.flip(i)
     if: res == "match"
       call: this.game.hit()
     if: this.game.skill.is_cleared() == 1
       call: this.game.skill.start_board()
+    if: res == "match"
+      call: this.feedback(before)
 
   # Answer choices come from the active skill (numbers for Math, words for
   # Reading), so the same battle screen works for every skill.
   fn opts():
     return: this.game.skill.options(this.game.problem)
+
+  # XP progress toward the next level (used in both battle and memory HUDs).
+  fn xp_bar():
+    set g: this.game
+    return: ui_bar(g.hero.xp_v(), g.prog.xp_to_level(g.hero.diff()), "yellow")
 
   # ---- screens ----
   # Note: the parser wants each expression on one line, so we build widgets into
@@ -130,9 +173,10 @@ class UiGame:
     set q: ui_heading(g.problem.ask())
     set row: this.answers_widget()
     set msg: ui_text(g.message, "yellow")
-    set hud: ui_text("Level " + g.hero.lvl() + "     XP " + g.hero.xp_v() + "     Diff " + g.hero.diff())
+    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff())
+    set xp: this.xp_bar()
     set back: ui_button("Back to menu", "app.to_menu")
-    set items: [name, sprite, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, ui_space(6), back]
+    set items: [name, sprite, hp, ui_space(6), q, ui_space(8), row, ui_space(8), msg, hud, xp, ui_space(6), back]
     return: ui_backdrop(this.bg, ui_card(items))
 
   # Memory mini-game: a 4-column grid of flip cards over the foe's HUD.
@@ -153,9 +197,10 @@ class UiGame:
     set c7: ui_button(s.face(7), "app.flip_card", 7)
     set grid: ui_grid(4, [c0, c1, c2, c3, c4, c5, c6, c7])
     set msg: ui_text(g.message, "yellow")
-    set hud: ui_text("Level " + g.hero.lvl() + "     XP " + g.hero.xp_v() + "     Diff " + g.hero.diff())
+    set hud: ui_text("Level " + g.hero.lvl() + "     Diff " + g.hero.diff())
+    set xp: this.xp_bar()
     set back: ui_button("Back to menu", "app.to_menu")
-    set items: [name, sprite, hp, ui_space(6), instr, grid, ui_space(8), msg, hud, ui_space(6), back]
+    set items: [name, sprite, hp, ui_space(6), instr, grid, ui_space(8), msg, hud, xp, ui_space(6), back]
     return: ui_backdrop(this.bg, ui_card(items))
 
   fn render():

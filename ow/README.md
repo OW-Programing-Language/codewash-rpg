@@ -46,7 +46,9 @@ React app:
   red **HP bar**, the current problem, and the answer input — four **buttons**
   for Math/Reading, or a **text field** for Writing (type the word, press Enter;
   case-insensitive). Correct answers damage the foe; clearing foes grants XP and
-  levels you up, with a live HUD.
+  levels you up, with a live HUD: an **HP bar**, an **XP bar** toward the next
+  level, and **sounds** (looping background music, a click on each action and a
+  jingle on level-up — native backend).
 
 The screens are built from the Ow UI primitives (`ui_backdrop`, `ui_card`,
 `ui_image`, `ui_bar`, `ui_button`, …) in `UiGame.ow`; all game logic stays in the
