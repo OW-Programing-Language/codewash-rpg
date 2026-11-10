@@ -6,6 +6,14 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com).
 ## [Unreleased] — CodeWash cleanup
 
 ### Added
+- **Translation feature** (mission): switch the game's display language from the
+  Settings panel (new **Language** selector — a button per language). Ships
+  **English + Français**. Lightweight dependency-free i18n: pure core
+  (`src/i18n/translate.js` + `config.js`, 100% line coverage), plain-JSON locales,
+  and a `useI18n()` React binding. Nothing about languages is hardcoded — adding
+  a locale is a JSON file + two one-line registrations (see `docs/FEATURES.md`).
+  Settings and Bug Report UI are translated; remaining strings tracked as DEBT-12.
+  See `docs/adr/0003-i18n.md`.
 - **Bug Reporting feature** (mission, DEBT-08): the main-menu Bug button now
   opens a real report form — description, optional email, screenshot
   attachments, and opt-in game-save + error-log bundling. The destination

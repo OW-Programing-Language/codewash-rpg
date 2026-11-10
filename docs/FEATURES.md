@@ -54,3 +54,37 @@ and watch the delivered JSON appear.
   coverage).
 - UI: `src/components/modals/BugReportModal.jsx`.
 - Design rationale: `docs/adr/0002-bug-reporting.md`.
+
+---
+
+## Translation (change the language)
+
+**Where:** the **Settings** panel → **Language** section. Pick a language; the
+choice is saved and applied immediately.
+
+Currently shipped: **English** and **Français**. The Settings panel, the Bug
+Report modal and the language selector are translated; the rest of the in-game
+text is being migrated incrementally (tracked as DEBT-12).
+
+### Adding a new language (no coding required beyond a JSON file)
+1. Copy `src/i18n/locales/en.json` to `src/i18n/locales/<code>.json` (e.g.
+   `es.json`) and translate the values. Keep the keys unchanged.
+2. Register it in `src/i18n/translations.js`:
+   ```js
+   import es from './locales/es.json';
+   export const translations = { en, fr, es };
+   ```
+3. Add one entry to `LANGUAGES` in `src/i18n/config.js`:
+   ```js
+   { code: 'es', label: 'Español', flag: '🇪🇸' },
+   ```
+That's it — a new button appears in the selector automatically. A missing key
+falls back to English, then to the key itself, so a partial translation never
+breaks the UI.
+
+### Implementation
+- Pure core: `src/i18n/translate.js` (lookup + interpolation + fallback) and
+  `src/i18n/config.js` (language registry + persistence) — 100% line coverage.
+- React binding: `src/i18n/I18nContext.jsx` (`useI18n()` → `t(key, vars)`),
+  `src/components/ui/LanguageSelector.jsx`.
+- Design rationale: `docs/adr/0003-i18n.md`.
