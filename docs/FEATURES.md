@@ -119,3 +119,17 @@ Non-developer guide: **`docs/THEMES.md`** (two files + a few images, no coding).
 - Design rationale: `docs/adr/0004-theming.md`.
 - Known limitation: new themes reuse default monster art until themed images are
   added (DEBT-13).
+
+---
+
+## Performance / startup
+
+**What you'll notice:** launching the game shows a **loading screen with a
+percentage** immediately, then opens the menu once art is ready — no blank wait,
+no image pop-in.
+
+- Preloader: `src/utils/assetPreloader.js` (progress 0–100%, 100% line coverage).
+- Overlay: `src/components/ui/LoadingScreen.jsx`.
+- Measurement: `src/utils/perf.js` logs `[perf] startup assets ready in <N>ms`.
+  Full method + before/after template: `docs/PERFORMANCE.md`.
+- Rationale: `docs/adr/0005-performance.md`.

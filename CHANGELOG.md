@@ -6,6 +6,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com).
 ## [Unreleased] — CodeWash cleanup
 
 ### Added
+- **Performance feature** (mission): startup now shows a `LoadingScreen` with a
+  **real 0–100% bar** while the heavy theme art preloads (`utils/assetPreloader.js`,
+  pure/injectable, 100% line coverage), so the menu feels instant and no longer
+  pops in. Added `utils/perf.js` (injectable clock) that marks `app-mount` /
+  `assets-loaded` and logs the startup span. Animations kept. Measurement method
+  and before/after template in `docs/PERFORMANCE.md`; rationale in
+  `docs/adr/0005-performance.md`.
 - **Themes feature** (mission): a pure theme engine (`src/utils/themeUtils.js`,
   100% line coverage) that resolves themes by **merging onto a base theme** (so
   missing keys inherit) and resolves monster art **theme-first** (themes can now
