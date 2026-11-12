@@ -183,7 +183,7 @@ class UiGame:
   # field for skills answered by typing (Writing).
   fn answers_widget():
     if: this.game.skill.mode() == "text"
-      return: ui_input("app.pick_text", "type the word, then Enter")
+      return: ui_input("", "app.pick_text")
     if: this.game.skill.mode() == "task"
       return: ui_button("Complete!", "app.complete")
     set o: this.opts()
