@@ -1,13 +1,28 @@
-import "UiGame.ow"
+import "full/GameView.ow"
 
-# Graphical entry point for the Code Wash RPG (OW port).
-#
-#   Run from the `ow/` folder:  ow run src/main_ui.ow
-#   (OwIDE: open this file and click UI Web ▶ or UI Native ▶)
-#
-# Opens a themed menu; press Play to start the Math shift and answer by clicking
-# the correct result. The native backend shows the original art from
-# ../public/assets; the web backend renders the same widget tree in the browser.
+# Full browser game. Build its catalog/page with node scripts/build-web.mjs.
+# The launcher selects a runtime supporting web_ui and sets the asset cwd.
+fn media_view():
+  return: ui_text("Level Up media")
+
 main:
-  set app: new UiGame()
-  call: ui_run("app.render", "Code Wash RPG")
+  set world: new World("save/profiles.json")
+  set view: new GameView(world)
+  set page: load("generated/page.json")
+  call: web_ui("/media", "media_view", "Level Up", "../public")
+  route "GET /":
+    respond: page
+  route "GET /api/state":
+    set world.effects: []
+    respond: view.state()
+  route "POST /api/event":
+    set request: body_json()
+    if: request.token != world.token
+      respond: response(403, {error: "Invalid session"})
+    if: request.revision != world.revision
+      respond: response(409, {error: "State changed; refresh"})
+    call: world.dispatch(request.action, request.value)
+    respond: view.state()
+  route "GET /api/export":
+    respond: {schema: 1, current: world.current, profiles: world.profiles}
+  serve: 5180

@@ -1,0 +1,181 @@
+import "Helpers.ow"
+
+class Challenges:
+  field data
+  field question
+  field answer
+  field image
+  field deck
+  field matched
+  field flipped
+  field mistakes
+  field sequence
+  field cursor
+  field rounds
+  field active
+  field showing
+  field difficulty
+
+  fn new(data):
+    set this.data: data
+    set this.question: ""
+    set this.answer: ""
+    set this.image: ""
+    set this.deck: []
+    set this.matched: []
+    set this.flipped: []
+    set this.mistakes: 0
+    set this.sequence: []
+    set this.cursor: 0
+    set this.rounds: 0
+    set this.active: false
+    set this.showing: false
+    set this.difficulty: 1
+
+  fn next(index, difficulty):
+    set this.difficulty: difficulty
+    set this.image: ""
+    if: index == 0
+      set pool: this.data.reading[difficulty - 1]
+      set this.answer: pick(pool)
+      set this.question: this.answer
+    if: index == 1
+      call: this.math(difficulty)
+    if: index == 2
+      set word: pick(this.data.writing[difficulty - 1])
+      set this.answer: upper(word.displayName)
+      set this.question: "Spell it!"
+      set this.image: word.imagePath
+    if: index == 3
+      set this.question: "Task complete?"
+      set this.answer: "FLOPPYDISK"
+
+  fn math(d):
+    if: d > 5
+      set pool: this.data.pemdas
+      if: d == 7
+        set pool: this.data.nightmare
+      set problem: pick(pool)
+      set this.question: problem.question
+      set this.answer: problem.answer
+      return: 0
+    set config: this.data.math[d - 1]
+    set op: pick(config.operations)
+    set a: rand(config.range[1] - config.range[0] + 1) + config.range[0]
+    set b: rand(config.range[1] - config.range[0] + 1) + config.range[0]
+    set result: a + b
+    if: op == "-"
+      set b: 1
+      if: a > 0
+        set b: rand(a) + 1
+      set result: a - b
+    if: op == "*"
+      set hi: 12
+      if: d == 4
+        set hi: 10
+      set a: rand(hi) + 1
+      set b: rand(hi) + 1
+      set result: a * b
+      set op: "×"
+    if: op == "/"
+      set b: rand(10) + 1
+      set result: rand(10) + 1
+      set a: result * b
+      set op: "÷"
+    set this.question: str(a) + " " + op + " " + str(b) + " = ?"
+    set this.answer: str(result)
+
+  fn correct(index, text):
+    set guess: normalized(text)
+    if: guess == normalized(this.answer)
+      return: 1
+    if: index == 0
+      set i: 0
+      while: i < len(this.data.homophones)
+        set entry: this.data.homophones[i]
+        if: entry.word == this.answer
+          if: has(entry.alternatives, upper(trim(text)))
+            return: 1
+        set i: i + 1
+    return: 0
+
+  fn memory(d):
+    set this.difficulty: d
+    set pool: shuffled(this.data.friendly)
+    set pairs: this.data.memory[d - 1].pairs
+    set deck: []
+    set i: 0
+    while: i < pairs
+      set deck: append(deck, pool[i])
+      set deck: append(deck, pool[i])
+      set i: i + 1
+    set this.deck: shuffled(deck)
+    set this.flipped: []
+    set this.matched: []
+    set this.mistakes: 0
+
+  fn flip(index):
+    if: index < 0
+      return: "ignored"
+    if: index > (len(this.deck) - 1)
+      return: "ignored"
+    if: len(this.flipped) == 2
+      return: "ignored"
+    if: has(this.flipped, index)
+      return: "ignored"
+    if: has(this.matched, this.deck[index].name)
+      return: "ignored"
+    set this.flipped: append(this.flipped, index)
+    if: len(this.flipped) == 2
+      set a: this.deck[this.flipped[0]]
+      set b: this.deck[this.flipped[1]]
+      if: a.name == b.name
+        set this.matched: append(this.matched, a.name)
+        set this.flipped: []
+        if: len(this.matched) * 2 == len(this.deck)
+          return: "complete"
+        return: "match"
+      set this.mistakes: this.mistakes + 1
+      return: "mismatch"
+    return: "flipped"
+
+  fn simon(d):
+    set this.difficulty: d
+    set this.rounds: 0
+    set this.cursor: 0
+    set this.sequence: [rand(d + 1)]
+    set this.active: true
+    set this.showing: true
+
+  fn press(color):
+    if: this.showing
+      return: "ignored"
+    if: this.active == false
+      return: "ignored"
+    if: color != this.sequence[this.cursor]
+      set this.active: false
+      return: "wrong"
+    set this.cursor: this.cursor + 1
+    if: this.cursor < len(this.sequence)
+      return: "correct"
+    set this.rounds: this.rounds + 1
+    set this.cursor: 0
+    set size: len(this.sequence) + 1
+    if: this.difficulty == 7
+      set this.sequence: []
+      set i: 0
+      while: i < size
+        set this.sequence: append(this.sequence, rand(8))
+        set i: i + 1
+    else:
+      set this.sequence: append(this.sequence, rand(this.difficulty + 1))
+    set this.showing: true
+    return: "round"
+
+  fn tempo():
+    set starting: 800 - (this.difficulty - 1) * 100
+    set runway: 10.0 - (this.difficulty - 1) * 1.5
+    set delay: 200
+    if: runway > 1
+      set delay: max(200, round(starting + (200 - starting) * this.rounds / (runway - 1)))
+    return: {on: delay, off: max(100, round(delay * 0.35))}

@@ -1,0 +1,380 @@
+import "Rules.ow"
+import "Challenges.ow"
+import "Awards.ow"
+
+class World:
+  field data
+  field rules
+  field awards
+  field challenge
+  field profiles
+  field current
+  field selected
+  field battle
+  field battleDifficulty
+  field hp
+  field panel
+  field modal
+  field message
+  field effects
+  field revision
+  field token
+  field savePath
+  field phantomAt
+  field phantomUntil
+  field pendingProfile
+  field musicIndex
+
+  fn new(savePath):
+    set this.data: load("generated/catalog.json")
+    set this.rules: new Rules()
+    set this.awards: new Awards()
+    set this.challenge: new Challenges(this.data)
+    set this.savePath: savePath
+    set this.profiles: []
+    set this.current: 0
+    set i: 0
+    while: i < 3
+      set this.profiles: append(this.profiles, this.new_profile(i))
+      set i: i + 1
+    if: exists(savePath)
+      set saved: load(savePath)
+      if: saved.schema == 1
+        if: len(saved.profiles) == 3
+          set this.profiles: saved.profiles
+          set this.current: clamp(saved.current, 0, 2)
+    set i: 0
+    while: i < 3
+      set p: this.profiles[i]
+      set p.stats.battles: 0
+      set i: i + 1
+    set this.selected: 0
+    set this.battle: 0 - 1
+    set this.battleDifficulty: 1
+    set this.hp: 10
+    set this.panel: ""
+    set this.modal: ""
+    set this.message: ""
+    set this.effects: []
+    set this.revision: 1
+    set this.token: str(rand(1000000000)) + str(rand(1000000000)) + str(rand(1000000000))
+    set this.phantomAt: now_ms() + 45000 + rand(30000)
+    set this.phantomUntil: 0
+    set this.pendingProfile: 0
+    set this.musicIndex: rand(3)
+
+  fn new_profile(i):
+    set skills: []
+    set n: 0
+    while: n < 6
+      set skills: append(skills, this.rules.skill(n, this.data))
+      set n: n + 1
+    return: {name: "Player " + str(i + 1), parent: false, skills: skills, stats: this.awards.stats(), theme: 0, border: "solid", color: "#FFD700", language: "en", bgm: 30, sfx: 50}
+
+  fn profile():
+    return: this.profiles[this.current]
+
+  fn persist():
+    if: exists(this.savePath)
+      call: save(this.savePath + ".backup", load(this.savePath))
+    call: save(this.savePath, {schema: 1, current: this.current, profiles: this.profiles})
+
+  fn effect(kind, value, delay):
+    set this.effects: append(this.effects, {kind: kind, value: value, delay: delay})
+
+  fn sound(name):
+    call: this.effect("sound", "assets/sounds/ui/ui/" + name + ".wav", 0)
+
+  fn close_battle():
+    set this.battle: 0 - 1
+    set this.challenge.active: false
+    set this.challenge.showing: false
+    call: this.effect("cancel", "", 0)
+    call: this.effect("mic-stop", "", 0)
+
+  fn begin(index):
+    if: index < 0
+      return: 0
+    if: index > 5
+      return: 0
+    set this.selected: index
+    set this.battle: index
+    set this.panel: ""
+    set this.modal: ""
+    set this.message: ""
+    set p: this.profile()
+    set this.battleDifficulty: this.rules.challenge_difficulty(p.skills[index])
+    if: index == 4
+      call: this.challenge.memory(p.skills[index].difficulty)
+    else:
+      if: index == 5
+        call: this.challenge.simon(p.skills[index].difficulty)
+        call: this.sequence()
+      else:
+        call: this.challenge.next(index, this.battleDifficulty)
+    call: this.sound("click")
+
+  fn sequence():
+    set tempo: this.challenge.tempo()
+    call: this.effect("sequence", {steps: this.challenge.sequence, on: tempo.on, off: tempo.off}, 500)
+
+  fn win():
+    if: this.battle < 0
+      return: 0
+    set p: this.profile()
+    set s: p.skills[this.battle]
+    set result: this.rules.hit(s, this.battle, this.data)
+    if: this.battle != 3
+      if: this.battle != 4
+        set clip: result.mob.hurt
+        if: result.defeated
+          set clip: result.mob.death
+        if: clip
+          call: this.effect("sound", clip, 0)
+    call: this.sound("successful_hit")
+    call: this.effect("damage", result.damage, 0)
+    set this.message: "+" + str(result.xp) + " XP"
+    if: result.defeated
+      set p.stats.battles: p.stats.battles + 1
+      if: result.encounter == "boss"
+        set p.stats.bossKills: p.stats.bossKills + 1
+        set p.stats.bosses: unique(p.stats.bosses, result.mob.name)
+      else:
+        if: result.encounter == "miniboss"
+          set p.stats.miniKills: p.stats.miniKills + 1
+          set p.stats.minibosses: unique(p.stats.minibosses, result.mob.name)
+        else:
+          set p.stats.kills: p.stats.kills + 1
+          if: this.battle != 3
+            if: this.battle != 4
+              set p.stats.mobs: unique(p.stats.mobs, result.mob.name)
+      set this.message: result.mob.name + " defeated! +" + str(result.xp) + " XP"
+    if: result.levels > 0
+      call: this.sound("levelup")
+      call: this.effect("toast", "Level " + str(s.level) + "!", 0)
+    if: result.restored
+      call: this.effect("toast", "Level restored!", 0)
+    if: result.badge > 0
+      call: this.effect("toast", "New badge: " + this.data.badges[result.badge - 1].name, 0)
+    if: this.battle < 4
+      call: this.challenge.next(this.battle, this.battleDifficulty)
+    if: this.battle == 4
+      if: this.challenge.mistakes == 0
+        set p.stats.perfect: p.stats.perfect + 1
+      call: this.close_battle()
+
+  fn wrong():
+    set p: this.profile()
+    set s: p.skills[this.battle]
+    call: this.sound("fail")
+    call: this.effect("shake", "", 0)
+    set this.message: "Try again!"
+    if: this.rules.encounter(s.level) == "boss"
+      set s.hp: s.hpMax
+      set this.message: "The boss recovered all its health!"
+      return: 0
+    set this.hp: this.hp - 1
+    if: this.hp < 1
+      set p.stats.deaths: p.stats.deaths + 1
+      set s.lostLevel: s.level > 1
+      set s.level: max(1, s.level - 1)
+      set s.recoveryDifficulty: max(1, s.difficulty - 1)
+      set this.hp: 10
+      call: this.close_battle()
+      call: this.sound("death")
+      call: this.effect("toast", "YOU DIED — Level -1", 0)
+
+  fn border_unlocked(id):
+    set p: this.profile()
+    set ids: ["solid", "solid-picker", "gradient", "sparkle", "electric", "lifestream", "frost", "fire", "shadow", "rainbow"]
+    if: id == "solid"
+      return: 1
+    set i: 1
+    while: i < len(ids)
+      if: id == ids[i]
+        set j: 0
+        while: j < 6
+          if: has(p.skills[j].badges, i)
+            return: 1
+          if: i == 9
+            if: p.skills[j].level > 179
+              return: 1
+          set j: j + 1
+      set i: i + 1
+    set custom: ["livewire", "void", "toxic", "holo", "crystal"]
+    set awards: ["speed_demon", "world_ender", "monster_manual", "perfectionist", "full_set"]
+    set i: 0
+    while: i < 5
+      if: id == custom[i]
+        return: this.awards.unlocked(p, awards[i])
+      set i: i + 1
+    return: 0
+
+  fn act(action, value):
+    set p: this.profile()
+    if: action == "music-next"
+      set this.musicIndex: this.musicIndex + 1
+    if: action == "navigate"
+      if: this.battle < 0
+        set this.selected: mod(this.selected + int(value) + 6, 6)
+        call: this.sound("actioncard_right")
+    if: action == "select"
+      if: this.battle < 0
+        set this.selected: clamp(int(value), 0, 5)
+    if: action == "begin"
+      if: this.battle < 0
+        call: this.begin(this.selected)
+    if: action == "end"
+      call: this.close_battle()
+    if: action == "panel"
+      if: has(["settings", "cosmetics", "achievements", "help", ""], value)
+        set this.panel: value
+        set this.modal: ""
+    if: action == "answer"
+      if: this.battle > (0 - 1)
+        if: this.battle < 3
+          if: this.challenge.correct(this.battle, value)
+            call: this.win()
+          else:
+            if: this.battle == 2
+              set this.message: "Try again!"
+              call: this.sound("fail")
+              call: this.effect("shake", "", 0)
+            else:
+              call: this.wrong()
+    if: action == "flip"
+      if: this.battle == 4
+        set result: this.challenge.flip(int(value))
+        call: this.sound("click")
+        if: result == "complete"
+          call: this.win()
+        if: result == "match"
+          call: this.sound("successful_hit")
+        if: result == "mismatch"
+          call: this.sound("fail")
+          call: this.effect("event", {action: "hide-cards", value: ""}, 900)
+    if: action == "hide-cards"
+      set this.challenge.flipped: []
+    if: action == "sequence-done"
+      set this.challenge.showing: false
+    if: action == "axolotl"
+      if: this.battle == 5
+        set result: this.challenge.press(int(value))
+        if: result == "round"
+          call: this.win()
+          call: this.sequence()
+        if: result == "wrong"
+          set this.message: "Sequence missed. Try again!"
+          call: this.sound("fail")
+    if: action == "retry"
+      if: this.battle == 5
+        call: this.challenge.simon(this.battleDifficulty)
+        call: this.sequence()
+    if: action == "difficulty"
+      if: this.battle < 0
+        set s: p.skills[this.selected]
+        if: this.selected != 3
+          set d: clamp(int(value), 1, min(7, s.level / 20 + 1))
+          set s.difficulty: d
+          set s.hpMax: this.rules.health(d)
+          set s.hp: s.hpMax
+    if: action == "theme"
+      set n: clamp(int(value), 0, 5)
+      if: n != p.theme
+        set p.theme: n
+        set p.stats.themes: p.stats.themes + 1
+    if: action == "border"
+      if: this.border_unlocked(value)
+        if: p.border != value
+          set p.border: value
+          set p.stats.borders: p.stats.borders + 1
+    if: action == "color"
+      if: this.border_unlocked("solid-picker")
+        if: len(value) == 7
+          if: char_at(value, 0) == "#"
+            set p.color: value
+    if: action == "language"
+      if: has(["en", "fr"], value)
+        set p.language: value
+    if: action == "bgm"
+      set p.bgm: clamp(int(value), 0, 100)
+    if: action == "sfx"
+      set p.sfx: clamp(int(value), 0, 100)
+    if: action == "profile"
+      call: this.close_battle()
+      set this.current: clamp(int(value), 0, 2)
+      set this.hp: 10
+      set this.message: ""
+    if: action == "rename"
+      if: len(trim(value)) > 0
+        set p.name: substr(trim(value), 0, min(32, len(trim(value))))
+    if: action == "parent"
+      set this.pendingProfile: clamp(int(value), 0, 2)
+      set this.modal: "parent"
+    if: action == "clean"
+      if: this.battle == 3
+        set this.modal: "clean"
+    if: action == "verify"
+      if: normalized(value) == "FLOPPYDISK"
+        if: this.modal == "parent"
+          set target: this.profiles[this.pendingProfile]
+          set target.parent: true
+          set i: 0
+          while: i < 6
+            set s: target.skills[i]
+            set s.level: 200
+            set s.difficulty: 7
+            set s.badges: [1,2,3,4,5,6,7,8]
+            call: this.rules.spawn(s, i, this.data)
+            set i: i + 1
+        if: this.modal == "clean"
+          if: this.battle == 3
+            call: this.win()
+        set this.modal: ""
+      else:
+        set this.message: "Try again!"
+        call: this.effect("shake", "", 0)
+    if: action == "reset"
+      set this.modal: "reset"
+    if: action == "confirm-reset"
+      if: this.modal == "reset"
+        set profiles: this.profiles
+        set profiles[this.current]: this.new_profile(this.current)
+        set this.modal: ""
+        set this.hp: 10
+        call: this.close_battle()
+    if: action == "dismiss"
+      set this.modal: ""
+    if: action == "login"
+      if: len(value) == 10
+        set p.stats.days: unique(p.stats.days, value)
+    if: action == "tick"
+      if: now_ms() > this.phantomAt
+        set this.phantomAt: now_ms() + 60000 + rand(60000)
+        set this.phantomUntil: now_ms() + 9000
+        call: this.effect("phantom", "assets/mobs/hostile/phantom.gif", 0)
+    if: action == "phantom"
+      if: now_ms() < this.phantomUntil
+        set this.phantomUntil: 0
+        set p.stats.phantoms: p.stats.phantoms + 1
+        set s: p.skills[this.selected]
+        set s.level: s.level + 1
+        call: this.rules.spawn(s, this.selected, this.data)
+        call: this.effect("toast", "Phantom bonus! +1 level", 0)
+        call: this.sound("levelup")
+
+  fn dispatch(action, value):
+    set before: this.awards.evaluate(this.profile())
+    set this.effects: []
+    call: this.act(action, value)
+    set after: this.awards.evaluate(this.profile())
+    set i: 0
+    while: i < len(after)
+      if: action != "profile"
+        if: after[i].tier > before[i].tier
+          call: this.effect("toast", "Achievement: " + after[i].name, 0)
+          call: this.sound("notification")
+      set i: i + 1
+    set this.revision: this.revision + 1
+    if: action != "tick"
+      call: this.persist()

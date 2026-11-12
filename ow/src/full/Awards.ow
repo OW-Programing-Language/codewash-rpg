@@ -1,0 +1,46 @@
+import "Helpers.ow"
+
+class Awards:
+  fn stats():
+    return: {phantoms: 0, mobs: [], bosses: [], minibosses: [], kills: 0, bossKills: 0, miniKills: 0, deaths: 0, themes: 0, borders: 0, battles: 0, days: [], perfect: 0}
+
+  fn evaluate(p):
+    set st: p.stats
+    set total: 0
+    set least: 2000000
+    set highest: 0
+    set difficulty: 1
+    set badges: 0
+    set i: 0
+    while: i < len(p.skills)
+      set s: p.skills[i]
+      set total: total + s.level
+      set least: min(least, s.level)
+      set highest: max(highest, s.level)
+      set difficulty: max(difficulty, s.difficulty)
+      set badges: max(badges, len(s.badges))
+      set i: i + 1
+    return: [this.tier("phantom_hunter", "Ghost Buster", st.phantoms, [5,10,15,20,25,50,75,100]), this.tier("combined_levels", "Power Overwhelming", total, [100,200,300,400,500,600,700,800]), this.tier("skill_mastery", "Jack of All Trades", least, [20,40,60,80,100,120,140,160]), this.once("first_steps", "First Steps", st.kills > 0), this.once("level_up", "Level Up!", highest > 1), this.once("fashion_forward", "Fashion Forward", st.themes > 0), this.once("framed", "Framed!", st.borders > 0), this.once("ouch", "Ouch!", st.deaths > 0), this.once("dragon_slayer", "Dragon Slayer", st.bossKills > 0), this.once("mini_menace", "Mini Menace", st.miniKills > 0), this.once("mini_master", "Mini Master", len(st.minibosses) == 4), this.once("world_ender", "World Ender", len(st.bosses) == 4), this.once("monster_manual", "Monster Manual", len(st.mobs) == 20), this.once("perfectionist", "Perfectionist", st.perfect > 0), this.once("speed_demon", "Speed Demon", st.battles > 9), this.once("dedicated", "Dedicated", len(st.days) > 2), this.once("high_roller", "High Roller", difficulty == 7), this.once("badge_collector", "Badge Collector", badges > 0), this.once("full_set", "Full Set", badges == 8)]
+
+  fn once(id, name, unlocked):
+    return: {id: id, name: name, progress: unlocked, target: 1, tier: unlocked, unlocked: unlocked}
+
+  fn tier(id, name, progress, tiers):
+    set tier: 0
+    set target: tiers[0]
+    set i: 0
+    while: i < len(tiers)
+      if: progress > (tiers[i] - 1)
+        set tier: i + 1
+        set target: tiers[min(7, i + 1)]
+      set i: i + 1
+    return: {id: id, name: name, progress: progress, target: target, tier: tier, unlocked: tier > 0}
+
+  fn unlocked(p, id):
+    set awards: this.evaluate(p)
+    set i: 0
+    while: i < len(awards)
+      if: awards[i].id == id
+        return: awards[i].unlocked
+      set i: i + 1
+    return: 0
