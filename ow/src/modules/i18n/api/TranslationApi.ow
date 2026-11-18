@@ -1,0 +1,4 @@
+# Public contract of the translation (i18n) module.
+interface TranslationApi:
+  fn current()
+  fn t(key)

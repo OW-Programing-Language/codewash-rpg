@@ -3,7 +3,7 @@
 #   Run:  ow test tests/MathSkillTest.ow        (from the ow/ folder)
 #   Or:   ow test tests/
 import "@owunit/src/OWAssert.ow"
-import "../src/MathSkill.ow"
+import "../src/modules/skills/api/MathSkill.ow"
 
 class MathSkillTest:
   field checker

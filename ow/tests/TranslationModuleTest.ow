@@ -1,0 +1,32 @@
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/i18n/infra/TranslationFunctor.ow"
+
+class TranslationModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.apply(new TranslationFunctor())
+    call: this.app.boot()
+
+  @Test
+  fn defaultsToEnglish():
+    set i: this.app.service("i18n")
+    call: this.checker.assertEquals("en", i.current())
+    call: this.checker.assertEquals("Clean your code or get fired", i.t("tagline"))
+
+  @Test
+  fn langChangeSwitchesStrings():
+    set i: this.app.service("i18n")
+    call: this.app.emit("lang.change", "fr")
+    call: this.checker.assertEquals("fr", i.current())
+    call: this.checker.assertEquals("Nettoie ton code ou tu es viré", i.t("tagline"))
+
+  @Test
+  fn unknownKeyReturnsKey():
+    set i: this.app.service("i18n")
+    call: this.checker.assertEquals("nope", i.t("nope"))

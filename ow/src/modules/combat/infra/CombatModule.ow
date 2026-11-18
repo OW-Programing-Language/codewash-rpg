@@ -1,0 +1,41 @@
+# flOW module that owns the running Game (the combat loop). Provides both the
+# "combat" service (this module) and the "game" service (the Game itself), so the
+# UI drives the game via a flOW service like everything else.
+import "@flow/src/Module.ow"
+import "../api/CombatApi.ow"
+import "../api/Game.ow"
+
+class CombatModule(Module, CombatApi):
+  field g
+
+  fn new():
+    set this.g: new Game()
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "combat"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("combat", this)
+    call: app.provide("game", this.g)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    set this.g: new Game()
+    return: 0
+
+  fn on_event(type, payload):
+    return: 0
+
+  # ---- CombatApi ----
+  fn game():
+    return: this.g

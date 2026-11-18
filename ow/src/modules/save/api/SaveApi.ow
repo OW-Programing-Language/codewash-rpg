@@ -1,0 +1,5 @@
+# Public contract of the save (autosave policy) module.
+interface SaveApi:
+  fn pending_save()
+  fn save_count()
+  fn turns_since_save()

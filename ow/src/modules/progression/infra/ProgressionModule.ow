@@ -1,0 +1,51 @@
+# flOW service module for RPG progression maths. Wraps the published Progression
+# class and exposes it as the "progression" service (read by the UI and others).
+import "@flow/src/Module.ow"
+import "../api/ProgressionApi.ow"
+import "../api/Progression.ow"
+
+class ProgressionModule(Module, ProgressionApi):
+  field prog
+
+  fn new():
+    set this.prog: new Progression()
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "progression"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("progression", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    set this.prog: new Progression()
+    return: 0
+
+  fn on_event(type, payload):
+    return: 0
+
+  # ---- ProgressionApi (thin delegations) ----
+  fn xp_to_level(d):
+    return: this.prog.xp_to_level(d)
+
+  fn damage(d):
+    return: this.prog.damage(d)
+
+  fn mob_health(d):
+    return: this.prog.mob_health(d)
+
+  fn xp_reward(d, level):
+    return: this.prog.xp_reward(d, level)
+
+  fn encounter(level):
+    return: this.prog.encounter(level)

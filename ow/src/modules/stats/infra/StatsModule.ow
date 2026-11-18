@@ -1,0 +1,60 @@
+# Implementation of the stats concern (infra zone). Tracks play metrics purely
+# from the event bus.
+#
+# Events it listens to:
+#   "turn"         -> count total actions
+#   "hero.levelup" -> count level-ups, track best level (payload = new level)
+import "@flow/src/Module.ow"
+import "../api/StatsApi.ow"
+
+class StatsModule(Module, StatsApi):
+  field turns
+  field levelups
+  field best
+
+  fn new():
+    set this.turns: 0
+    set this.levelups: 0
+    set this.best: 1
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "stats"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("stats", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    set this.turns: 0
+    set this.levelups: 0
+    set this.best: 1
+    return: 0
+
+  fn on_event(type, payload):
+    if: type == "turn"
+      set this.turns: this.turns + 1
+    if: type == "hero.levelup"
+      set this.levelups: this.levelups + 1
+      if: payload > this.best
+        set this.best: payload
+    return: 0
+
+  # ---- StatsApi ----
+  fn total_turns():
+    return: this.turns
+
+  fn level_ups():
+    return: this.levelups
+
+  fn best_level():
+    return: this.best

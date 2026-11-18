@@ -1,0 +1,5 @@
+# Public contract of the sound module. Other code depends on this interface,
+# never on the infra implementation (Spring-Modulith style). api/ must not import
+# infra/ — the compiler's Loader enforces that boundary.
+interface SoundApi:
+  fn set_sound(v)

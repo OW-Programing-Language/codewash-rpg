@@ -1,0 +1,13 @@
+# flOW functor for the save module: injects the autosave interval from config.
+import "@flow/src/Functor.ow"
+import "SaveModule.ow"
+
+class SaveFunctor(Functor):
+  fn new():
+    return: 0
+
+  fn make(app):
+    set n int: app.config_or("save.interval", 5)
+    set m: new SaveModule()
+    call: m.set_interval(n)
+    return: m

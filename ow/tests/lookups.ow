@@ -1,5 +1,5 @@
-import "../src/ThemeBank.ow"
-import "../src/flow/App.ow"
+import "../src/modules/theme/api/ThemeBank.ow"
+import "@flow/src/App.ow"
 import "../src/full/World.ow"
 
 class LookupModule:

@@ -1,0 +1,29 @@
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/mob/infra/MobFunctor.ow"
+
+class MobModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.apply(new MobFunctor())
+    call: this.app.boot()
+
+  @Test
+  fn spriteForKnownMob():
+    set m: this.app.service("mob")
+    call: this.checker.assertEquals("../public/assets/mobs/hostile/zombie.png", m.sprite_for("Zombie"))
+
+  @Test
+  fn unknownMobFallsBackToZombie():
+    set m: this.app.service("mob")
+    call: this.checker.assertEquals("../public/assets/mobs/hostile/zombie.png", m.sprite_for("Herobrine2"))
+
+  @Test
+  fn chestForKnownBlock():
+    set m: this.app.service("mob")
+    call: this.checker.assertEquals("../public/assets/items/chests/chest.gif", m.chest_for("Chest"))

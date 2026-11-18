@@ -1,0 +1,34 @@
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/progression/infra/ProgressionFunctor.ow"
+
+class ProgressionModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.apply(new ProgressionFunctor())
+    call: this.app.boot()
+
+  @Test
+  fn baseCurvesAtDifficultyOne():
+    set p: this.app.service("progression")
+    call: this.checker.assertEquals(100, p.xp_to_level(1))
+    call: this.checker.assertEquals(12, p.damage(1))
+    call: this.checker.assertEquals(60, p.mob_health(1))
+
+  @Test
+  fn curvesTripleEachDifficulty():
+    set p: this.app.service("progression")
+    call: this.checker.assertEquals(300, p.xp_to_level(2))
+    call: this.checker.assertEquals(36, p.damage(2))
+
+  @Test
+  fn encounterCycle():
+    set p: this.app.service("progression")
+    call: this.checker.assertEquals(0, p.encounter(1))
+    call: this.checker.assertEquals(1, p.encounter(10))
+    call: this.checker.assertEquals(2, p.encounter(20))

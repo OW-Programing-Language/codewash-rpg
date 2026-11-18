@@ -1,0 +1,5 @@
+# Public contract of the bug-report module.
+interface BugReportApi:
+  fn total()
+  fn last_message()
+  fn report()

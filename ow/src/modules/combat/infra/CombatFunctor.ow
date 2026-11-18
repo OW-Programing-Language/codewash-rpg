@@ -1,0 +1,10 @@
+# flOW functor for the combat module.
+import "@flow/src/Functor.ow"
+import "CombatModule.ow"
+
+class CombatFunctor(Functor):
+  fn new():
+    return: 0
+
+  fn make(app):
+    return: new CombatModule()

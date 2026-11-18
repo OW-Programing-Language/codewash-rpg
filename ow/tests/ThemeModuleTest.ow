@@ -1,7 +1,7 @@
-# OWUnit tests for ThemeModule booted on an App from the @flow dependency.
+# OWUnit tests for the theme module, built by its functor on an @flow App.
 import "@owunit/src/OWAssert.ow"
 import "@flow/src/App.ow"
-import "../src/modules/theme/ThemeModule.ow"
+import "../src/modules/theme/infra/ThemeFunctor.ow"
 
 class ThemeModuleTest:
   field checker
@@ -11,7 +11,7 @@ class ThemeModuleTest:
   fn setup():
     set this.checker: new OWAssert()
     set this.app: new App()
-    call: this.app.use(new ThemeModule())
+    call: this.app.apply(new ThemeFunctor())
     call: this.app.boot()
 
   @Test

@@ -1,0 +1,59 @@
+# Implementation of the theme concern (infra zone). Owns the active theme and
+# exposes the current backdrop/logo/name as the "theme" service.
+#
+# Events it handles:
+#   "theme.change" -> switch the active theme (payload is the theme id string)
+import "@flow/src/Module.ow"
+import "../api/ThemeApi.ow"
+import "../api/ThemeBank.ow"
+
+class ThemeModule(Module, ThemeApi):
+  field bank
+  field cur
+
+  fn new():
+    set this.bank: new ThemeBank()
+    set this.cur: "minecraft"
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "theme"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("theme", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    set this.cur: "minecraft"
+    return: 0
+
+  fn on_event(type, payload):
+    if: type == "theme.change"
+      call: this.change(payload)
+    return: 0
+
+  fn change(id):
+    set this.cur: id
+    return: 0
+
+  # ---- ThemeApi ----
+  fn current():
+    return: this.cur
+
+  fn label():
+    return: this.bank.name(this.cur)
+
+  fn bg():
+    return: this.bank.bg(this.cur)
+
+  fn logo():
+    return: this.bank.logo(this.cur)

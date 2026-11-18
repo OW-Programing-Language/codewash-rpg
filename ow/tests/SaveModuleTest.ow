@@ -1,7 +1,8 @@
-# OWUnit tests for SaveModule booted on an App from the @flow dependency.
+# OWUnit tests for the save module. Shows the functor injecting the autosave
+# interval from flOW config.
 import "@owunit/src/OWAssert.ow"
 import "@flow/src/App.ow"
-import "../src/modules/save/SaveModule.ow"
+import "../src/modules/save/infra/SaveFunctor.ow"
 
 class SaveModuleTest:
   field checker
@@ -11,11 +12,11 @@ class SaveModuleTest:
   fn setup():
     set this.checker: new OWAssert()
     set this.app: new App()
-    call: this.app.use(new SaveModule())
-    call: this.app.boot()
 
   @Test
   fn flagsSaveAfterDefaultInterval():
+    call: this.app.apply(new SaveFunctor())
+    call: this.app.boot()
     set sv: this.app.service("save")
     call: this.checker.assertEquals(0, sv.pending_save())
     set i int: 0
@@ -28,6 +29,8 @@ class SaveModuleTest:
 
   @Test
   fn gameSaveFlushesAndResets():
+    call: this.app.apply(new SaveFunctor())
+    call: this.app.boot()
     set sv: this.app.service("save")
     set i int: 0
     while: i < 6
@@ -38,10 +41,12 @@ class SaveModuleTest:
     call: this.checker.assertEquals(0, sv.pending_save())
     call: this.checker.assertEquals(0, sv.turns_since_save())
 
-  # The autosave interval is configurable through flOW's config store.
+  # The functor injects the interval from config "save.interval".
   @Test
-  fn respectsConfiguredInterval():
+  fn functorInjectsConfiguredInterval():
     call: this.app.set_config("save.interval", 2)
+    call: this.app.apply(new SaveFunctor())
+    call: this.app.boot()
     set sv: this.app.service("save")
     call: this.app.emit("turn", 0)
     call: this.checker.assertEquals(0, sv.pending_save())

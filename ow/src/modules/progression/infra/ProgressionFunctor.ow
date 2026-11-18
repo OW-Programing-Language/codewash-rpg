@@ -1,0 +1,10 @@
+# flOW functor for the progression module.
+import "@flow/src/Functor.ow"
+import "ProgressionModule.ow"
+
+class ProgressionFunctor(Functor):
+  fn new():
+    return: 0
+
+  fn make(app):
+    return: new ProgressionModule()

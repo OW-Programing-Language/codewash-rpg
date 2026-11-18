@@ -1,7 +1,7 @@
-# OWUnit tests for StatsModule booted on an App from the @flow dependency.
+# OWUnit tests for the stats module, built by its functor on an @flow App.
 import "@owunit/src/OWAssert.ow"
 import "@flow/src/App.ow"
-import "../src/modules/stats/StatsModule.ow"
+import "../src/modules/stats/infra/StatsFunctor.ow"
 
 class StatsModuleTest:
   field checker
@@ -11,7 +11,7 @@ class StatsModuleTest:
   fn setup():
     set this.checker: new OWAssert()
     set this.app: new App()
-    call: this.app.use(new StatsModule())
+    call: this.app.apply(new StatsFunctor())
     call: this.app.boot()
 
   @Test

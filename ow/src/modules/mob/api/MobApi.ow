@@ -1,0 +1,4 @@
+# Public contract of the mob (bestiary art) module.
+interface MobApi:
+  fn sprite_for(name)
+  fn chest_for(name)

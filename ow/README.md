@@ -87,23 +87,45 @@ or `import "@flow/src/App.ow"`. Relative imports (`import "Game.ow"`) are
 unchanged. `.ow/deps/` is git-ignored; the lockfile is committed so installs are
 reproducible. `run-ow.ps1` runs `ow deps install` automatically before launch.
 
-The vendored `src/flow/` copy of the framework has been removed — flOW now comes
-from `@flow`. The game boots **five** flOW modules, one per cross-cutting concern,
-each a folder under `src/modules/` that declares the upstream interface nominally
-(`class SoundModule(Module):`) and implements its lifecycle (`start`/`stop`):
+### Spring-Modulith layout
 
-| module | folder | reacts to | owns |
-|--------|--------|-----------|------|
-| `sound` | `modules/sound` | `music.start`, `turn`, `hero.levelup` | audio playback |
-| `achievements` | `modules/achievements` | `turn`, `hero.levelup` | unlocks |
-| `theme` | `modules/theme` | `theme.change` | active theme (backdrop/logo/name) |
-| `stats` | `modules/stats` | `turn`, `hero.levelup` | play metrics |
-| `save` | `modules/save` | `turn`, `game.save` | autosave policy (config `save.interval`) |
+The whole slice is modularised (Spring-Modulith style): **every class lives
+inside a module** under `src/modules/<name>/`, split into two zones:
 
-`UiGame` only emits events and reads module services (e.g. the theme backdrop
-comes from the `theme` service); it carries no cross-cutting logic itself. Each
-module has an OWUnit suite under `tests/` (`ThemeModuleTest`, `StatsModuleTest`,
-`SaveModuleTest`, plus `FlowAppTest` for sound/achievements).
+- `api/` — the module's **published** types: its service interface plus any
+  reusable classes other modules may import.
+- `infra/` — the **implementation**: the flOW `Module` (`class X(Module, XApi):`,
+  full `start`/`stop`/`reload` lifecycle) and a **functor** (`class XFunctor(Functor)`)
+  that builds the module from the app context.
+
+The compiler's Loader **enforces** the boundary: a file in `api/` (or any other
+module) may not import another module's `infra/` — only its `api/`. Only the
+**composition root** (`src/app/UiGame.ow`, which sits outside any api/infra zone)
+imports `infra/`, and it wires every module with a functor:
+`app.apply(new SoundFunctor())`. Config is injected before boot via flOW config
+(`sound.track`, `save.interval`, `i18n.lang`) and read inside the functors.
+
+Eleven modules:
+
+| module | provides | reacts to |
+|--------|----------|-----------|
+| `sound` | audio playback (track injected by functor) | `music.start`, `turn`, `hero.levelup` |
+| `achievements` | unlocks | `turn`, `hero.levelup` |
+| `theme` | active theme (backdrop/logo/name) | `theme.change` |
+| `stats` | play metrics | `turn`, `hero.levelup` |
+| `save` | autosave policy (interval injected) | `turn`, `game.save` |
+| `bugreport` | diagnostic error buffer | `error` |
+| `i18n` | FR/EN translation | `lang.change` |
+| `progression` | RPG maths service | — |
+| `mob` | bestiary sprite service | — |
+| `skills` | skill factory (`make(id)`) | — |
+| `combat` | the running `Game` (`game` service) | — |
+
+`UiGame` holds no domain logic: it emits events and reads services (the theme
+backdrop from `theme`, foe sprites from `mob`, XP curve from `progression`, the
+active game from `combat`, skills from `skills`). Every module has its own OWUnit
+suite under `tests/` (`<Module>Test.ow`) — 32 tests, run with
+`java -jar ../.packaging/ow-dictionaries/target/OwIDE-deps.jar test tests/`.
 `MathSkill` keeps the game's per-tier difficulty policy but builds each question
 through `@math`'s `MathQuestions.from_operands()`.
 

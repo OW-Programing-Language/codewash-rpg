@@ -1,0 +1,73 @@
+# Implementation of the sound concern (infra zone). Owns all audio; the App
+# delivers events while it is enabled, so gameplay never calls audio builtins.
+# The background track is injected by SoundFunctor from flOW config.
+#
+# Events it handles:
+#   "music.start"  -> begin looping background music (once)
+#   "turn"         -> a short click on each action
+#   "hero.levelup" -> a jingle when the hero levels up
+import "@flow/src/Module.ow"
+import "../api/SoundApi.ow"
+
+class SoundModule(Module, SoundApi):
+  field snd
+  field music_on
+  field track
+
+  fn new():
+    set this.snd: 1
+    set this.music_on: 0
+    set this.track: "calm1"
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "sound"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("sound", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn on_event(type, payload):
+    if: type == "music.start"
+      call: this.start_music()
+    if: type == "turn"
+      call: this.sfx("click.wav")
+    if: type == "hero.levelup"
+      call: this.sfx("levelup.wav")
+    return: 0
+
+  fn reload(app):
+    set this.music_on: 0
+    return: 0
+
+  # ---- configuration (injected by the functor) ----
+  fn set_track(t):
+    set this.track: t
+    return: 0
+
+  # ---- SoundApi ----
+  fn set_sound(v):
+    set this.snd: v
+    return: 0
+
+  # ---- audio (native backend plays the original .wav assets) ----
+  fn start_music():
+    if: this.music_on == 1
+      return: 0
+    set this.music_on: 1
+    call: audio_music("../public/assets/sounds/bgm/" + this.track + ".wav")
+
+  # Kept last so a missing/unsupported file never aborts the caller.
+  fn sfx(file):
+    if: this.snd == 0
+      return: 0
+    call: audio_play("../public/assets/sounds/ui/ui/" + file)

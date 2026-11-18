@@ -1,4 +1,4 @@
-import "Game.ow"
+import "modules/combat/api/Game.ow"
 
 # Console entry point. Mirrors the shell style of the official
 # Guess-the-Number example (logic in classes, I/O only here).

@@ -1,0 +1,5 @@
+# Public contract of the stats module.
+interface StatsApi:
+  fn total_turns()
+  fn level_ups()
+  fn best_level()

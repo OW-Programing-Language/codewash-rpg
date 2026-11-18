@@ -1,0 +1,7 @@
+# Public contract of the progression module.
+interface ProgressionApi:
+  fn xp_to_level(d)
+  fn damage(d)
+  fn mob_health(d)
+  fn xp_reward(d, level)
+  fn encounter(level)

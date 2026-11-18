@@ -1,0 +1,15 @@
+# flOW functor for the sound module: builds a SoundModule configured from the
+# application context (OCaml-style `module Make (Deps) = ...`). Register it with
+# app.apply(new SoundFunctor()); the track comes from flOW config "sound.track".
+import "@flow/src/Functor.ow"
+import "SoundModule.ow"
+
+class SoundFunctor(Functor):
+  fn new():
+    return: 0
+
+  fn make(app):
+    set track: app.config_or("sound.track", "calm1")
+    set m: new SoundModule()
+    call: m.set_track(track)
+    return: m

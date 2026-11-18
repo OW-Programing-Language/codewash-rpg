@@ -1,0 +1,12 @@
+# flOW functor for the translation module: injects the initial language.
+import "@flow/src/Functor.ow"
+import "TranslationModule.ow"
+
+class TranslationFunctor(Functor):
+  fn new():
+    return: 0
+
+  fn make(app):
+    set m: new TranslationModule()
+    call: m.set_lang(app.config_or("i18n.lang", "en"))
+    return: m

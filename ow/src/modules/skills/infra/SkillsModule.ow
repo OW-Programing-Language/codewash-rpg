@@ -1,0 +1,52 @@
+# flOW service module for the skill catalogue. Provides the "skills" service: a
+# factory that builds any of the six skills by id. The skill classes are the
+# module's published api/ types.
+import "@flow/src/Module.ow"
+import "../api/SkillsApi.ow"
+import "../api/MathSkill.ow"
+import "../api/ReadingSkill.ow"
+import "../api/WritingSkill.ow"
+import "../api/MemorySkill.ow"
+import "../api/PatternsSkill.ow"
+import "../api/CleaningSkill.ow"
+
+class SkillsModule(Module, SkillsApi):
+  fn new():
+    return: 0
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "skills"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("skills", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    return: 0
+
+  fn on_event(type, payload):
+    return: 0
+
+  # ---- SkillsApi: build a skill by id ----
+  fn make(id):
+    if: id == "reading"
+      return: new ReadingSkill()
+    if: id == "writing"
+      return: new WritingSkill()
+    if: id == "memory"
+      return: new MemorySkill()
+    if: id == "patterns"
+      return: new PatternsSkill()
+    if: id == "cleaning"
+      return: new CleaningSkill()
+    return: new MathSkill()

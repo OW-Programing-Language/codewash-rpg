@@ -1,0 +1,10 @@
+# flOW functor for the skills module.
+import "@flow/src/Functor.ow"
+import "SkillsModule.ow"
+
+class SkillsFunctor(Functor):
+  fn new():
+    return: 0
+
+  fn make(app):
+    return: new SkillsModule()

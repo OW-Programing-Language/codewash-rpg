@@ -1,0 +1,10 @@
+# flOW functor for the stats module.
+import "@flow/src/Functor.ow"
+import "StatsModule.ow"
+
+class StatsFunctor(Functor):
+  fn new():
+    return: 0
+
+  fn make(app):
+    return: new StatsModule()

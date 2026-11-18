@@ -1,0 +1,34 @@
+# The combat module provides the running Game as the "game" service. Here we
+# boot it alongside the skills module and drive one correct answer through it.
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/skills/infra/SkillsFunctor.ow"
+import "../src/modules/combat/infra/CombatFunctor.ow"
+
+class CombatModuleTest:
+  field checker
+  field app
+  field game
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.apply(new SkillsFunctor())
+    call: this.app.apply(new CombatFunctor())
+    call: this.app.boot()
+    set this.game: this.app.service("game")
+
+  @Test
+  fn gameServiceIsProvided():
+    call: this.checker.assertEquals(1, this.app.has_service("game"))
+    call: this.checker.assertEquals(1, this.app.has_service("combat"))
+
+  @Test
+  fn correctAnswerDamagesTheFoe():
+    set g: this.game
+    call: g.use_skill(this.app.service("skills").make("math"))
+    call: g.start(1)
+    set full int: g.mob.max_hp()
+    call: g.answer(g.problem.solution())
+    call: this.checker.assertLessThan(g.mob.cur_hp(), full)

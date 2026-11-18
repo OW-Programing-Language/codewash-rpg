@@ -1,0 +1,3 @@
+# Public contract of the combat module: access to the running game.
+interface CombatApi:
+  fn game()

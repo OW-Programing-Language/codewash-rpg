@@ -1,0 +1,5 @@
+# Public contract of the skills module: a factory that builds a skill by id.
+# Each skill exposes generate(d)/mode()[/options(p)/flip(i)/...] and is consumed
+# duck-typed by the combat loop.
+interface SkillsApi:
+  fn make(id)

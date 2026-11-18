@@ -1,0 +1,42 @@
+# flOW service module for bestiary art. The UI asks the "mob" service for a foe's
+# or chest's sprite path instead of holding a MobArt instance itself.
+import "@flow/src/Module.ow"
+import "../api/MobApi.ow"
+import "../api/MobArt.ow"
+
+class MobModule(Module, MobApi):
+  field art
+
+  fn new():
+    set this.art: new MobArt()
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "mob"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("mob", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    set this.art: new MobArt()
+    return: 0
+
+  fn on_event(type, payload):
+    return: 0
+
+  # ---- MobApi ----
+  fn sprite_for(name):
+    return: this.art.path(name)
+
+  fn chest_for(name):
+    return: this.art.chest_path(name)

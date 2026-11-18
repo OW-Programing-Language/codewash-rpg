@@ -1,0 +1,3 @@
+# Public contract of the achievements module.
+interface AchievementsApi:
+  fn total()

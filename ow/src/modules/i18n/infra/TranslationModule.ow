@@ -1,0 +1,56 @@
+# Implementation of the translation concern (infra zone). Strings live in
+# dictionaries (new OW style); an unknown key returns the key itself.
+#
+# Events it handles:
+#   "lang.change" -> switch the active language (payload "en" or "fr")
+import "@flow/src/Module.ow"
+import "../api/TranslationApi.ow"
+
+class TranslationModule(Module, TranslationApi):
+  field lang
+  field en
+  field fr
+
+  fn new():
+    set this.lang: "en"
+    set this.en: {"tagline": "Clean your code or get fired", "theme": "Theme", "back": "Back to menu"}
+    set this.fr: {"tagline": "Nettoie ton code ou tu es viré", "theme": "Thème", "back": "Retour au menu"}
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "i18n"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    call: app.provide("i18n", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    set this.lang: "en"
+    return: 0
+
+  fn on_event(type, payload):
+    if: type == "lang.change"
+      call: this.set_lang(payload)
+    return: 0
+
+  fn set_lang(l):
+    set this.lang: l
+    return: 0
+
+  # ---- TranslationApi ----
+  fn current():
+    return: this.lang
+
+  fn t(key):
+    if: this.lang == "fr"
+      return: map_get(this.fr, key, key)
+    return: map_get(this.en, key, key)

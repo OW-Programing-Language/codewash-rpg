@@ -1,0 +1,6 @@
+# Public contract of the theme module.
+interface ThemeApi:
+  fn current()
+  fn label()
+  fn bg()
+  fn logo()

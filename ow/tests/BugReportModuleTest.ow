@@ -1,0 +1,31 @@
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/bugreport/infra/BugReportFunctor.ow"
+
+class BugReportModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.apply(new BugReportFunctor())
+    call: this.app.boot()
+
+  @Test
+  fn buffersErrorEvents():
+    set b: this.app.service("bugreport")
+    call: this.checker.assertEquals(0, b.total())
+    call: this.app.emit("error", "boom")
+    call: this.app.emit("error", "kaboom")
+    call: this.checker.assertEquals(2, b.total())
+    call: this.checker.assertEquals("kaboom", b.last_message())
+
+  @Test
+  fn reportSummarises():
+    set b: this.app.service("bugreport")
+    call: this.app.emit("error", "oops")
+    set r: b.report()
+    call: this.checker.assertEquals(1, r.errors)
+    call: this.checker.assertEquals("oops", r.last)

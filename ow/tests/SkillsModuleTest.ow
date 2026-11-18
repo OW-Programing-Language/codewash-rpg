@@ -1,0 +1,27 @@
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/skills/infra/SkillsFunctor.ow"
+
+class SkillsModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.apply(new SkillsFunctor())
+    call: this.app.boot()
+
+  @Test
+  fn factoryBuildsEachSkillMode():
+    set s: this.app.service("skills")
+    call: this.checker.assertEquals("choice", s.make("math").mode())
+    call: this.checker.assertEquals("text", s.make("writing").mode())
+    call: this.checker.assertEquals("memory", s.make("memory").mode())
+    call: this.checker.assertEquals("task", s.make("cleaning").mode())
+
+  @Test
+  fn unknownIdDefaultsToMath():
+    set s: this.app.service("skills")
+    call: this.checker.assertEquals("choice", s.make("zzz").mode())
