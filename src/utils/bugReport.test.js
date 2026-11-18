@@ -211,7 +211,16 @@ describe('fetchTransport', () => {
   });
 
   it('throws when no fetch implementation is available', async () => {
-    await expect(fetchTransport('https://h', {}, null)).rejects.toThrow(/fetch/i);
+    // Simulate a runtime with no global fetch (older Node). Without this the
+    // test would hit the real network on runtimes that expose a global fetch
+    // (e.g. Node 18+/CI) and time out instead of throwing.
+    const savedFetch = globalThis.fetch;
+    globalThis.fetch = undefined;
+    try {
+      await expect(fetchTransport('https://h', {}, null)).rejects.toThrow(/fetch/i);
+    } finally {
+      globalThis.fetch = savedFetch;
+    }
   });
 });
 
