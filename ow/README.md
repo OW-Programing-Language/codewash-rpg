@@ -61,6 +61,75 @@ conflicts; not done here.
 > ("127.0.0.1 refused to connect"). Launch with `run-ow.ps1` or
 > `Lancer-jeu-OW.cmd` instead — they build the catalog and set the cwd to `ow/`.
 
+## Using OwIDE (the OW editor)
+
+OwIDE is the graphical editor/runner that ships with the OW language.
+
+### Install
+
+1. **Java 17+** is required (`java -version`).
+2. **Get the `OwIDE.jar`.** Build it from the OW language repo with Maven:
+   ```sh
+   git clone https://github.com/OW-Programing-Language/ow-lang
+   cd ow-lang
+   mvn -q -DskipTests package      # produces target/OwIDE.jar
+   ```
+   (This repo also keeps prebuilt jars under
+   `.packaging/ow-dictionaries/target/` — `OwIDE.jar` for the web game and
+   `OwIDE-deps.jar` for `deps`/`test`; `.packaging/` is git-ignored, so a fresh
+   clone builds its own jar as above.)
+3. **Launch the IDE:**
+   ```sh
+   java -jar target/OwIDE.jar ide      # or: ow ide  (if `ow` is on PATH)
+   ```
+   Running the jar with no arguments also opens the IDE.
+
+### Open the project
+
+`File → Open Folder…` and select this repo's **`ow/`** folder. The file tree
+shows `src/` (modules) and `tests/`. Before running anything that uses the
+libraries, resolve dependencies once from a terminal in `ow/` (the IDE has no
+deps button):
+
+```sh
+java -jar ../.packaging/ow-dictionaries/target/OwIDE-deps.jar deps install
+```
+
+### Run an OW program in OwIDE
+
+Open a file that defines a `main:` block and use **Run ▶ (interpret)** from the
+Run menu (or the toolbar). Good targets:
+
+- `src/main.ow` — the console slice (`new Game()` combat loop).
+- A one-line entry that boots the modular game, e.g. create `src/app/run.ow`:
+  ```ow
+  import "UiGame.ow"
+  main:
+    set ui: new UiGame()
+    call: ui.begin_math()
+    print: "flOW booted; achievements=" + str(ui.ach_count())
+  ```
+  Run ▶ (interpret) prints `flOW: booted 11 module(s)` — a quick in-IDE smoke
+  that every module wires up.
+
+> The full **browser game** is *not* launched from OwIDE's "Run UI (web)" button:
+> it needs `node ow/scripts/build-web.mjs` first and the working directory set to
+> `ow/`. Use `run-ow.ps1` / `Lancer-jeu-OW.cmd` for the real game (see above).
+
+### Test the game
+
+OWUnit suites run with the test runner on the **deps** jar (OwIDE itself has no
+test button — use a terminal, e.g. the IDE's built-in one or any shell, in `ow/`):
+
+```sh
+JAR=../.packaging/ow-dictionaries/target/OwIDE-deps.jar
+java -jar $JAR test tests/                     # all 11 module suites (32 tests)
+java -jar $JAR test tests/CombatModuleTest.ow  # one suite
+```
+
+Each module has its own suite (`tests/<Module>Test.ow`). A green run prints
+`[PASS] …` per test and `OW tests: N passed, 0 failed.`
+
 ## Dependencies (dependencies.yml)
 
 The OW sources now pull reusable libraries through the compiler's own package
