@@ -1,0 +1,49 @@
+# OWUnit tests for SaveModule booted on an App from the @flow dependency.
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/save/SaveModule.ow"
+
+class SaveModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.use(new SaveModule())
+    call: this.app.boot()
+
+  @Test
+  fn flagsSaveAfterDefaultInterval():
+    set sv: this.app.service("save")
+    call: this.checker.assertEquals(0, sv.pending_save())
+    set i int: 0
+    while: i < 4
+      call: this.app.emit("turn", 0)
+      set i: i + 1
+    call: this.checker.assertEquals(0, sv.pending_save())
+    call: this.app.emit("turn", 0)
+    call: this.checker.assertEquals(1, sv.pending_save())
+
+  @Test
+  fn gameSaveFlushesAndResets():
+    set sv: this.app.service("save")
+    set i int: 0
+    while: i < 6
+      call: this.app.emit("turn", 0)
+      set i: i + 1
+    call: this.app.emit("game.save", 0)
+    call: this.checker.assertEquals(1, sv.save_count())
+    call: this.checker.assertEquals(0, sv.pending_save())
+    call: this.checker.assertEquals(0, sv.turns_since_save())
+
+  # The autosave interval is configurable through flOW's config store.
+  @Test
+  fn respectsConfiguredInterval():
+    call: this.app.set_config("save.interval", 2)
+    set sv: this.app.service("save")
+    call: this.app.emit("turn", 0)
+    call: this.checker.assertEquals(0, sv.pending_save())
+    call: this.app.emit("turn", 0)
+    call: this.checker.assertEquals(1, sv.pending_save())

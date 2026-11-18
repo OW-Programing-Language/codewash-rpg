@@ -1,0 +1,43 @@
+# OWUnit tests for StatsModule booted on an App from the @flow dependency.
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/stats/StatsModule.ow"
+
+class StatsModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.use(new StatsModule())
+    call: this.app.boot()
+
+  @Test
+  fn countsTurns():
+    set s: this.app.service("stats")
+    call: this.checker.assertEquals(0, s.total_turns())
+    call: this.app.emit("turn", 0)
+    call: this.app.emit("turn", 0)
+    call: this.app.emit("turn", 0)
+    call: this.checker.assertEquals(3, s.total_turns())
+
+  @Test
+  fn tracksLevelUpsAndBest():
+    set s: this.app.service("stats")
+    call: this.app.emit("hero.levelup", 2)
+    call: this.app.emit("hero.levelup", 5)
+    call: this.app.emit("hero.levelup", 3)
+    call: this.checker.assertEquals(3, s.level_ups())
+    call: this.checker.assertEquals(5, s.best_level())
+
+  @Test
+  fn reloadClearsMetrics():
+    set s: this.app.service("stats")
+    call: this.app.emit("turn", 0)
+    call: this.app.emit("hero.levelup", 4)
+    call: this.app.reload("stats")
+    call: this.checker.assertEquals(0, s.total_turns())
+    call: this.checker.assertEquals(0, s.level_ups())
+    call: this.checker.assertEquals(1, s.best_level())

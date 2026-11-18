@@ -1,0 +1,71 @@
+# A flOW module that owns the autosave policy. It watches gameplay actions and,
+# after a configurable number of turns, flags that a save is due; an explicit
+# "game.save" event flushes it. The persistence *policy* lives here, decoupled
+# from both the game loop and whatever actually writes bytes.
+#
+# Config:
+#   "save.interval" -> turns between autosaves (default 5)
+# Events it handles:
+#   "turn"      -> count an action; mark a save pending at the interval
+#   "game.save" -> flush: record a save and reset the counter
+import "@flow/src/Module.ow"
+
+class SaveModule(Module):
+  field since
+  field saves
+  field pending
+  field app
+
+  fn new():
+    set this.since: 0
+    set this.saves: 0
+    set this.pending: 0
+
+  # ---- flOW Module contract ----
+  fn name():
+    return: "save"
+
+  fn requires():
+    return: array(0, 0)
+
+  fn register(app):
+    set this.app: app
+    call: app.provide("save", this)
+    return: 0
+
+  fn start(app):
+    return: 0
+
+  fn stop(app):
+    return: 0
+
+  fn reload(app):
+    set this.since: 0
+    set this.pending: 0
+    return: 0
+
+  fn on_event(type, payload):
+    if: type == "turn"
+      set this.since: this.since + 1
+      set interval int: this.app.config_or("save.interval", 5)
+      if: this.since > (interval - 1)
+        set this.pending: 1
+    if: type == "game.save"
+      call: this.flush()
+    return: 0
+
+  # ---- service API ----
+  fn flush():
+    set this.saves: this.saves + 1
+    set this.since: 0
+    set this.pending: 0
+    return: 0
+
+  fn pending_save():
+    return: this.pending
+
+  fn save_count():
+    return: this.saves
+
+  fn turns_since_save():
+    return: this.since

@@ -88,9 +88,22 @@ unchanged. `.ow/deps/` is git-ignored; the lockfile is committed so installs are
 reproducible. `run-ow.ps1` runs `ow deps install` automatically before launch.
 
 The vendored `src/flow/` copy of the framework has been removed — flOW now comes
-from `@flow`. The game's two modules (`src/modules/sound`,
-`src/modules/achievements`) declare the upstream interface nominally
-(`class SoundModule(Module):`) and implement its lifecycle (`start`/`stop`).
+from `@flow`. The game boots **five** flOW modules, one per cross-cutting concern,
+each a folder under `src/modules/` that declares the upstream interface nominally
+(`class SoundModule(Module):`) and implements its lifecycle (`start`/`stop`):
+
+| module | folder | reacts to | owns |
+|--------|--------|-----------|------|
+| `sound` | `modules/sound` | `music.start`, `turn`, `hero.levelup` | audio playback |
+| `achievements` | `modules/achievements` | `turn`, `hero.levelup` | unlocks |
+| `theme` | `modules/theme` | `theme.change` | active theme (backdrop/logo/name) |
+| `stats` | `modules/stats` | `turn`, `hero.levelup` | play metrics |
+| `save` | `modules/save` | `turn`, `game.save` | autosave policy (config `save.interval`) |
+
+`UiGame` only emits events and reads module services (e.g. the theme backdrop
+comes from the `theme` service); it carries no cross-cutting logic itself. Each
+module has an OWUnit suite under `tests/` (`ThemeModuleTest`, `StatsModuleTest`,
+`SaveModuleTest`, plus `FlowAppTest` for sound/achievements).
 `MathSkill` keeps the game's per-tier difficulty policy but builds each question
 through `@math`'s `MathQuestions.from_operands()`.
 

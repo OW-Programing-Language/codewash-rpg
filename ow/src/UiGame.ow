@@ -9,6 +9,9 @@ import "ThemeBank.ow"
 import "@flow/src/App.ow"
 import "modules/sound/SoundModule.ow"
 import "modules/achievements/AchievementsModule.ow"
+import "modules/theme/ThemeModule.ow"
+import "modules/stats/StatsModule.ow"
+import "modules/save/SaveModule.ow"
 
 # Graphical front-end for the Code Wash RPG engine.
 #
@@ -26,7 +29,6 @@ class UiGame:
   field bg
   field logo
   field art
-  field themes
   field theme
   field app
 
@@ -34,22 +36,39 @@ class UiGame:
     set this.game: new Game()
     set this.screen: "menu"
     set this.art: new MobArt()
-    set this.themes: new ThemeBank()
-    set this.theme: "minecraft"
-    set this.bg: this.themes.bg("minecraft")
-    set this.logo: this.themes.logo("minecraft")
-    # flOW application context: the SoundModule subscribes to the event bus and
-    # owns all audio, so gameplay just emits events (fully decoupled).
+    # flOW application context. Five modules subscribe to the event bus and own a
+    # cross-cutting concern each, so gameplay just emits events (fully decoupled):
+    #   sound        -> audio            achievements -> unlocks
+    #   theme        -> active theme     stats        -> play metrics
+    #   save         -> autosave policy
     set this.app: new App()
     call: this.app.use(new SoundModule())
     call: this.app.use(new AchievementsModule())
+    call: this.app.use(new ThemeModule())
+    call: this.app.use(new StatsModule())
+    call: this.app.use(new SaveModule())
     call: this.app.boot()
+    # The ThemeModule owns the theme; mirror its initial values for rendering.
+    call: this.sync_theme()
 
-  # Switch the active theme: swaps the background and logo everywhere.
+  # Pull the current backdrop/logo/id from the theme module (the source of truth).
+  fn sync_theme():
+    set t: this.app.service("theme")
+    set this.theme: t.current()
+    set this.bg: t.bg()
+    set this.logo: t.logo()
+    return: 0
+
+  # Switch the active theme: emit the event; the ThemeModule swaps it, then the
+  # UI re-reads the backdrop/logo from the module.
   fn set_theme(id):
-    set this.theme: id
-    set this.bg: this.themes.bg(id)
-    set this.logo: this.themes.logo(id)
+    call: this.app.emit("theme.change", id)
+    call: this.sync_theme()
+
+  # Current theme's display name, read from the theme module.
+  fn theme_name():
+    set t: this.app.service("theme")
+    return: t.label()
 
   # Toggle sound by enabling/disabling the flOW sound module.
   fn set_sound(v):
@@ -105,8 +124,10 @@ class UiGame:
     call: this.game.next_problem()
     call: this.feedback(before)
 
+  # Returning to the menu is a natural save point: the SaveModule flushes.
   fn to_menu():
     set this.screen: "menu"
+    call: this.app.emit("game.save", 0)
 
   fn pick(n):
     set before int: this.game.hero.lvl()
@@ -167,7 +188,7 @@ class UiGame:
     set row1: ui_row([play_math, play_read])
     set row2: ui_row([play_write, play_mem])
     set row3: ui_row([play_pat, play_clean])
-    set tlabel: ui_text("Theme: " + this.themes.name(this.theme), "yellow")
+    set tlabel: ui_text("Theme: " + this.theme_name(), "yellow")
     set tb_mc: ui_button("Minecraft", "app.set_theme", "minecraft")
     set tb_kp: ui_button("K-Pop", "app.set_theme", "kpop")
     set tb_pk: ui_button("Pokemon", "app.set_theme", "pokemon")

@@ -1,0 +1,37 @@
+# OWUnit tests for ThemeModule booted on an App from the @flow dependency.
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/theme/ThemeModule.ow"
+
+class ThemeModuleTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.use(new ThemeModule())
+    call: this.app.boot()
+
+  @Test
+  fn defaultsToMinecraft():
+    set t: this.app.service("theme")
+    call: this.checker.assertEquals("minecraft", t.current())
+    call: this.checker.assertEquals("Minecraft", t.label())
+
+  @Test
+  fn themeChangeEventSwitchesTheme():
+    set t: this.app.service("theme")
+    call: this.app.emit("theme.change", "pokemon")
+    call: this.checker.assertEquals("pokemon", t.current())
+    call: this.checker.assertEquals("Pokemon", t.label())
+    call: this.checker.assertEquals("../public/assets/themes/pokemon.jpg", t.bg())
+
+  @Test
+  fn reloadResetsToDefault():
+    set t: this.app.service("theme")
+    call: this.app.emit("theme.change", "spy")
+    call: this.checker.assertEquals("spy", t.current())
+    call: this.app.reload("theme")
+    call: this.checker.assertEquals("minecraft", t.current())
