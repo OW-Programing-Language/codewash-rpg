@@ -43,3 +43,33 @@ jobs:
           name: coverage-report
           path: coverage/
           if-no-files-found: ignore
+
+  # OW gate: build the OW compiler from upstream, resolve dependencies.yml
+  # (@flow / @math / @owunit) and run the OWUnit module test suites.
+  ow-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build the OW compiler (ow-lang)
+        run: |
+          git clone --depth 1 https://github.com/OW-Programing-Language/ow-lang /tmp/ow-lang
+          mvn -q -DskipTests -f /tmp/ow-lang/pom.xml package
+          JAR=$(ls /tmp/ow-lang/target/OwIDE.jar)
+          echo "OW_JAR=$JAR" >> "$GITHUB_ENV"
+
+      - name: Resolve OW dependencies (ow deps install)
+        working-directory: ow
+        run: java -jar "$OW_JAR" deps install
+
+      - name: Run OWUnit module tests
+        working-directory: ow
+        run: java -jar "$OW_JAR" test tests/
