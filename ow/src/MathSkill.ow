@@ -1,14 +1,21 @@
 import "Problem.ow"
+import "@math/src/MathQuestions.ow"
 
 # Generates math problems per difficulty tier (1-7), ported from
 # generateMathProblem() in src/utils/gameUtils.js.
 # Operators are written in ASCII (* and /) for the OW console; the
 # original uses the unicode glyphs x and / (see docs/PORTING.md).
+#
+# The game keeps its own difficulty policy (operand ranges per tier), but the
+# arithmetic and question text come from the reusable ow-math-questions library
+# (dependency @math, declared in dependencies.yml). See docs/PORTING.md.
 class MathSkill:
   field ready
+  field math
 
   fn new():
     set this.ready: 1
+    set this.math: new MathQuestions()
 
   fn mode():
     return: "choice"
@@ -33,34 +40,40 @@ class MathSkill:
       set lo: s + 3
     return: [s + 1, lo, s, s + 2]
 
-  # Difficulties 1-5: pick an operator allowed at this tier, then
-  # build a problem whose answer is a non-negative integer.
+  # Difficulties 1-5: pick an operator allowed at this tier, then build a problem
+  # whose answer is a non-negative integer. Operand ranges are the game's own
+  # difficulty policy; the arithmetic and the prompt string come from the
+  # @math library's from_operands(), so answers stay consistent with the lib.
   fn basic(d):
     set hi int: 20
     if: d == 1
       set hi: 9
     set op int: this.pick_op(d)
-    set a int: 0
-    set b int: 0
-    set p: new Problem()
+    set left int: 0
+    set right int: 0
+    set sym: "+"
     switch: op
       case 0:
-        set a: this.between(0, hi)
-        set b: this.between(0, hi)
-        call: p.init("" + a + " + " + b + " = ?", a + b)
+        set left: this.between(0, hi)
+        set right: this.between(0, hi)
+        set sym: "+"
       case 1:
-        set a: this.between(1, hi)
-        set b: this.between(1, a)
-        call: p.init("" + a + " - " + b + " = ?", a - b)
+        set left: this.between(1, hi)
+        set right: this.between(1, left)
+        set sym: "-"
       case 2:
-        set a: this.between(1, 10)
-        set b: this.between(1, 10)
-        call: p.init("" + a + " * " + b + " = ?", a * b)
+        set left: this.between(1, 10)
+        set right: this.between(1, 10)
+        set sym: "*"
       default:
-        set b: this.between(1, 10)
-        set a: this.between(1, 10)
-        set dividend int: b * a
-        call: p.init("" + dividend + " / " + b + " = ?", a)
+        # Build a clean division: dividend / divisor with an integer quotient.
+        set right: this.between(1, 10)
+        set quotient int: this.between(1, 10)
+        set left: right * quotient
+        set sym: "/"
+    set q: this.math.from_operands(sym, left, right)
+    set p: new Problem()
+    call: p.init(q.prompt, q.answer)
     return: p
 
   # Operator codes: 0=+, 1=-, 2=*, 3=/  constrained by difficulty.
@@ -75,68 +88,47 @@ class MathSkill:
       return: rand(3)
     return: rand(4)
 
-  # Difficulty 6: order-of-operations table (12 problems).
+  # Difficulty 6: order-of-operations table. A dictionary (new OW style) maps each
+  # question to its answer, replacing the old parallel qs[]/ans[] arrays.
   fn pemdas():
-    set qs: array(12, "")
-    set ans: array(12, 0)
-    set qs[0]: "3 + 4 * 2"
-    set ans[0]: 11
-    set qs[1]: "(2 + 3) * 4"
-    set ans[1]: 20
-    set qs[2]: "10 - 2 * 3"
-    set ans[2]: 4
-    set qs[3]: "(5 + 5) / 2"
-    set ans[3]: 5
-    set qs[4]: "8 / 2 + 3"
-    set ans[4]: 7
-    set qs[5]: "2 * 3 + 4"
-    set ans[5]: 10
-    set qs[6]: "15 - 3 * 3"
-    set ans[6]: 6
-    set qs[7]: "(4 + 2) * 3"
-    set ans[7]: 18
-    set qs[8]: "12 / 3 + 5"
-    set ans[8]: 9
-    set qs[9]: "2 + 6 / 2"
-    set ans[9]: 5
-    set qs[10]: "(8 - 3) * 2"
-    set ans[10]: 10
-    set qs[11]: "4 * 2 - 1"
-    set ans[11]: 7
-    set i int: rand(12)
-    set p: new Problem()
-    call: p.init(qs[i] + " = ?", ans[i])
-    return: p
+    set table: {
+      "3 + 4 * 2": 11,
+      "(2 + 3) * 4": 20,
+      "10 - 2 * 3": 4,
+      "(5 + 5) / 2": 5,
+      "8 / 2 + 3": 7,
+      "2 * 3 + 4": 10,
+      "15 - 3 * 3": 6,
+      "(4 + 2) * 3": 18,
+      "12 / 3 + 5": 9,
+      "2 + 6 / 2": 5,
+      "(8 - 3) * 2": 10,
+      "4 * 2 - 1": 7
+    }
+    return: this.from_table(table)
 
-  # Difficulty 7: nightmare multi-step table (12 problems).
+  # Difficulty 7: nightmare multi-step table, same dictionary style.
   fn nightmare():
-    set qs: array(12, "")
-    set ans: array(12, 0)
-    set qs[0]: "((25 - 10) * 4 + 18) / 2 - 7"
-    set ans[0]: 32
-    set qs[1]: "(50 / 5 + 3) * 6 - 28"
-    set ans[1]: 50
-    set qs[2]: "100 - (8 * 7 - 12) / 2"
-    set ans[2]: 78
-    set qs[3]: "((15 + 9) * 3 - 20) / 4"
-    set ans[3]: 13
-    set qs[4]: "(80 - 32) / 6 + 15 * 2"
-    set ans[4]: 38
-    set qs[5]: "((40 / 8 + 7) * 6 - 18) / 3"
-    set ans[5]: 18
-    set qs[6]: "120 / (12 - 2) + 8 * 5"
-    set ans[6]: 52
-    set qs[7]: "(18 + 22) * 2 - 35 / 7"
-    set ans[7]: 75
-    set qs[8]: "((64 - 16) / 4 + 9) * 3"
-    set ans[8]: 63
-    set qs[9]: "(100 - 45) / 5 + 17 * 2"
-    set ans[9]: 45
-    set qs[10]: "((36 / 6 + 8) * 4 - 20) / 2"
-    set ans[10]: 18
-    set qs[11]: "(72 / 9 - 3) * 7 + 15"
-    set ans[11]: 50
-    set i int: rand(12)
+    set table: {
+      "((25 - 10) * 4 + 18) / 2 - 7": 32,
+      "(50 / 5 + 3) * 6 - 28": 50,
+      "100 - (8 * 7 - 12) / 2": 78,
+      "((15 + 9) * 3 - 20) / 4": 13,
+      "(80 - 32) / 6 + 15 * 2": 38,
+      "((40 / 8 + 7) * 6 - 18) / 3": 18,
+      "120 / (12 - 2) + 8 * 5": 52,
+      "(18 + 22) * 2 - 35 / 7": 75,
+      "((64 - 16) / 4 + 9) * 3": 63,
+      "(100 - 45) / 5 + 17 * 2": 45,
+      "((36 / 6 + 8) * 4 - 20) / 2": 18,
+      "(72 / 9 - 3) * 7 + 15": 50
+    }
+    return: this.from_table(table)
+
+  # Pick a random question->answer pair from a dictionary table and build a Problem.
+  fn from_table(table):
+    set keys: map_keys(table)
+    set q: keys[rand(len(keys))]
     set p: new Problem()
-    call: p.init(qs[i] + " = ?", ans[i])
+    call: p.init(q + " = ?", table[q])
     return: p

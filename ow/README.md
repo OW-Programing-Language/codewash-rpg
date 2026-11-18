@@ -14,11 +14,14 @@ Double-click **Lancer-jeu-OW.cmd** in the repository root, or run:
 ```
 
 The launcher builds the catalog/page, selects the compatible local compiler at
-`.packaging/ow-lang/target/OwIDE.jar`, sets the working directory, and opens
+`.packaging/ow-dictionaries/target/OwIDE.jar`, sets the working directory, and opens
 http://127.0.0.1:5180/. Keep the launcher running while playing.
 
 Requirements: Node.js, Java 17+, and an OW runtime with `web_ui`, HTTP routes,
+native dictionaries (`map_get`, `map_set`, `map_has`, `map_keys`, `map_size`),
 JSON records, floating-point arithmetic, file persistence and math builtins.
+The local runtime combines ow-lang PR #43 with this game's existing browser
+support. The older `.packaging/ow-lang` checkout is retained unchanged.
 The old `ow` on this machine's PATH lacks the required APIs. Choose another JAR:
 
 ```powershell
@@ -34,6 +37,62 @@ node ow/scripts/build-web.mjs
 cd ow
 java -jar /absolute/path/to/OwIDE.jar run src/main_ui.ow
 ```
+
+## Two runtimes (important)
+
+This project needs **two** OW runtime jars, because the game's browser support
+(`web_ui`, HTTP routes, `serve`) is a local patch (`.packaging/runtime-browser.patch`)
+that is **not** in upstream ow-lang, while `ow deps` / `ow test` / the new
+dictionary & array literals are **only** in upstream:
+
+| Jar | Has | Used for |
+|-----|-----|----------|
+| `.packaging/ow-dictionaries/target/OwIDE.jar` | `web_ui` + HTTP server | **running the web game** (`run-ow.ps1`) |
+| `.packaging/ow-dictionaries/target/OwIDE-deps.jar` | `ow deps` + `ow test` + dict/array literals | **dependencies & tests** (`ow deps install`, `ow test tests/`) |
+
+Do **not** overwrite the web jar with an upstream build — it loses `web_ui` and
+the web game then fails with "connection refused" (nothing binds). Unifying both
+into one jar means re-applying `runtime-browser.patch` onto upstream and resolving
+conflicts; not done here.
+
+> **The OwIDE "Run web" button does not work for this game.** It runs the file
+> from the wrong working directory and skips the Node pre-build, so
+> `generated/page.json` / `../public` can't be found and the server never starts
+> ("127.0.0.1 refused to connect"). Launch with `run-ow.ps1` or
+> `Lancer-jeu-OW.cmd` instead — they build the catalog and set the cwd to `ow/`.
+
+## Dependencies (dependencies.yml)
+
+The OW sources now pull reusable libraries through the compiler's own package
+manager instead of vendoring copies. `dependencies.yml` declares three:
+
+| alias     | repository                                   | used by                              |
+|-----------|----------------------------------------------|--------------------------------------|
+| `@flow`   | `OW-Programing-Language/flOW---OW-Modular-Framework` | `src/UiGame.ow`, `src/modules/*`     |
+| `@math`   | `OW-Programing-Language/ow-math-questions`    | `src/MathSkill.ow`                    |
+| `@owunit` | `OW-Programing-Language/OWUnit`               | `tests/*Test.ow`                      |
+
+Resolve them (clones the locked commits into `ow/.ow/deps/`, writes
+`dependencies.lock.yml`):
+
+```sh
+cd ow
+# use the deps/test jar (see "Two runtimes" above)
+java -jar ../.packaging/ow-dictionaries/target/OwIDE-deps.jar deps install
+java -jar ../.packaging/ow-dictionaries/target/OwIDE-deps.jar deps list
+```
+
+Imports use the `@alias/path` form, e.g. `import "@math/src/MathQuestions.ow"`
+or `import "@flow/src/App.ow"`. Relative imports (`import "Game.ow"`) are
+unchanged. `.ow/deps/` is git-ignored; the lockfile is committed so installs are
+reproducible. `run-ow.ps1` runs `ow deps install` automatically before launch.
+
+The vendored `src/flow/` copy of the framework has been removed — flOW now comes
+from `@flow`. The game's two modules (`src/modules/sound`,
+`src/modules/achievements`) declare the upstream interface nominally
+(`class SoundModule(Module):`) and implement its lifecycle (`start`/`stop`).
+`MathSkill` keeps the game's per-tier difficulty policy but builds each question
+through `@math`'s `MathQuestions.from_operands()`.
 
 ## Architecture
 
@@ -80,11 +139,28 @@ profile/state; revision checks reject stale clicks. It is not multiplayer.
 
 ## Validation
 
+Unit tests use **OWUnit** (`@owunit`) and run with the compiler's test runner
+(files ending in `Test.ow` / `_test.ow`, `@Test` / `@BeforeEach` methods):
+
+```sh
+cd ow
+JAR=../.packaging/ow-dictionaries/target/OwIDE-deps.jar
+java -jar $JAR deps install
+java -jar $JAR test tests/                       # all suites
+java -jar $JAR test tests/MathSkillTest.ow       # one file
+```
+
+`tests/MathSkillTest.ow` checks the `@math`-backed question generation and
+answer options; `tests/FlowAppTest.ow` boots the two flOW modules on an `App`
+from `@flow` and asserts event delivery and enable/disable. The parity harness
+below is the original end-to-end check:
+
 ```sh
 npm run ow:test
 ```
 
-This builds the catalog, compares OW against **1,400 original JS formula
+This builds the catalog, checks registry, module, theme and border lookups,
+compares OW against **1,400 original JS formula
 cases** (levels 1–200 × seven difficulties), and exercises all six activities,
 bosses, minibosses, death/recovery, profiles, awards, save reload and HTML escaping.
 Set OW_JAR when the compiler lives elsewhere.

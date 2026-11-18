@@ -6,7 +6,9 @@
 # Events it listens to:
 #   "turn"         -> one action was taken (count toward effort achievements)
 #   "hero.levelup" -> payload is the new level (level milestones)
-class AchievementsModule:
+import "@flow/src/Module.ow"
+
+class AchievementsModule(Module):
   field turns
   field unlocked
   field a_first
@@ -36,6 +38,10 @@ class AchievementsModule:
     return: 0
 
   fn start(app):
+    return: 0
+
+  # flOW now performs ordered shutdown/rollback; nothing to tear down here.
+  fn stop(app):
     return: 0
 
   # Reset all progress (e.g. when switching profiles).

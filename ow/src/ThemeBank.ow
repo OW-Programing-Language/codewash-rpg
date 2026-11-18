@@ -1,55 +1,32 @@
 # Themes, ported from THEME_CONFIG / THEMES_LIST in src/constants/gameData.jsx.
-# Each theme swaps the background and logo (the mob/chest art is shared, as in the
-# React app where most themes reuse the base art). Paths resolve from the ow/
-# folder. A theme with no dedicated logo inherits the base (Minecraft) logo.
+# Paths resolve from ow/. Unknown themes and missing logos use Minecraft.
 class ThemeBank:
   field ids
+  field themes
 
   fn new():
-    set this.ids: ["minecraft", "kpop", "pokemon", "spy", "scifi", "fantasy"]
+    set this.themes: {
+      "minecraft": {name: "Minecraft", bg: "minecraft.png", logo: "minecraft_logo.png"},
+      "kpop": {name: "K-Pop", bg: "kpop.jpg", logo: "kpop_logo.png"},
+      "pokemon": {name: "Pokemon", bg: "pokemon.jpg", logo: "pokemon_logo.png"},
+      "spy": {name: "Spy", bg: "spy.png"},
+      "scifi": {name: "Sci-Fi", bg: "Scifi.png"},
+      "fantasy": {name: "Fantasy", bg: "fantasy.png"}
+    }
+    # OW dictionaries preserve insertion order for the theme selector.
+    set this.ids: map_keys(this.themes)
 
   fn all():
     return: this.ids
 
   fn name(id):
-    switch: id
-      case "minecraft":
-        return: "Minecraft"
-      case "kpop":
-        return: "K-Pop"
-      case "pokemon":
-        return: "Pokemon"
-      case "spy":
-        return: "Spy"
-      case "scifi":
-        return: "Sci-Fi"
-      case "fantasy":
-        return: "Fantasy"
-      default:
-        return: "Minecraft"
+    set tb_theme: map_get(this.themes, id, this.themes.minecraft)
+    return: tb_theme.name
 
   fn bg(id):
-    switch: id
-      case "minecraft":
-        return: "../public/assets/themes/minecraft.png"
-      case "kpop":
-        return: "../public/assets/themes/kpop.jpg"
-      case "pokemon":
-        return: "../public/assets/themes/pokemon.jpg"
-      case "spy":
-        return: "../public/assets/themes/spy.png"
-      case "scifi":
-        return: "../public/assets/themes/Scifi.png"
-      case "fantasy":
-        return: "../public/assets/themes/fantasy.png"
-      default:
-        return: "../public/assets/themes/minecraft.png"
+    set tb_theme: map_get(this.themes, id, this.themes.minecraft)
+    return: "../public/assets/themes/" + tb_theme.bg
 
   fn logo(id):
-    switch: id
-      case "kpop":
-        return: "../public/assets/themes/kpop_logo.png"
-      case "pokemon":
-        return: "../public/assets/themes/pokemon_logo.png"
-      default:
-        return: "../public/assets/themes/minecraft_logo.png"
+    set tb_theme: map_get(this.themes, id, this.themes.minecraft)
+    return: "../public/assets/themes/" + map_get(tb_theme, "logo", this.themes.minecraft.logo)

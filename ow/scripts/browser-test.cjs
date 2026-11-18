@@ -12,7 +12,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 app.whenReady().then(async()=>{
   const entry=(await fs.readFile(path.join(ow,'src/main_ui.ow'),'utf8')).replace('"full/GameView.ow"','"../src/full/GameView.ow"').replace('"save/profiles.json"',`"generated/browser-save-${Date.now()}.json"`);
   await fs.writeFile(path.join(ow,'generated/browser-main.ow'),entry);
-  server=spawn('java',['-Dow.web.port=0','-Dow.web.noBrowser=true','-jar',process.env.OW_JAR||path.join(root,'.packaging/ow-lang/target/OwIDE.jar'),'run','generated/browser-main.ow'],{cwd:ow,windowsHide:true});
+  server=spawn('java',['-Dow.web.port=0','-Dow.web.noBrowser=true','-jar',process.env.OW_JAR||path.join(root,'.packaging/ow-dictionaries/target/OwIDE.jar'),'run','generated/browser-main.ow'],{cwd:ow,windowsHide:true});
   let output='';
   const url=await new Promise((resolve,reject)=>{
     const timeout=setTimeout(()=>reject(new Error('OW server startup timeout: '+output)),15000);

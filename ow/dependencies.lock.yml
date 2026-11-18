@@ -1,0 +1,17 @@
+format: 1
+dependencies:
+  - name: "math"
+    repository: "github"
+    path: "OW-Programing-Language/ow-math-questions"
+    version: "c22d01cfee6be18d96d4c55b95b7e79892bca9f6"
+    commit: "c22d01cfee6be18d96d4c55b95b7e79892bca9f6"
+  - name: "flow"
+    repository: "github"
+    path: "OW-Programing-Language/flOW---OW-Modular-Framework"
+    version: "main"
+    commit: "6d91239698e88994ac6057ea46a176fe79394acb"
+  - name: "owunit"
+    repository: "github"
+    path: "OW-Programing-Language/OWUnit"
+    version: "main"
+    commit: "fde7cb6208305a4cda3bd623c9f520521f3137bf"

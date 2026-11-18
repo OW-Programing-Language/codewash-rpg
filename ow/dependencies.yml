@@ -1,0 +1,20 @@
+format: 1
+repositories:
+  - id: github
+    url: https://github.com
+dependencies:
+  # Math question generator (replaces the hand-rolled mathlib helpers).
+  - name: math
+    repository: github
+    path: OW-Programing-Language/ow-math-questions
+    version: c22d01cfee6be18d96d4c55b95b7e79892bca9f6
+  # flOW modular-monolith framework (App / Registry / Module / Functor).
+  - name: flow
+    repository: github
+    path: OW-Programing-Language/flOW---OW-Modular-Framework
+    version: main
+  # OWUnit test framework (@Test / OWAssert) — used by ow/tests.
+  - name: owunit
+    repository: github
+    path: OW-Programing-Language/OWUnit
+    version: main

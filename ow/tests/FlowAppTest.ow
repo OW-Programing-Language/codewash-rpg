@@ -1,0 +1,46 @@
+# OWUnit tests for the flOW wiring: the game's Sound and Achievements modules
+# booted on an App that comes from the @flow dependency (declared in
+# dependencies.yml), not from a vendored copy.
+#   Run:  ow test tests/FlowAppTest.ow           (from the ow/ folder)
+import "@owunit/src/OWAssert.ow"
+import "@flow/src/App.ow"
+import "../src/modules/sound/SoundModule.ow"
+import "../src/modules/achievements/AchievementsModule.ow"
+
+class FlowAppTest:
+  field checker
+  field app
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.app: new App()
+    call: this.app.use(new SoundModule())
+    call: this.app.use(new AchievementsModule())
+    call: this.app.boot()
+
+  @Test
+  fn bootsBothModules():
+    call: this.checker.assertEquals(1, this.app.has_service("sound"))
+    call: this.checker.assertEquals(1, this.app.has_service("achievements"))
+    call: this.checker.assertEquals(1, this.app.is_enabled("sound"))
+    call: this.checker.assertEquals(1, this.app.is_enabled("achievements"))
+
+  # Events reach enabled modules. Sound is disabled first so the test never
+  # touches the audio backend; only the Achievements module reacts.
+  @Test
+  fn achievementsReactToEvents():
+    call: this.app.disable("sound")
+    set ach: this.app.service("achievements")
+    call: this.checker.assertEquals(0, ach.total())
+    call: this.app.emit("turn", 0)
+    call: this.checker.assertEquals(1, ach.total())
+    call: this.app.emit("hero.levelup", 2)
+    call: this.checker.assertEquals(2, ach.total())
+
+  @Test
+  fn modulesCanBeDisabledAndReEnabled():
+    call: this.checker.assertEquals(1, this.app.disable("sound"))
+    call: this.checker.assertEquals(0, this.app.is_enabled("sound"))
+    call: this.checker.assertEquals(1, this.app.enable("sound"))
+    call: this.checker.assertEquals(1, this.app.is_enabled("sound"))

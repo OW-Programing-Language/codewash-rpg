@@ -11,8 +11,10 @@ ow/save/
 
 # Logs
 *.log
+npm-debug.log*
+ow/generated/
+ow/save/
 
-# Local tooling / runtime (not a tracked dependency)
-.packaging/
-.idea/
-.vscode/
+# OW dependency cache (resolved from dependencies.yml via `ow deps install`).
+# The lockfile dependencies.lock.yml IS tracked so installs are reproducible.
+ow/.ow/

@@ -12,8 +12,13 @@ const js=await import('data:text/javascript;base64,'+Buffer.from(utilSource).toS
 const cases=[];
 for(let level=1;level<=200;level++) for(let difficulty=1;difficulty<=7;difficulty++) cases.push({level,difficulty,damage:js.calculateDamage(level,difficulty),health:js.calculateMobHealth(difficulty),needed:js.calculateXPToLevel(difficulty,level),reward:js.calculateXPReward(difficulty,level),encounter:js.getEncounterType(level)});
 await fs.writeFile(path.join(ow,'generated/parity.json'),JSON.stringify(cases));
-const jar=process.env.OW_JAR || path.join(root,'.packaging/ow-lang/target/OwIDE.jar');
-const result=spawnSync('java',['-jar',jar,'run','tests/core.ow'],{cwd:ow,encoding:'utf8'});
-process.stdout.write(result.stdout || '');process.stderr.write(result.stderr || '');
-if(result.error) throw result.error;
-process.exitCode=result.status ?? 1;
+const jar=process.env.OW_JAR || path.join(root,'.packaging/ow-dictionaries/target/OwIDE.jar');
+for (const suite of ['tests/lookups.ow', 'tests/core.ow']) {
+  const result=spawnSync('java',['-jar',jar,'run',suite],{cwd:ow,encoding:'utf8'});
+  process.stdout.write(result.stdout || '');process.stderr.write(result.stderr || '');
+  if(result.error) throw result.error;
+  if (result.status !== 0) {
+    process.exitCode=result.status ?? 1;
+    break;
+  }
+}

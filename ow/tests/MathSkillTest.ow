@@ -1,0 +1,50 @@
+# OWUnit tests for MathSkill, which now builds its questions through the
+# @math library (ow-math-questions) declared in dependencies.yml.
+#   Run:  ow test tests/MathSkillTest.ow        (from the ow/ folder)
+#   Or:   ow test tests/
+import "@owunit/src/OWAssert.ow"
+import "../src/MathSkill.ow"
+
+class MathSkillTest:
+  field checker
+  field skill
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.skill: new MathSkill()
+
+  @Test
+  fn modeIsChoice():
+    call: this.checker.assertEquals("choice", this.skill.mode())
+
+  # Tiers 1-5 route through @math from_operands(); every generated problem must
+  # carry a prompt and a non-negative integer answer.
+  @Test
+  fn generatesSolvableBasicProblems():
+    set d int: 1
+    while: d < 6
+      set i int: 0
+      while: i < 40
+        set p: this.skill.generate(d)
+        call: this.checker.assertNotEmpty(p.ask())
+        call: this.checker.assertTrue(p.solution() >= 0)
+        set i: i + 1
+      set d: d + 1
+
+  @Test
+  fn optionsAlwaysIncludeTheSolution():
+    set t int: 0
+    while: t < 40
+      set p: this.skill.generate(4)
+      set opts: this.skill.options(p)
+      call: this.checker.assertArrayLength(opts, 4)
+      call: this.checker.assertContains(opts, p.solution())
+      set t: t + 1
+
+  @Test
+  fn pemdasAndNightmareStayNonNegative():
+    set p6: this.skill.generate(6)
+    call: this.checker.assertTrue(p6.solution() >= 0)
+    set p7: this.skill.generate(7)
+    call: this.checker.assertTrue(p7.solution() >= 0)

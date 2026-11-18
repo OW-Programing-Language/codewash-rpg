@@ -1,0 +1,131 @@
+import "../src/ThemeBank.ow"
+import "../src/flow/App.ow"
+import "../src/full/World.ow"
+
+class LookupModule:
+  field id
+  field events
+  field reloads
+
+  fn new(id):
+    set this.id: id
+    set this.events: 0
+    set this.reloads: 0
+
+  fn name():
+    return: this.id
+
+  fn on_event(type, payload):
+    set this.events: this.events + 1
+
+  fn reload(app):
+    set this.reloads: this.reloads + 1
+
+main:
+  set registry: new Registry()
+  call: assert(json(registry.has("missing")) == "0", "has returns numeric zero")
+  call: assert(registry.get("missing") == 0, "Missing service default")
+  set i: 0
+  while: i < 100
+    call: assert(registry.put("key " + str(i), i) == 0, "put return value")
+    set i: i + 1
+  call: assert(registry.count == 100, "Registry grows beyond 64 entries")
+  set i: 0
+  while: i < 100
+    call: assert(registry.get("key " + str(i)) == i, "Registry value")
+    set i: i + 1
+  call: registry.put("key 0", false)
+  call: assert(registry.count == 100, "Updating a key does not increase count")
+  call: assert(json(registry.has("key 0")) == "1", "has returns numeric one for false")
+  call: assert(registry.get("key 0") == false, "Stored false is preserved")
+  call: registry.put("", "")
+  call: assert(registry.get("") == "", "Empty key and value")
+
+  set app: new App()
+  call: app.set_config("off", false)
+  call: app.set_config("zero", 0)
+  call: app.set_config("empty", "")
+  call: assert(app.config_or("off", true) == false, "False config is present")
+  call: assert(app.config_or("zero", 9) == 0, "Zero config is present")
+  call: assert(app.config_or("empty", "fallback") == "", "Empty config is present")
+  call: assert(app.config_or("missing", 9) == 9, "Missing config fallback")
+  set first: new LookupModule("same")
+  set second: new LookupModule("other")
+  set last: new LookupModule("same")
+  call: app.use(first)
+  call: app.use(second)
+  call: assert(app.index_of("same") == 0, "Index zero is present")
+  call: app.use(last)
+  call: assert(app.index_of("same") == 2, "Latest duplicate wins lookup")
+  call: assert(app.index_of("other") == 1, "Other module index")
+  call: assert(app.index_of("missing") == 99, "Missing module sentinel")
+  call: app.disable("same")
+  call: assert(app.is_enabled("same") == 0, "Disable latest module")
+  call: app.emit("test", 0)
+  call: assert(first.events == 1, "Earlier duplicate still receives events")
+  call: assert(second.events == 1, "Other module receives events")
+  call: assert(last.events == 0, "Disabled module receives no events")
+  call: app.enable("same")
+  call: app.reload("same")
+  call: assert(last.reloads == 1, "Reload latest duplicate")
+  call: assert(first.reloads == 0, "Earlier duplicate is not reloaded")
+  call: app.enable("missing")
+  call: app.disable("missing")
+  call: app.reload("missing")
+  call: assert(app.is_enabled("missing") == 0, "Unknown module operations are harmless")
+
+  set themes: new ThemeBank()
+  set ids: ["minecraft", "kpop", "pokemon", "spy", "scifi", "fantasy"]
+  set names: ["Minecraft", "K-Pop", "Pokemon", "Spy", "Sci-Fi", "Fantasy"]
+  set backgrounds: ["minecraft.png", "kpop.jpg", "pokemon.jpg", "spy.png", "Scifi.png", "fantasy.png"]
+  set logos: ["minecraft_logo.png", "kpop_logo.png", "pokemon_logo.png", "minecraft_logo.png", "minecraft_logo.png", "minecraft_logo.png"]
+  call: assert(json(themes.all()) == json(ids), "Theme selector order")
+  set i: 0
+  while: i < len(ids)
+    call: assert(themes.name(ids[i]) == names[i], "Theme name")
+    call: assert(themes.bg(ids[i]) == "../public/assets/themes/" + backgrounds[i], "Theme background")
+    call: assert(themes.logo(ids[i]) == "../public/assets/themes/" + logos[i], "Theme logo")
+    set i: i + 1
+  set unknown: ["unknown", "", "Minecraft"]
+  set i: 0
+  while: i < len(unknown)
+    call: assert(themes.name(unknown[i]) == themes.name("minecraft"), "Unknown theme name")
+    call: assert(themes.bg(unknown[i]) == themes.bg("minecraft"), "Unknown theme background")
+    call: assert(themes.logo(unknown[i]) == themes.logo("minecraft"), "Unknown theme logo")
+    set i: i + 1
+
+  set world: new World("generated/lookup-unsaved-profile.json")
+  set profile: world.profile()
+  call: assert(world.border_unlocked("solid") == 1, "Solid always unlocked")
+  call: assert(world.border_unlocked("unknown") == 0, "Unknown border locked")
+  call: assert(world.border_unlocked("") == 0, "Empty border locked")
+  set borders: ["solid-picker", "gradient", "sparkle", "electric", "lifestream", "frost", "fire", "shadow", "rainbow"]
+  set lastSkill: profile.skills[5]
+  set i: 0
+  while: i < len(borders)
+    set lastSkill.badges: []
+    call: assert(world.border_unlocked(borders[i]) == 0, "Border initially locked")
+    set lastSkill.badges: [i + 1]
+    call: assert(world.border_unlocked(borders[i]) == 1, "Correct badge unlocks border")
+    set i: i + 1
+  set lastSkill.badges: []
+  set lastSkill.level: 179
+  call: assert(world.border_unlocked("rainbow") == 0, "Rainbow locked at 179")
+  set lastSkill.level: 180
+  call: assert(world.border_unlocked("rainbow") == 1, "Rainbow unlocked at 180")
+  set custom: ["livewire", "void", "toxic", "holo", "crystal"]
+  set i: 0
+  while: i < len(custom)
+    call: assert(world.border_unlocked(custom[i]) == false, "Custom border initially locked")
+    set i: i + 1
+  set profile.stats.battles: 10
+  call: assert(world.border_unlocked("livewire") == true, "Speed award border")
+  set profile.stats.bosses: ["a", "b", "c", "d"]
+  call: assert(world.border_unlocked("void") == true, "Boss award border")
+  set profile.stats.mobs: array(20, "mob")
+  call: assert(world.border_unlocked("toxic") == true, "Mob award border")
+  set profile.stats.perfect: 1
+  call: assert(world.border_unlocked("holo") == true, "Perfect award border")
+  set lastSkill.badges: [1, 2, 3, 4, 5, 6, 7, 8]
+  call: assert(world.border_unlocked("crystal") == true, "Badge award border")
+  print: "Dictionary lookup regressions passed."

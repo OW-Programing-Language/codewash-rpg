@@ -2,7 +2,7 @@ param([int]$Port = 5180, [string]$RuntimeJar = $env:OW_JAR, [switch]$NoBrowser)
 $ErrorActionPreference = 'Stop'
 $gameRoot = $PSScriptRoot
 if (-not $RuntimeJar) {
-    $RuntimeJar = Join-Path $gameRoot '.packaging/ow-lang/target/OwIDE.jar'
+    $RuntimeJar = Join-Path $gameRoot '.packaging/ow-dictionaries/target/OwIDE.jar'
 }
 if (-not (Test-Path -LiteralPath $RuntimeJar)) {
     throw 'Runtime OW compatible absent. Indiquez -RuntimeJar chemin/vers/OwIDE.jar (web_ui requis). Voir ow/README.md.'
@@ -13,6 +13,10 @@ try {
     & node 'ow/scripts/build-web.mjs'
     if ($LASTEXITCODE -ne 0) { throw 'Échec de préparation du jeu OW.' }
     Set-Location (Join-Path $gameRoot 'ow')
+    # Note: the web game (main_ui.ow -> src/full/*) is self-contained and does NOT
+    # use dependencies.yml. It runs on the web-capable runtime jar. The @flow/@math/
+    # @owunit dependencies and `ow test` use the newer deps/test jar instead
+    # (OwIDE-deps.jar) — see ow/README.md. Keep the two runtimes separate.
     $javaArgs = @("-Dow.web.port=$Port")
     if ($NoBrowser) { $javaArgs += '-Dow.web.noBrowser=true' }
     $javaArgs += @('-jar', $RuntimeJar, 'run', 'src/main_ui.ow')

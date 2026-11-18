@@ -24,8 +24,20 @@ class World:
   field phantomUntil
   field pendingProfile
   field musicIndex
+  field borderBadges
+  field borderAwards
 
   fn new(savePath):
+    set this.borderBadges: {
+      "solid-picker": 1, "gradient": 2, "sparkle": 3,
+      "electric": 4, "lifestream": 5, "frost": 6,
+      "fire": 7, "shadow": 8, "rainbow": 9
+    }
+    set this.borderAwards: {
+      "livewire": "speed_demon", "void": "world_ender",
+      "toxic": "monster_manual", "holo": "perfectionist",
+      "crystal": "full_set"
+    }
     set this.data: load("generated/catalog.json")
     set this.rules: new Rules()
     set this.awards: new Awards()
@@ -186,28 +198,21 @@ class World:
 
   fn border_unlocked(id):
     set p: this.profile()
-    set ids: ["solid", "solid-picker", "gradient", "sparkle", "electric", "lifestream", "frost", "fire", "shadow", "rainbow"]
     if: id == "solid"
       return: 1
-    set i: 1
-    while: i < len(ids)
-      if: id == ids[i]
-        set j: 0
-        while: j < 6
-          if: has(p.skills[j].badges, i)
+    set badge: map_get(this.borderBadges, id, 0)
+    if: badge > 0
+      set j: 0
+      while: j < len(p.skills)
+        if: has(p.skills[j].badges, badge)
+          return: 1
+        if: badge == 9
+          if: p.skills[j].level > 179
             return: 1
-          if: i == 9
-            if: p.skills[j].level > 179
-              return: 1
-          set j: j + 1
-      set i: i + 1
-    set custom: ["livewire", "void", "toxic", "holo", "crystal"]
-    set awards: ["speed_demon", "world_ender", "monster_manual", "perfectionist", "full_set"]
-    set i: 0
-    while: i < 5
-      if: id == custom[i]
-        return: this.awards.unlocked(p, awards[i])
-      set i: i + 1
+        set j: j + 1
+    set award: map_get(this.borderAwards, id, "")
+    if: award != ""
+      return: this.awards.unlocked(p, award)
     return: 0
 
   fn act(action, value):

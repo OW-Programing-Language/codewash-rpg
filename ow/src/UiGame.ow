@@ -6,7 +6,7 @@ import "MemorySkill.ow"
 import "PatternsSkill.ow"
 import "CleaningSkill.ow"
 import "ThemeBank.ow"
-import "flow/App.ow"
+import "@flow/src/App.ow"
 import "modules/sound/SoundModule.ow"
 import "modules/achievements/AchievementsModule.ow"
 
