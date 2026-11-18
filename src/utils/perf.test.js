@@ -40,4 +40,20 @@ describe('createPerfTracker', () => {
     p.reset();
     expect(p.getMarks()).toEqual({});
   });
+
+  it('falls back to a real monotonic clock when no `now` is provided', () => {
+    const p = createPerfTracker();
+    p.mark('a'); // invokes the default clock
+    expect(typeof p.getMark('a')).toBe('number');
+    expect(p.getMark('a')).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('perf singleton', () => {
+  it('is a ready-to-use tracker on the real clock', async () => {
+    const { perf } = await import('./perf');
+    perf.reset();
+    perf.mark('boot');
+    expect(typeof perf.measure('boot')).toBe('number');
+  });
 });
