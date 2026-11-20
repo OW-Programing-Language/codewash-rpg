@@ -131,11 +131,26 @@ class BattleHudText:
       set count: cap
     if: count < 1
       return: at
+    # Never stretch short words to fill an entire pill or badge.
     set step float: available / count
+    if: step > 0.022
+      set step: 0.022
     set glyph_w float: step * 0.81
     if: glyph_w > 0.014
       set glyph_w: 0.014
     return: this.menu_line(buffer, at, value, x, y, count, glyph_w, height, step)
+
+  fn centered_line(buffer, at, value, x, y, available, height, cap):
+    set count int: len(value)
+    if: count > cap
+      set count: cap
+    if: count < 1
+      return: at
+    set step float: available / count
+    if: step > 0.022
+      set step: 0.022
+    set start float: x + (available - step * count) / 2.0
+    return: this.fitted_line(buffer, at, value, start, y, step * count, height, cap)
 
   # Electron's side cards are intentionally dim. Extend the existing 5x7
   # glyph vertex material encoding rather than making extra meshes/shaders:
@@ -199,17 +214,25 @@ class BattleHudText:
         else:
           if: dist > 0.53
             set fade: 1
-        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.055, w - 0.146, 0.021, 15, fade)
-        set at: this.faded_line(buffer, at, cards.title(slot), x + 0.020, y + h - 0.111, w - 0.146, 0.035, 22, fade)
-        set at: this.faded_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.106, y + h - 0.074, 0.091, 0.032, 9, fade)
-        if: dist < 0.53
-          set at: this.fitted_line(buffer, at, upper(cards.mob_name(slot)), x + w * 0.22, y + h * 0.485, w * 0.56, 0.028, 24)
-          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.035, y + h * 0.438, w - 0.070, 0.021, 20)
-          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.031, y + 0.304, w - 0.062, 0.025, 25)
-          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.031, y + 0.255, w - 0.062, 0.025, 25)
-          set at: this.fitted_line(buffer, at, cards.action(slot), x + 0.045, y + 0.103, w - 0.090, 0.039, 15)
+        # The top-left label is text-only in Electron. Split long
+        # headings at real word boundaries and preserve the LVL badge.
+        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.048, w - 0.146, 0.017, 15, fade)
+        set first: cards.title_first(slot)
+        set second: cards.title_second(slot)
+        if: second == ""
+          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.108, w - 0.146, 0.030, 22, fade)
         else:
-          set at: this.faded_line(buffer, at, cards.action(slot), x + 0.044, y + 0.103, w - 0.088, 0.029, 15, fade)
+          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.088, w - 0.146, 0.025, 22, fade)
+          set at: this.faded_line(buffer, at, second, x + 0.020, y + h - 0.126, w - 0.146, 0.025, 22, fade)
+        set at: this.faded_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.106, y + h - 0.076, 0.091, 0.029, 9, fade)
+        if: dist < 0.53
+          set at: this.centered_line(buffer, at, upper(cards.mob_name(slot)), x + w * 0.18, y + h * 0.488, w * 0.64, 0.025, 24)
+          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.035, y + h * 0.438, w - 0.070, 0.018, 20)
+          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.031, y + 0.304, w - 0.062, 0.023, 25)
+          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.031, y + 0.255, w - 0.062, 0.023, 25)
+          set at: this.centered_line(buffer, at, cards.action(slot), x + 0.045, y + 0.103, w - 0.090, 0.037, 15)
+        else:
+          set at: this.faded_line(buffer, at, cards.action(slot), x + 0.044, y + 0.103, w - 0.088, 0.027, 15, fade)
       set i: i + 1
     return: buffer
 
