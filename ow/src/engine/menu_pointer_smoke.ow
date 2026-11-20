@@ -15,11 +15,11 @@ main:
   while: i < 6
     call: assert(game.render() == 0, "mouse hover pulse renders")
     set i: i + 1
-  call: assert(game.pointer.visual == 10, "first quick menu button highlighted")
+  call: assert(game.pointer.visual == 10, "settings icon highlighted")
   call: assert(game.pointer.eased == 1.0, "hover transition reaches full outline")
   set hover: extension("codewash.test.pixel", 50, 693)
   call: assert(hover[1] > hover[0] + 30, "cyan GPU hover outline visible at button top")
-  call: assert(game.pointer.sample(x, y, 1, game.menu.screen(), game.carousel, game.layout) == 10, "left click selects menu button")
+  call: assert(game.pointer.sample(x, y, 1, game.menu.screen(), game.carousel, game.layout) == 10, "left click selects settings icon")
   call: assert(game.pointer.sample(x, y, 1, game.menu.screen(), game.carousel, game.layout) == 0 - 1, "held click not repeated")
   call: assert(game.pointer.sample(x, y, 0, game.menu.screen(), game.carousel, game.layout) == 0 - 1, "release resets latch")
   call: assert(game.pointer.sample(0.0, 0.0, 1, game.menu.screen(), game.carousel, game.layout) == 1, "center card is clickable")
