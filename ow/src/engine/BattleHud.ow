@@ -2,6 +2,7 @@
 # This is an opt-in experiment and does not replace the six-skill browser UI.
 import "BattleHudText.ow"
 import "NativeMenuLayout.ow"
+import "NativeToolbarArt.ow"
 
 class BattleHud:
   field meshes
@@ -20,6 +21,7 @@ class BattleHud:
   field materials
   field arrow_controls
   field toolbar_icons
+  field toolbar_art
   field modal_panel
   field hover_frame
   field card_data
@@ -47,6 +49,7 @@ class BattleHud:
     set this.materials: 0
     set this.arrow_controls: 0
     set this.toolbar_icons: 0
+    set this.toolbar_art: new NativeToolbarArt(meshes, shader, renderer, this.layout)
     set this.modal_panel: 0
     set this.hover_frame: 0
     set this.card_data: 0
@@ -76,9 +79,11 @@ class BattleHud:
     set this.arrow_controls: this.meshes.create(this.layout.arrow_vertices())
     if: this.arrow_controls < 1
       return: 0
-    set this.toolbar_icons: this.meshes.create(this.layout.toolbar_icon_vertices())
-    if: this.toolbar_icons < 1
+    # Icons are native anti-aliased shader shapes and rounded backgrounds,
+    # not stacked flat quads. Keep the public handle for existing smoke tests.
+    if: this.toolbar_art.start() != 1
       return: 0
+    set this.toolbar_icons: this.toolbar_art.quad
     set this.modal_panel: this.meshes.create(this.layout.panel_vertices())
     if: this.modal_panel < 1
       return: 0
@@ -263,9 +268,16 @@ class BattleHud:
       if: this.menu_show_cards == 0
         if: this.renderer.draw_mesh(this.modal_panel) != 1
           return: 0
-      if: this.renderer.draw_mesh(this.menu_cards) != 1
+      # Dedicated toolbar draws the actual five Lucide-like icons; the
+      # obsolete orange/green bitmap glyphs and square background meshes
+      # are deliberately NOT drawn. Restore the HUD program for texts.
+      if: this.toolbar_art.render(this.pointer) != 1
         return: 0
-      if: this.renderer.draw_mesh(this.toolbar_icons) != 1
+      if: this.shader.bind(this.shader_program) != 1
+        return: 0
+      if: this.shader.set_int(this.shader_program, "uSelected", this.selection.selected) != 1
+        return: 0
+      if: this.shader.set_int(this.shader_program, "uAnimTick", this.anim_tick) != 1
         return: 0
       if: this.hover_frame > 0
         if: this.renderer.draw_mesh(this.hover_frame) != 1
@@ -312,8 +324,8 @@ class BattleHud:
     if: this.arrow_controls > 0
       call: this.meshes.destroy(this.arrow_controls)
       set this.arrow_controls: 0
-    if: this.toolbar_icons > 0
-      call: this.meshes.destroy(this.toolbar_icons)
+    if: this.toolbar_art != 0
+      call: this.toolbar_art.stop()
       set this.toolbar_icons: 0
     if: this.modal_panel > 0
       call: this.meshes.destroy(this.modal_panel)
