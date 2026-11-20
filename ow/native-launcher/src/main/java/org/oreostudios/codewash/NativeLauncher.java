@@ -76,6 +76,12 @@ public final class NativeLauncher {
         String javaName = isWindows() && graphicalRun ? "javaw.exe"
                 : isWindows() ? "java.exe" : "java";
         Path java = Path.of(System.getProperty("java.home"), "bin", javaName);
+        if (!Files.isRegularFile(java) && isWindows() && graphicalRun) {
+            // Some custom jlink images omit javaw.exe. Fall back to bundled
+            // java.exe instead of silently closing the splash on Windows.
+            log("Bundled javaw.exe unavailable; falling back to java.exe");
+            java = Path.of(System.getProperty("java.home"), "bin", "java.exe");
+        }
         if (!Files.isRegularFile(java)) {
             closeSplash(splash);
             throw new IllegalStateException("Bundled Java executable missing: " + java);
