@@ -197,3 +197,31 @@ font layout and preserves actual source image proportions. Mob portraits,
 skill emblems and the logo use transparent **contain** fitting; the
 theme background uses centered **cover** cropping without stretching.
 None of this requires an Internet connection at launch.
+
+## PR #36 — Native pointer input and hover / arrow controls
+
+The native GLFW adapter now exposes `input.cursor_ndc()`, which transforms
+logical window pointer positions into OpenGL normalized device coordinates.
+The CodeWash menu uses the *same* `NativeMenuLayout.card_rect()` bounds for
+drawing and hit-testing, including the center and two adjacent cards.
+
+- Click the **center card** or its CTA to launch the actual native OW skill.
+- Click a **side card**, or the left/right chevrons, to move by one skill.
+- Click any of the four **footer actions** to perform the matching W/A/S/D menu choice.
+- The selected control receives a smooth five-frame cyan hover outline,
+  plus a subtle GPU-color pulse. Carousel sliding remains a separate
+  twelve-frame eased animation.
+- Mouse clicks have their own press-edge latch; holding/dragging does not
+  repeatedly activate actions. Keyboard Enter, Space, ESC, and arrow keys
+  stay supported. The mouse is menu-only; gameplay mouse interaction is
+  not incorrectly advertised.
+
+The new OW Graphics input commit is SHA-pinned in both lockfiles and native
+build workflows so the Windows, Linux and macOS packaged JAR uses exactly the
+same implementation as the interpreter. No Electron or browser processes.
+Cursor hit testing is calibrated for the current fixed 1280x720 native
+window. Fullscreen/resizing and more advanced transitions remain future work.
+
+CI: `ow test tests/` includes `NativeMenuPointerTest.ow`, and the Linux
+Mesa/OpenGL workflow runs `menu_pointer_smoke.ow` to check GPU hover
+pixels, carousel/hover coexistence and GPU mesh cleanup.

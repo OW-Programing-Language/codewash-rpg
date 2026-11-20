@@ -180,6 +180,82 @@ class NativeMenuLayout:
       set i: i + 1
     return: buffer
 
+  # Two visible previous/next chevrons outside the animated cards.
+  # Match the pointer hitboxes in NativeMenuPointer exactly.
+  fn triangle(buffer, at, x1, y1, x2, y2, x3, y3, z):
+    set buffer[at]: x1
+    set buffer[at + 1]: y1
+    set buffer[at + 2]: z
+    set buffer[at + 3]: x2
+    set buffer[at + 4]: y2
+    set buffer[at + 5]: z
+    set buffer[at + 6]: x3
+    set buffer[at + 7]: y3
+    set buffer[at + 8]: z
+    return: at + 9
+
+  fn arrow_vertices():
+    set buffer: array(54, 0.0)
+    set at int: 0
+    set at: this.quad(buffer, at, 0.0 - 0.995, 0.0 - 0.20, 0.110, 0.30, 0 - 9)
+    set at: this.quad(buffer, at, 0.885, 0.0 - 0.20, 0.110, 0.30, 0 - 9)
+    set at: this.triangle(buffer, at, 0.0 - 0.970, 0.0 - 0.05, 0.0 - 0.910, 0.02, 0.0 - 0.910, 0.0 - 0.12, 0 - 7)
+    set at: this.triangle(buffer, at, 0.970, 0.0 - 0.05, 0.910, 0.02, 0.910, 0.0 - 0.12, 0 - 7)
+    return: buffer
+
+  # GPU-only glow outline. Pointer easing expands the ring over five frames
+  # and material #16 pulses in the fragment shader. No web shadows / CSS.
+  # Regenerate only while hovered or while the card is already animating.
+  fn hover_vertices(pointer, carousel):
+    set buffer: array(72, 0.0)
+    if: pointer.visual < 0
+      return: buffer
+    set x float: 0.0
+    set y float: 0.0
+    set w float: 0.0
+    set h float: 0.0
+    set target int: pointer.visual
+    if: target >= 10
+      if: target <= 13
+        set x: this.button_x(target - 10)
+        set y: this.button_y()
+        set w: 0.43
+        set h: 0.17
+    else:
+      if: target == 2
+        set x: 0.0 - 0.995
+        set y: 0.0 - 0.20
+        set w: 0.110
+        set h: 0.30
+      else:
+        if: target == 3
+          set x: 0.885
+          set y: 0.0 - 0.20
+          set w: 0.110
+          set h: 0.30
+        else:
+          if: target == 1
+            set i int: 0
+            while: i < 5
+              set rel float: carousel.relative(i)
+              if: rel >= 0.0 - 0.5
+                if: rel <= 0.5
+                  set rect: this.card_rect(rel)
+                  set x: rect[0]
+                  set y: rect[1]
+                  set w: rect[2]
+                  set h: rect[3]
+              set i: i + 1
+    if: w <= 0.0
+      return: buffer
+    set t float: 0.003 + 0.011 * pointer.eased
+    set at int: 0
+    set at: this.quad(buffer, at, x - t, y - t, w + t * 2.0, t, 0 - 17)
+    set at: this.quad(buffer, at, x - t, y + h, w + t * 2.0, t, 0 - 17)
+    set at: this.quad(buffer, at, x - t, y, t, h, 0 - 17)
+    set at: this.quad(buffer, at, x + w, y, t, h, 0 - 17)
+    return: buffer
+
   fn button_vertices():
     set buffer: array(72, 0.0)
     set at int: 0

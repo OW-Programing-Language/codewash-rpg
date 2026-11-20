@@ -1,0 +1,70 @@
+# Pure OW NDC mouse routing, edge-trigger debouncing and ease-out tests.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/NativeMenuPointer.ow"
+import "../src/engine/NativeMenuCarousel.ow"
+import "../src/engine/NativeMenuLayout.ow"
+
+class NativeMenuPointerTest:
+  field check
+  field pointer
+  field carousel
+  field layout
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.pointer: new NativeMenuPointer()
+    set this.carousel: new NativeMenuCarousel()
+    set this.layout: new NativeMenuLayout()
+
+  @Test
+  fn centerSideCardsArrowsAndFooterUseRealNdcLayout():
+    call: this.check.assertEquals(1, this.pointer.hit(0.0, 0.0, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(2, this.pointer.hit(0.0 - 0.70, 0.0, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(3, this.pointer.hit(0.70, 0.0, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(2, this.pointer.hit(0.0 - 0.95, 0.0, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(3, this.pointer.hit(0.95, 0.0, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(10, this.pointer.hit(0.0 - 0.75, 0.0 - 0.75, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(11, this.pointer.hit(0.0 - 0.28, 0.0 - 0.75, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(12, this.pointer.hit(0.24, 0.0 - 0.75, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(13, this.pointer.hit(0.75, 0.0 - 0.75, "settings", this.carousel, this.layout))
+
+  @Test
+  fn offWindowAndGameplayClicksCannotLaunchMenu():
+    call: this.check.assertEquals(0 - 1, this.pointer.hit(1.5, 0.0, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(0 - 1, this.pointer.hit(0.0, 0.0 - 1.5, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(0 - 1, this.pointer.hit(0.0, 0.0, "battle", this.carousel, this.layout))
+    call: this.check.assertEquals(0 - 1, this.pointer.hit(0.0, 0.0, "settings", this.carousel, this.layout))
+    call: this.check.assertEquals(1, this.carousel.move(1))
+    call: this.check.assertEquals(0 - 1, this.pointer.hit(0.0, 0.0, "menu", this.carousel, this.layout))
+
+  @Test
+  fn aHeldMouseButtonNeverRepeatsOrClicksByDragging():
+    call: this.check.assertEquals(0 - 1, this.pointer.sample(1.4, 0.0, 1, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(0 - 1, this.pointer.sample(0.0, 0.0, 1, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(0 - 1, this.pointer.sample(0.0, 0.0, 0, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(1, this.pointer.sample(0.0, 0.0, 1, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(0 - 1, this.pointer.sample(0.0, 0.0, 1, "menu", this.carousel, this.layout))
+
+  @Test
+  fn hoverGlowEasesInAndOutAndGpuGeometryRemainsBounded():
+    call: this.pointer.sample(0.0 - 0.75, 0.0 - 0.75, 0, "menu", this.carousel, this.layout)
+    call: this.check.assertEquals(1, this.pointer.tick())
+    call: this.check.assertEquals(10, this.pointer.visual)
+    call: this.check.assertEquals(1, this.pointer.eased > 0.0)
+    set mesh: this.layout.hover_vertices(this.pointer, this.carousel)
+    call: this.check.assertEquals(72, len(mesh))
+    call: this.check.assertEquals(0 - 17, mesh[2])
+    call: this.check.assertEquals(54, len(this.layout.arrow_vertices()))
+    set i int: 0
+    while: i < 7
+      call: this.pointer.tick()
+      set i: i + 1
+    call: this.check.assertEquals(1.0, this.pointer.eased)
+    call: this.pointer.sample(2.0, 2.0, 0, "menu", this.carousel, this.layout)
+    set i: 0
+    while: i < 8
+      call: this.pointer.tick()
+      set i: i + 1
+    call: this.check.assertEquals(0 - 1, this.pointer.visual)
+    call: this.check.assertEquals(0.0, this.pointer.eased)

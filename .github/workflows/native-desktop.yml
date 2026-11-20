@@ -65,7 +65,7 @@ jobs:
         shell: bash
         run: |
           git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git "$RUNNER_TEMP/ow-graphics"
-          git -C "$RUNNER_TEMP/ow-graphics" checkout --quiet e0b6b3ad7d3e04fb47ec80a03eaf28e392ee30d6
+          git -C "$RUNNER_TEMP/ow-graphics" checkout --quiet 08f633185966f80751e8aae9063163e10b86e8d3
           native_args=()
           if [ "$RUNNER_OS" = "macOS" ] && [ "$(uname -m)" = "arm64" ]; then
             native_args+=("-Dlwjgl.natives=natives-macos-arm64")
