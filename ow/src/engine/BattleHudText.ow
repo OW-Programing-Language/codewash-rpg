@@ -137,6 +137,20 @@ class BattleHudText:
       set glyph_w: 0.014
     return: this.menu_line(buffer, at, value, x, y, count, glyph_w, height, step)
 
+  # Electron's side cards are intentionally dim. Extend the existing 5x7
+  # glyph vertex material encoding rather than making extra meshes/shaders:
+  # +392 = near-card text, +784 = far-card text. Character codes remain
+  # unchanged, and the same geometry still respects the badge-safe width.
+  fn faded_line(buffer, at, value, x, y, available, height, cap, fade):
+    set start int: at
+    set end int: this.fitted_line(buffer, at, value, x, y, available, height, cap)
+    if: fade > 0
+      set k int: start
+      while: k < end
+        set buffer[k + 2]: buffer[k + 2] + 392 * fade
+        set k: k + 3
+    return: end
+
   # On card screens only the real logo and gold LEVEL UP headline show.
   # Drawer screens use exact functional labels, not W/A/S/D placeholders.
   fn menu_vertices(router):
@@ -179,17 +193,23 @@ class BattleHudText:
         set dist float: rel
         if: dist < 0.0
           set dist: 0.0 - dist
-        set at: this.fitted_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.055, w - 0.146, 0.021, 15)
-        set at: this.fitted_line(buffer, at, cards.title(slot), x + 0.020, y + h - 0.111, w - 0.146, 0.035, 22)
-        set at: this.fitted_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.106, y + h - 0.074, 0.091, 0.032, 9)
-        if: dist < 0.53
-          set at: this.fitted_line(buffer, at, upper(cards.mob_name(slot)), x + 0.035, y + 0.331, w - 0.07, 0.028, 24)
-          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.039, y + 0.293, w - 0.078, 0.022, 20)
-          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.033, y + 0.177, w - 0.066, 0.026, 25)
-          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.033, y + 0.124, w - 0.066, 0.026, 25)
-          set at: this.fitted_line(buffer, at, cards.action(slot), x + 0.046, y + 0.057, w - 0.092, 0.034, 15)
+        set fade int: 0
+        if: dist > 1.53
+          set fade: 2
         else:
-          set at: this.fitted_line(buffer, at, cards.action(slot), x + 0.044, y + 0.058, w - 0.088, 0.029, 15)
+          if: dist > 0.53
+            set fade: 1
+        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.055, w - 0.146, 0.021, 15, fade)
+        set at: this.faded_line(buffer, at, cards.title(slot), x + 0.020, y + h - 0.111, w - 0.146, 0.035, 22, fade)
+        set at: this.faded_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.106, y + h - 0.074, 0.091, 0.032, 9, fade)
+        if: dist < 0.53
+          set at: this.fitted_line(buffer, at, upper(cards.mob_name(slot)), x + w * 0.22, y + h * 0.485, w * 0.56, 0.028, 24)
+          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.035, y + h * 0.438, w - 0.070, 0.021, 20)
+          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.031, y + 0.304, w - 0.062, 0.025, 25)
+          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.031, y + 0.255, w - 0.062, 0.025, 25)
+          set at: this.fitted_line(buffer, at, cards.action(slot), x + 0.045, y + 0.103, w - 0.090, 0.039, 15)
+        else:
+          set at: this.faded_line(buffer, at, cards.action(slot), x + 0.044, y + 0.103, w - 0.088, 0.029, 15, fade)
       set i: i + 1
     return: buffer
 
