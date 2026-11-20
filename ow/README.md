@@ -296,7 +296,7 @@ CodeWash deliverable; the new bridge has its own OWUnit integration tests.
 [Battle preview instructions](docs/GPU-BATTLE.md) cover the opt-in native
 OpenGL scene combining **OW Engine** ECS, **OW Graphics** and the existing
 OW math-combat service. The separate `src/engine/battle_gpu.ow` entrypoint
-uses procedural block placeholders and terminal-based math choices; it does
+uses procedural block placeholders and an in-window math HUD; it does
 not replace `src/main_ui.ow` or the React/Electron deliverable.
 
 ## PR #3: native battle feedback
@@ -312,3 +312,19 @@ now draws level/monster HP, math questions and four highlighted answer cards
 in the native OpenGL window. The text uses an original 5x7 OW bitmap mesh;
 W/A/S/D answers directly, or use arrows + Space to select. The full browser
 game, React/Electron app and saves remain unchanged.
+
+## GPU math battle — repeatable developer launcher (PR #5)
+
+From a clean source checkout with sibling `ow-lang` and **SHA-pinned**
+`OW-Graphics` clones plus JDK 17+, Maven and Node.js:
+
+```sh
+npm run ow:gpu:prepare
+npm run ow:gpu:check
+npm run ow:gpu
+npm run ow:gpu:test
+```
+
+[Full setup, runtime constraints and feature-parity status](docs/GPU-BATTLE.md).
+This launches the **experimental OpenGL MathSkill slice only** — it does not
+package a standalone EXE or replace the full OW browser/Electron game.

@@ -1,0 +1,34 @@
+# Two independent GPU battle sessions to catch stale window/GPU handles.
+# Uses the real OW Graphics native SPI under Xvfb/Mesa (not a fake).
+import "GpuBattle.ow"
+
+main:
+  set first: new GpuBattle()
+  call: assert(first.start() == 1, "first OpenGL context boots")
+  call: assert(first.render() == 4, "first battle HUD draws")
+  call: assert(first.hud.text_mesh > 0, "first HUD mesh allocated")
+  call: assert(first.hud.shader_program > 0, "first HUD shader allocated")
+  call: assert(first.hud.refresh(first.battle) == 1, "HUD can replace text mesh")
+  call: assert(first.battle.choose(2) == 1, "first combat answer")
+  call: assert(first.hud.refresh(first.battle) == 1, "HUD refresh after combat")
+  call: assert(first.render() == 5, "first combat feedback draws")
+  call: assert(first.stop() == 1, "first context and modules shut down")
+  call: assert(first.hud.text_mesh == 0, "first HUD mesh released")
+  call: assert(first.hud.option_cards == 0, "first card mesh released")
+  call: assert(first.hud.shader_program == 0, "first HUD shader released")
+  call: assert(first.cube == 0, "first world cube released")
+  call: assert(first.program == 0, "first world shader released")
+
+  set second: new GpuBattle()
+  call: assert(second.start() == 1, "second OpenGL context boots after first")
+  call: assert(second.render() == 4, "new ECS state starts idle")
+  call: assert(second.battle.feedback_kind == 0, "no stale combat animation")
+  call: assert(second.selection.selected == 0, "new HUD starts at first card")
+  call: assert(second.battle.choose(0) == 0, "new battle accepts wrong answer")
+  call: assert(second.hud.refresh(second.battle) == 1, "new HUD refresh succeeds")
+  call: assert(second.render() == 5, "second GPU feedback draws")
+  call: assert(second.stop() == 1, "second context exits cleanly")
+  call: assert(second.hud.text_mesh == 0, "second text buffer released")
+  call: assert(second.hud.option_cards == 0, "second card buffer released")
+  call: assert(second.hud.shader_program == 0, "second shader released")
+  print: "PASS: two native OW Engine + OW Graphics preview sessions without stale GPU state"
