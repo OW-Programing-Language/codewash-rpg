@@ -31,10 +31,12 @@ class CodeWashEngineIntegrationTest:
   @Test
   fn advancesOnlyTheActiveScene():
     set scenes: this.bridge.app.service("scenes")
-    call: this.checker.assertEquals(1, scenes.spawn("menu-hero") > 0)
+    set menu_hero int: scenes.spawn("menu-hero")
+    call: this.checker.assertLessThan(0, menu_hero)
     call: this.checker.assertEquals(1, this.bridge.enter_battle())
-    call: this.checker.assertEquals(1, scenes.spawn("battle-monster") > 0)
-    call: this.checker.assertEquals(1, this.bridge.tick(32) == 2)
+    set battle_monster int: scenes.spawn("battle-monster")
+    call: this.checker.assertLessThan(0, battle_monster)
+    call: this.checker.assertEquals(2, this.bridge.tick(32))
     call: this.checker.assertEquals(2, scenes.ticks_in("battle"))
     call: this.checker.assertEquals(0, scenes.ticks_in("menu"))
     call: this.checker.assertEquals(1, this.bridge.enter_menu())
