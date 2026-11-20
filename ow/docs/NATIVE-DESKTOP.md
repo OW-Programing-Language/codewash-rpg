@@ -187,3 +187,29 @@ Card levels and HP come from the running native Game, not from static
 preview literals. Portraits, colored headers, HP rails, descriptions and
 action labels are rendered through OW Graphics/OpenGL. No Electron
 resources, web downloads or build tools are used at launch.
+
+## PR #35 — Native typography and menu readability
+
+The OW/OpenGL menu retains the original Minecraft logo asset but now uses
+a physically proportioned 5x7 bitmap heading instead of stretched oversized
+letters. The page title, carousel instructions, status line, and four quick
+buttons have separate centered text bounds in the 1280x720 scene.
+
+Card headings are fitted into the space **between the original skill emblem
+and the live-level badge** on both the large selected card and narrow side
+cards. Mob names, HP labels, two descriptions, and the action button are
+centered inside their own card regions. All geometry continues to follow
+the existing 12-frame OW carousel interpolation; it is not browser text.
+
+The card-text GPU mesh now reserves 480 glyphs rather than 240 so
+entering and exiting carousel cards cannot lose late labels just because
+of the previous fixed text-buffer capacity. All assets remain offline.
+
+**Limitations:** This still uses an original OW-generated 5x7 font (not
+a Minecraft TTF/SDF renderer); it does not add true font anti-aliasing,
+fullscreen/window resizing, cursor click handling, or Electron's full UI.
+These require later OW Graphics / native UI capabilities.
+
+For headless regression testing, run the NativeMenuTypographyTest.ow
+OWUnit suite (included automatically by ow test tests/). Real OpenGL
+menu/color smoke suites continue to run in the GPU CI workflow.
