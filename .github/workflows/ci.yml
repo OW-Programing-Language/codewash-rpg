@@ -30,6 +30,9 @@ jobs:
       - name: Lint (ESLint)
         run: npm run lint
 
+      - name: Validate GPU preview launcher commands (Node.js)
+        run: node --test ow/scripts/gpu-preview.test.mjs
+
       - name: Tests + coverage (Vitest, fails under thresholds)
         run: npm run coverage
 

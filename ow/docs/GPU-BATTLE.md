@@ -11,13 +11,12 @@ profile saves. The preview intentionally demonstrates only the modular
 The GPU preview opens a 640x480 window and draws four separate ECS entities:
 cyan hero, orange monster, green health bar and blue-gray floor. These are
 **procedural cube placeholders**, not final art or game sprite conversions.
-The terminal prints a math problem and four answers. Focus the OpenGL window
-and press **W** (first option), **A** (second), **S** (third), **D** (fourth),
-or **Esc** to close. Input is edge-triggered (release between repeated keys).
+The OpenGL HUD displays the math problem, four answer cards, level and foe HP.
+Use **W/A/S/D** to answer immediately, or **arrow keys** + **Space** to
+highlight and submit a choice. Press **Esc** to exit. Input is edge-triggered.
 Correct answers use the existing `Game.answer()` and reduce monster HP;
 CodeWash's original modular combat logic handles respawns/XP. The bar reflects
-remaining monster HP (resetting when a new enemy spawns). The OpenGL window
-does not yet display readable questions or accept text input.
+remaining monster HP (resetting when a new enemy spawns). The OpenGL window displays bitmap text but does not yet accept free-text input.
 
 ## Build and run
 
@@ -116,3 +115,72 @@ reliable absolute cursor coordinates; therefore the cards are keyboard
 operable, **not mouse-clickable**. Native text input, accessibility,
 the other five learning activities, original sprites, audio and save migration
 are not implemented. The existing CodeWash browser/Electron games are intact.
+
+## PR #5 — Reproducible native preview launcher and lifecycle gate
+
+This is an **opt-in developer launcher**, not a self-contained Windows EXE or
+macOS/Linux installer. It builds the current local OW compiler and the
+**commit-pinned** OW Graphics native LWJGL bridge, resolves the existing
+`ow/dependencies.lock.yml`, checks OW source, then opens the 640×480 GPU
+battle. It never modifies the browser launcher, its runtime jar, or the
+React/Electron game.
+
+### Local prerequisites
+
+- Node.js 20+, Java JDK 17+, Maven 3.9+, Git and an OpenGL 3.3-capable desktop.
+- Three sibling clones: `codewash-rpg`, `ow-lang` and `OW-Graphics`.
+- `OW-Graphics` **must be checked out** to the exact SHA listed under
+  `graphics` in `ow/dependencies.yml`. The launcher fails rather than silently
+  compiling from a newer, incompatible checkout. Work in a separate cloned
+  copy if your OW Graphics source contains other in-progress changes.
+
+From the CodeWash repository root, first prepare the native provider:
+
+```sh
+# Confirm the pinned graphics SHA in ow/dependencies.yml, then check it out
+git -C ../OW-Graphics checkout <PINNED_GRAPHICS_SHA>
+npm run ow:gpu:prepare
+npm run ow:gpu:check
+npm run ow:gpu
+```
+
+Specify different checkout locations using the underlying command:
+
+```sh
+node ow/scripts/gpu-preview.mjs --run --compiler-dir ../ow-lang --graphics-dir ../OW-Graphics
+node ow/scripts/gpu-preview.mjs --check --no-build
+node --test ow/scripts/gpu-preview.test.mjs
+```
+
+The launcher uses the JVM/OS classpath separator automatically and respects
+the working directory required by OW imports. It **does not download or
+install Git repos**, overwrite a git checkout, or silently regenerate the
+committed OW lockfile. Windows Maven runs through `mvn.cmd`; users need the
+Maven command on `PATH`. The Windows/macOS interactive desktop launch
+is not yet validated in GitHub Actions, which runs Linux Mesa/Xvfb.
+
+### Lifecycle/cleanup gate
+
+The `battle_lifecycle_smoke.ow` smoke starts one GPU game, refreshes its HUD,
+answers a problem, and verifies the GPU mesh/shader handles are released by
+`stop()`. It then starts a **new OpenGL context in the same process**, checks
+its ECS/HUD state starts fresh, and shuts it down again. Both sessions run with
+the real native provider under Mesa/Xvfb in CI. The existing pixel smoke still
+verifies text, cards, colors and combat outcomes.
+
+### Completion and remaining work
+
+PRs 1–5 establish a separate, testable **native math battle vertical slice**
+rather than shipping a fully migrated game. More work is required to replace
+the six-skill browser version:
+
+- Port the other five activities (reading, writing, cleaning, memory, patterns).
+- Replace block placeholders with original models, textures, animation and audio.
+- Build native menus, profiles/saves, settings, themes and achievements.
+- Add accessible text input, mouse support, responsive UI, Windows/macOS
+  desktop CI, and actual distributable signed/native packages.
+- Resolve and document the web runtime vs. dependency/test runtime split
+  without breaking the existing OW browser game.
+
+The native launcher should not be advertised as a complete release until
+these feature-parity and packaging requirements are met.
