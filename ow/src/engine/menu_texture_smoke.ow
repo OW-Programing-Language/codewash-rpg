@@ -11,9 +11,9 @@ main:
   call: assert(preview.art.menu_ticks == 0, "animation begins at rest")
   call: assert(preview.render() == 0, "themed main menu draws")
   call: assert(preview.art.menu_ticks == 1, "menu animation advances")
-  set corner1: extension("codewash.test.pixel", 35, 280)
-  set corner2: extension("codewash.test.pixel", 450, 260)
-  set corner3: extension("codewash.test.pixel", 320, 200)
+  set corner1: extension("codewash.test.pixel", 70, 420)
+  set corner2: extension("codewash.test.pixel", 900, 390)
+  set corner3: extension("codewash.test.pixel", 640, 300)
   set changed int: 0
   if: corner1[0] != 12
     set changed: changed + 1

@@ -1,0 +1,40 @@
+# Mesa/Xvfb real framebuffer proof for PR #32's 1280x720 native layout.
+# Snapshot checks centered feature-panel outline, purple card body and
+# decorative pixel hearts; no fabricated mouse/fullscreen support.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "wide-screen native engine boots")
+  call: assert(game.layout.width() == 1280, "1280 pixel initial window")
+  call: assert(game.layout.height() == 720, "720 pixel initial window")
+  call: assert(game.hud.menu_cards > 0, "four layout-aligned menu buttons")
+  call: assert(game.hud.menu_chrome > 0, "three panel outlines and hearts")
+  call: assert(game.art.menu_logo > 0, "original Minecraft logo loaded")
+  call: assert(game.render() == 0, "native widescreen menu draws")
+  set border: extension("codewash.test.pixel", 461, 420)
+  call: assert(border[0] > 145, "center feature panel has gold rim")
+  call: assert(border[1] > 105, "gold feature-card border visible")
+  set panel: extension("codewash.test.pixel", 640, 208)
+  call: assert(panel[2] > panel[1] + 25, "center card has violet background")
+  set heart: extension("codewash.test.pixel", 671, 25)
+  call: assert(heart[0] > heart[1] + 70, "red pixel-heart footer visible")
+  set before int: game.art.menu_ticks
+  call: assert(game.render() == 0, "menu animation second frame")
+  call: assert(game.art.menu_ticks == before + 1, "menu art animates")
+  call: assert(game.art.ticks == 0, "battle animation unaffected")
+  call: assert(game.menu.open_activities(1) == 1, "second activities page")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "new activity text and cards")
+  call: assert(game.render() == 0, "activities retain 16 by 9 shell")
+  call: assert(game.menu.start_math() == 1, "Math scene still accessible")
+  call: assert(game.hud.refresh(game.battle) == 1, "Math HUD restored")
+  call: assert(game.hud.menu_mode == 0, "battle uses original battle HUD")
+  call: assert(game.render() == 4, "battle ECS meshes still present")
+  call: assert(game.menu.back() == 1, "return to main menu")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "restore native menu")
+  call: assert(game.render() == 0, "menu still visible after battle")
+  call: assert(game.stop() == 1, "GPU shutdown")
+  call: assert(game.art.menu_logo == 0, "logo GPU texture released")
+  call: assert(game.hud.menu_chrome == 0, "chrome GPU mesh released")
+  call: assert(game.hud.menu_cards == 0, "menu buttons GPU mesh released")
+  print: "PASS: wide-screen OW menu layout, panels, logo and hearts"

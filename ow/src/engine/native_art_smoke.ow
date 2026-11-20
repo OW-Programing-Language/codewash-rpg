@@ -19,15 +19,15 @@ main:
   call: preview.battle.game.mob.init("Creeper", preview.battle.game.mob.max_hp())
   call: assert(preview.render() == 4, "four original ECS meshes plus art overlay")
   call: assert(preview.art.enemy > 0, "original enemy PNG or neutral fallback")
-  set iconPixel: extension("codewash.test.pixel", 50, 288)
+  set iconPixel: extension("codewash.test.pixel", 100, 432)
   call: assert(iconPixel[0] + iconPixel[1] + iconPixel[2] > 65, "original activity PNG appears in framebuffer")
   # Transparent sprite margins are expected: sample interior points instead
   # of requiring one arbitrary PNG texel to be opaque.
-  set mob1: extension("codewash.test.pixel", 560, 275)
-  set mob2: extension("codewash.test.pixel", 575, 285)
-  set mob3: extension("codewash.test.pixel", 590, 295)
-  set mob4: extension("codewash.test.pixel", 565, 310)
-  set mob5: extension("codewash.test.pixel", 595, 320)
+  set mob1: extension("codewash.test.pixel", 1120, 413)
+  set mob2: extension("codewash.test.pixel", 1150, 428)
+  set mob3: extension("codewash.test.pixel", 1180, 443)
+  set mob4: extension("codewash.test.pixel", 1130, 465)
+  set mob5: extension("codewash.test.pixel", 1190, 480)
   set nonBackground int: 0
   if: mob1[0] + mob1[1] + mob1[2] > 65
     set nonBackground: nonBackground + 1
