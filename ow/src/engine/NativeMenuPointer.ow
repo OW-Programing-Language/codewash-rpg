@@ -53,6 +53,11 @@ class NativeMenuPointer:
       set i: i + 1
     if: screen != "menu"
       if: screen != "activities"
+        set i: 0
+        while: i < 4
+          if: this.inside(x, y, layout.panel_option_x(), layout.panel_option_y(i), layout.panel_option_width(), layout.panel_option_height()) == 1
+            return: 20 + i
+          set i: i + 1
         return: 0 - 1
     # Reject clicks mid-transition, matching keyboard navigation lock.
     if: carousel.active == 1
