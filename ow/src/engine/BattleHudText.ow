@@ -105,36 +105,67 @@ class BattleHudText:
       set i: i + 1
     return: at
 
+  # PR35: Fit each line inside an explicit NDC rectangle. At 1280x720,
+  # width=0.76*advance and height=1.90*advance map the 5x7 glyph to
+  # approximately square physical pixels; the old 0.069x0.10 heading
+  # squashed letters into an excessively broad 44px-wide font.
+  # Centering and width fitting also prevent side-card headings from
+  # colliding with their fixed level badges during carousel animation.
+  fn fit_center(buffer, at, value, left, right, y, limit, advance, max_height):
+    set count int: len(value)
+    if: count > limit
+      set count: limit
+    if: count <= 0
+      return: at
+    set available float: right - left
+    if: available <= 0.0
+      return: at
+    set step float: advance
+    if: step * count > available
+      set step: available / count
+    set width float: step * 0.76
+    set height float: step * 1.90
+    if: height > max_height
+      set height: max_height
+      set width: max_height * 0.40
+    set start float: left + (available - count * step) / 2.0
+    return: this.menu_line(buffer, at, value, start, y, count, width, height, step)
+
   # Reuse the very same OW bitmap-glyph mesh generator for every menu.
   # HUD shaders/cards stay alive across scene changes; no UI duplication.
   fn menu_vertices(router):
     set buffer: array(4320, 0.0)
     set at int: 0
     set screen: router.screen()
-    set at: this.menu_line(buffer, at, "LEVEL UP!", 0.0 - 0.45, 0.50, 10, 0.069, 0.10, 0.10)
-    set at: this.menu_line(buffer, at, router.title(), 0.0 - 0.29, 0.405, 27, 0.020, 0.052, 0.023)
-    # Animated card headings and monster statistics belong to the separate
-    # dynamic rich_card_vertices mesh, so they slide with the carousel.
-    set at: this.menu_line(buffer, at, router.subtitle(), 0.0 - 0.49, 0.0 - 0.60, 40, 0.019, 0.044, 0.024)
-    set at: this.menu_line(buffer, at, "LEFT RIGHT BROWSE  SPACE PLAY", 0.0 - 0.41, 0.0 - 0.54, 31, 0.020, 0.044, 0.027)
-    set at: this.menu_line(buffer, at, router.status, 0.0 - 0.47, 0.0 - 0.64, 42, 0.018, 0.038, 0.023)
+    # Clear hierarchy: Minecraft image at the top, a readable LEVEL UP
+    # wordmark, secondary page title, then carousel interaction hints.
+    set at: this.fit_center(buffer, at, "LEVEL UP!", 0.0 - 0.52, 0.52, 0.52, 10, 0.057, 0.104)
+    set at: this.fit_center(buffer, at, router.title(), 0.0 - 0.62, 0.62, 0.405, 30, 0.030, 0.053)
+    # Animated headings/HP/mob descriptions live on the card-local mesh.
+    # Keep all instructional rows outside the bottom of the carousel.
+    set at: this.fit_center(buffer, at, "LEFT RIGHT BROWSE  SPACE PLAY", 0.0 - 0.55, 0.55, 0.0 - 0.558, 32, 0.028, 0.042)
+    set at: this.fit_center(buffer, at, router.subtitle(), 0.0 - 0.62, 0.62, 0.0 - 0.610, 42, 0.024, 0.040)
+    set at: this.fit_center(buffer, at, router.status, 0.0 - 0.66, 0.66, 0.0 - 0.652, 44, 0.024, 0.033)
     set opts: router.options()
-    set at: this.menu_line(buffer, at, "W " + opts[0], 0.0 - 0.92, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
-    set at: this.menu_line(buffer, at, "A " + opts[1], 0.0 - 0.44, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
-    set at: this.menu_line(buffer, at, "S " + opts[2], 0.04, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
-    set at: this.menu_line(buffer, at, "D " + opts[3], 0.52, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
+    # Four independent button bounds, not a long baseline of free text.
+    set at: this.fit_center(buffer, at, "W " + opts[0], 0.0 - 0.94, 0.0 - 0.55, 0.0 - 0.785, 19, 0.028, 0.055)
+    set at: this.fit_center(buffer, at, "A " + opts[1], 0.0 - 0.46, 0.0 - 0.07, 0.0 - 0.785, 19, 0.028, 0.055)
+    set at: this.fit_center(buffer, at, "S " + opts[2], 0.02, 0.41, 0.0 - 0.785, 19, 0.028, 0.055)
+    set at: this.fit_center(buffer, at, "D " + opts[3], 0.50, 0.89, 0.0 - 0.785, 19, 0.028, 0.055)
     if: screen == "menu"
-      set at: this.menu_line(buffer, at, "S", 0.0 - 0.915, 0.81, 1, 0.029, 0.06, 0.035)
-      set at: this.menu_line(buffer, at, "A", 0.0 - 0.775, 0.81, 1, 0.029, 0.06, 0.035)
-      set at: this.menu_line(buffer, at, "D", 0.715, 0.81, 1, 0.029, 0.06, 0.035)
-      set at: this.menu_line(buffer, at, "ESC", 0.842, 0.81, 3, 0.022, 0.06, 0.027)
+      set at: this.menu_line(buffer, at, "S", 0.0 - 0.915, 0.81, 1, 0.026, 0.059, 0.035)
+      set at: this.menu_line(buffer, at, "A", 0.0 - 0.775, 0.81, 1, 0.026, 0.059, 0.035)
+      set at: this.menu_line(buffer, at, "D", 0.715, 0.81, 1, 0.026, 0.059, 0.035)
+      set at: this.menu_line(buffer, at, "ESC", 0.842, 0.81, 3, 0.022, 0.059, 0.027)
     return: buffer
 
   # Dynamic OW bitmap labels are positioned from the same card_rect() as
   # the GPU panels and loaded monster textures. A separate mesh is rebuilt
   # only on selection transitions or when returning from gameplay.
   fn rich_card_text_vertices(carousel, cards, layout):
-    set buffer: array(4320, 0.0)
+    # Five candidate cards can contain over 300 glyphs, not 240: the old
+    # 4320-float mesh silently truncated card labels on the far side.
+    set buffer: array(8640, 0.0)
     set at int: 0
     set i int: 0
     while: i < 5
@@ -150,15 +181,17 @@ class BattleHudText:
         if: distance < 0.0
           set distance: 0.0 - distance
 
-        # Header, real (per-activity) current level and mob name.
-        set at: this.menu_line(buffer, at, cards.title(slot), x + 0.093, y + h - 0.084, 10, 0.015, 0.044, 0.016)
-        set at: this.menu_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.122, y + h - 0.079, 7, 0.014, 0.038, 0.016)
-        set at: this.menu_line(buffer, at, cards.mob_name(slot), x + 0.033, y + 0.326, 17, 0.017, 0.037, 0.019)
+        # The upper-left original skill icon occupies x+0.014..x+0.079.
+        # Fit title between that icon and the x+w-0.132 level badge;
+        # this works for long titles even on the narrower side cards.
+        set at: this.fit_center(buffer, at, cards.title(slot), x + 0.087, x + w - 0.145, y + h - 0.085, 17, 0.018, 0.046)
+        set at: this.fit_center(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.130, x + w - 0.010, y + h - 0.077, 10, 0.017, 0.037)
+        set at: this.fit_center(buffer, at, cards.mob_name(slot), x + 0.024, x + w - 0.024, y + 0.327, 19, 0.020, 0.037)
         if: distance < 0.52
-          set at: this.menu_line(buffer, at, cards.hp_text(slot), x + 0.033, y + 0.285, 19, 0.015, 0.024, 0.017)
-          set at: this.menu_line(buffer, at, cards.description_a(slot), x + 0.028, y + 0.164, 21, 0.016, 0.034, 0.019)
-          set at: this.menu_line(buffer, at, cards.description_b(slot), x + 0.028, y + 0.113, 21, 0.016, 0.034, 0.019)
-        set at: this.menu_line(buffer, at, cards.action(slot), x + 0.037, y + 0.050, 14, 0.018, 0.037, 0.022)
+          set at: this.fit_center(buffer, at, cards.hp_text(slot), x + 0.027, x + w - 0.027, y + 0.289, 22, 0.017, 0.029)
+          set at: this.fit_center(buffer, at, cards.description_a(slot), x + 0.028, x + w - 0.028, y + 0.164, 24, 0.019, 0.035)
+          set at: this.fit_center(buffer, at, cards.description_b(slot), x + 0.028, x + w - 0.028, y + 0.113, 24, 0.019, 0.035)
+        set at: this.fit_center(buffer, at, cards.action(slot), x + 0.037, x + w - 0.037, y + 0.051, 16, 0.022, 0.042)
       set i: i + 1
     return: buffer
 
