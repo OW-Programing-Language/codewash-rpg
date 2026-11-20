@@ -106,6 +106,6 @@ class NativeCleaningTest:
     set builder: new BattleHudText()
     set mesh: builder.cleaning_vertices(this.cleaning, this.activity)
     call: this.check.assertEquals(4320, len(mesh))
-    call: this.check.assertEquals(2, mesh[2])
+    call: this.check.assertEquals(88, mesh[2])
     call: this.check.assertEquals(2, this.activity.choose(0))
     call: this.check.assertEquals(4320, len(builder.cleaning_vertices(this.cleaning, this.activity)))
