@@ -89,12 +89,10 @@ class NativeMenuLayout:
   fn chrome_vertices():
     set buffer: array(1728, 0.0)
     set at int: 0
-    # Top-corner icon drop shadows and unchanged ten-pixel-heart strip.
+    # The Electron header uses settings, cosmetics, fullscreen and menu
+    # buttons. Native OW does NOT implement those complete interactions yet.
+    # Do not show inert W/A/S/D proxy controls as though they were parity.
     set i int: 0
-    while: i < 4
-      set at: this.quad(buffer, at, this.button_x(i) + 0.006, this.button_y() - 0.008, this.button_width(), this.button_height(), 0 - 10)
-      set i: i + 1
-    set i: 0
     while: i < 10
       set hx float: (0.0 - 0.42) + i * 0.087
       set hy float: 0.0 - 0.97
@@ -180,9 +178,12 @@ class NativeMenuLayout:
         set w float: rect[2]
         set h float: rect[3]
         set accent int: (0 - 11) - slot
-        # Colored Minecraft-style header and dark level badge.
-        set at: this.quad(buffer, at, x, y + h - 0.115, w, 0.115, accent)
-        set at: this.quad(buffer, at, x + w - 0.132, y + h - 0.103, 0.122, 0.087, 0 - 10)
+        # Electron: skill category + fantasy title live in a dark label
+        # panel at the top-left; the level badge has its own reserved area.
+        # All dimensions are shared by NativeCardLabelLayout.ow.
+        set at: this.quad(buffer, at, x, y + h - 0.152, w, 0.152, accent)
+        set at: this.quad(buffer, at, x + 0.009, y + h - 0.136, w - 0.127, 0.126, 0 - 9)
+        set at: this.quad(buffer, at, x + w - 0.112, y + h - 0.113, 0.101, 0.096, 0 - 10)
         # Dark inset for the current real mob portrait.
         set at: this.quad(buffer, at, x + 0.04, y + h * 0.45, w - 0.08, h * 0.36, 0 - 5)
         # Current mob-name backing and black HP rail.
@@ -274,11 +275,7 @@ class NativeMenuLayout:
     set at: this.quad(buffer, at, x + w, y, t, h, 0 - 17)
     return: buffer
 
+  # Retain the GPU mesh handle for legacy render lifecycle, but zero-area
+  # quads are invisible. No invisible mouse hitboxes or pretend toolbar.
   fn button_vertices():
-    set buffer: array(72, 0.0)
-    set at int: 0
-    set i int: 0
-    while: i < 4
-      set at: this.quad(buffer, at, this.button_x(i), this.button_y(), this.button_width(), this.button_height(), 0 - 5)
-      set i: i + 1
-    return: buffer
+    return: array(72, 0.0)
