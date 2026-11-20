@@ -42,6 +42,7 @@ import "NativeMenuLayout.ow"
 import "NativeMenuCardData.ow"
 import "NativeMenuCarousel.ow"
 import "NativeMenuPointer.ow"
+import "NativeMenuMaterials.ow"
 
 class GpuBattle:
   field app
@@ -76,6 +77,7 @@ class GpuBattle:
   field carousel
   field card_data
   field pointer
+  field menu_materials
   field escape_held
 
   fn new():
@@ -118,6 +120,7 @@ class GpuBattle:
     set this.carousel: new NativeMenuCarousel()
     set this.card_data: 0
     set this.pointer: new NativeMenuPointer()
+    set this.menu_materials: 0
 
   fn start():
     print: "GPU STARTUP: OW ENGINE BOOT"
@@ -214,6 +217,9 @@ class GpuBattle:
     if: this.art.start() != 1
       return: 0
     if: this.art.bind_cards(this.card_data) != 1
+      return: 0
+    set this.menu_materials: new NativeMenuMaterials(this.meshes, this.shader, textures, this.renderer, this.layout)
+    if: this.menu_materials.start() != 1
       return: 0
     print: "GPU STARTUP: HUD AND NATIVE MENU"
     set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
@@ -572,6 +578,14 @@ class GpuBattle:
     else:
       if: this.art.menu_background() != 1
         return: 0 - 1
+      set scene: this.menu.screen()
+      if: scene == "menu"
+        if: this.menu_materials.render(this.carousel) != 1
+          return: 0 - 1
+      else:
+        if: scene == "activities"
+          if: this.menu_materials.render(this.carousel) != 1
+            return: 0 - 1
     if: this.hud.render() != 2
       return: 0 - 1
     if: this.playing() == 0
@@ -583,6 +597,8 @@ class GpuBattle:
     return: this.window.present()
 
   fn stop():
+    if: this.menu_materials != 0
+      call: this.menu_materials.stop()
     if: this.art != 0
       call: this.art.stop()
     if: this.hud != 0
