@@ -39,7 +39,7 @@ main:
   call: assert(preview.battle.game.mob.cur_hp() == mathHp, "Math HP isolated")
   call: assert(preview.hud.refresh_memory(preview.memory, preview.memory_activity) == 1, "draw matched text")
   call: assert(preview.render() == 5, "gold pair-match feedback")
-  set hit: extension("codewash.test.pixel", 830, 555)
+  set hit: extension("codewash.test.pixel", 783, 555)
   call: assert(hit[0] > 120, "gold hit red component")
   call: assert(hit[1] > 95, "gold hit green component")
   set after int: preview.memory.game.mob.cur_hp()

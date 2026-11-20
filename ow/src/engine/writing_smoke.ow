@@ -11,7 +11,7 @@ main:
   call: assert(game.writing.skill_name == "writing", "uses original WritingSkill")
   call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "GPU spelling HUD")
   call: assert(game.render() == 4, "Writing renders four native scene meshes")
-  set hero: extension("codewash.test.pixel", 450, 360)
+  set hero: extension("codewash.test.pixel", 498, 360)
   call: assert(hero[2] > hero[0] + 30, "Writing hero rendered in OpenGL")
   set glyph: extension("codewash.test.pixel", 48, 671)
   call: assert(glyph[0] > 150, "bitmap Writing HUD glyph visible")
@@ -31,7 +31,7 @@ main:
   call: game.spelling.reset()
   call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "next Writing prompt")
   call: assert(game.render() == 5, "pink Writing miss feedback")
-  set miss: extension("codewash.test.pixel", 450, 555)
+  set miss: extension("codewash.test.pixel", 498, 555)
   call: assert(miss[0] > miss[1] + 60, "pink GPU feedback pixel")
 
   # Compose the exact current word letter-by-letter via 7-page input.
@@ -59,7 +59,7 @@ main:
   call: game.spelling.reset()
   call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "refresh next question")
   call: assert(game.render() == 5, "gold Writing hit feedback")
-  set hit: extension("codewash.test.pixel", 830, 555)
+  set hit: extension("codewash.test.pixel", 783, 555)
   call: assert(hit[0] > 120, "gold hit GPU pixel")
   call: assert(hit[1] > 95, "gold hit second channel")
   call: assert(game.menu.back() == 1, "leave Writing")

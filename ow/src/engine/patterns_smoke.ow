@@ -33,7 +33,7 @@ main:
   call: assert(preview.patterns_activity.phase == 0, "wrong answer starts new study")
   call: assert(preview.hud.refresh_patterns(preview.patterns, preview.patterns_activity) == 1, "GPU retry study")
   call: assert(preview.render() == 5, "pink miss GPU feedback")
-  set miss: extension("codewash.test.pixel", 450, 555)
+  set miss: extension("codewash.test.pixel", 498, 555)
   call: assert(miss[0] > miss[1] + 60, "miss effect actual pink pixel")
 
   call: assert(preview.patterns_activity.choose(0) == 2, "start next recall")
@@ -42,7 +42,7 @@ main:
   call: assert(preview.battle.game.mob.cur_hp() == mathHp, "Math independent")
   call: assert(preview.hud.refresh_patterns(preview.patterns, preview.patterns_activity) == 1, "correct HUD")
   call: assert(preview.render() == 5, "gold hit feedback")
-  set hit: extension("codewash.test.pixel", 830, 555)
+  set hit: extension("codewash.test.pixel", 783, 555)
   call: assert(hit[0] > 120, "gold feedback red")
   call: assert(hit[1] > 95, "gold feedback green")
   call: assert(preview.patterns_activity.rounds == 2, "two answered rounds")

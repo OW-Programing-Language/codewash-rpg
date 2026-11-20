@@ -10,8 +10,8 @@ main:
   call: assert(game.menu.start_math() == 1, "select math battle")
   call: assert(game.hud.refresh(game.battle) == 1, "battle HUD displayed")
   call: assert(game.render() == 4, "battle four meshes plus separate HUD")
-  set hero: extension("codewash.test.pixel", 450, 360)
-  set mob: extension("codewash.test.pixel", 830, 360)
+  set hero: extension("codewash.test.pixel", 498, 360)
+  set mob: extension("codewash.test.pixel", 783, 360)
   call: assert(hero[2] > hero[0] + 30, "cyan hero")
   call: assert(mob[0] > mob[2] + 35, "orange monster")
 
@@ -33,7 +33,7 @@ main:
   call: assert(game.battle.choose(2) == 1, "existing math rules still apply")
   call: assert(game.hud.refresh(game.battle) == 1, "answer labels refresh")
   call: assert(game.render() == 5, "hit effect and HUD both render")
-  set hit: extension("codewash.test.pixel", 830, 555)
+  set hit: extension("codewash.test.pixel", 783, 555)
   call: assert(hit[0] > 120, "gold hit marker red")
   call: assert(hit[1] > 95, "gold hit marker green")
   set i int: 0
@@ -47,7 +47,7 @@ main:
   call: assert(game.battle.game.mob.cur_hp() == hp, "wrong answer does not damage")
   call: assert(game.hud.refresh(game.battle) == 1, "second HUD refresh")
   call: assert(game.render() == 5, "miss effect and HUD both render")
-  set miss: extension("codewash.test.pixel", 450, 555)
+  set miss: extension("codewash.test.pixel", 498, 555)
   call: assert(miss[0] > 120, "pink miss marker red")
   call: assert(miss[0] > miss[1] + 60, "pink miss marker contrasted")
   call: assert(game.stop() == 1, "HUD and world GPU handles destroyed")

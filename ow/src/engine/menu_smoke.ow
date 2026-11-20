@@ -55,7 +55,7 @@ main:
   call: assert(preview.menu.choose(0) == 1, "start existing math")
   call: assert(preview.hud.refresh(preview.battle) == 1, "battle HUD")
   call: assert(preview.render() == 4, "battle ECS resumes")
-  set hero: extension("codewash.test.pixel", 450, 360)
+  set hero: extension("codewash.test.pixel", 498, 360)
   call: assert(hero[2] > hero[0] + 30, "hero appears in math scene")
   call: assert(preview.menu.back() == 1, "leave math")
   call: assert(preview.hud.refresh_menu(preview.menu) == 1, "menu HUD restored")
