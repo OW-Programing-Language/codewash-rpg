@@ -359,5 +359,53 @@ feedback and menu return. Existing web/Electron gameplay is unaffected.
 
 This is still keyboard-based and shows **four cards at once**; migrating a
 responsive eight-card native grid, textures, mouse input and full accessibility
-remain subsequent improvements. **Patterns** is the only activity not yet
-ported to this native prototype.
+remain subsequent improvements. **Patterns** is now covered by PR #11's study/recall adapter, described below.
+
+## Phase 2 PR #11 — Native Patterns / sequence recall (sixth activity)
+
+The **sixth and final native activity adapter** is accessible at
+**Activities → Next → Patterns**. It uses the existing OW
+`PatternsSkill`, which generates a repeating sequence of color names
+and four candidate next colors. The OW Engine `patterns` scene has its own
+`Game`, enemy HP and progression, independent of the five other native
+activities. The same OW Graphics GPU shader/5×7 bitmap HUD renders the prompt,
+the current stage and four highlighted action cards.
+
+This port introduces an explicit two-step **Study → Recall** flow:
+
+1. **Study** shows the repeating color sequence, potentially across two
+   text rows. The buttons are Recall, Replay, Help and Menu. Replay keeps
+   the same pattern visible and does not score; Recall hides the displayed
+   sequence and begins the answer stage.
+2. **Recall** displays four candidate colors. Select with W/A/S/D or the
+   highlighted option using arrows plus Space. The original `Game.answer()`
+   determines correctness, damage and XP, and generates the next sequence.
+   Incorrect answers cause pink miss feedback without damage; correct
+   answers cause gold hit feedback and normal combat progression.
+3. Esc returns to the main menu and resumes the current stage unchanged.
+   Invalid input never scores, and observing/help/replay never awards hits.
+
+The four candidate colors remain **cached for each question**, so a displayed
+choice always matches the value submitted to combat. `NativePatternsTest.ow`
+covers all six routes, original `PatternsSkill` difficulty palette scaling,
+study/recall gating, hidden prompt, correct/wrong combat behavior, independent
+game state, and bounded GPU text geometry. The Mesa/Xvfb framebuffer smoke
+tests actual HUD pixels, menu-to-Patterns routing, wrong/pink and correct/gold
+feedback, and pause/resume isolation.
+
+**Important distinction:** the original React Simon-Says game uses timed
+flashing colors and audio. The current OW `PatternsSkill` itself provides
+**text-based next-color sequence completion**, not timed flashing or sound.
+This native PR implements and tests that existing OW behavior with a manual
+study/recall stage. Timed visual sequences, sound cues, mouse/touch input,
+original art and full React gameplay parity remain future work.
+
+### Native migration status after PR #11
+
+All **six activity entry points** now function in the opt-in OW Engine +
+OW Graphics preview: Math, Reading, Writing, Cleaning, Memory and Patterns.
+This marks the end of the first **activity migration** phase, not completion
+of a shipping game. The native UI still needs a full asset pipeline,
+real text/voice input, original image and audio challenges, mouse/touch
+accessibility, durable profiles/saves, settings and cross-platform installers.
+The existing complete React/Electron and browser games remain unchanged.

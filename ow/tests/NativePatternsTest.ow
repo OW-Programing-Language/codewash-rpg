@@ -1,0 +1,143 @@
+# Phase 2 PR #11: headless OWUnit coverage for native Patterns.
+# The existing PatternsSkill generates repeating color sequences/choices.
+# Native UI introduces STUDY/RECALL; it is NOT timed Simon-Says playback.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+import "../src/engine/NativePatternsActivity.ow"
+import "../src/engine/NativeMenuRouter.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/modules/skills/api/PatternsSkill.ow"
+
+class NativePatternsTest:
+  field check
+  field root
+  field math
+  field patterns
+  field activity
+  field menu
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.root: new CodeWashEngine()
+    call: this.check.assertEquals(1, this.root.boot())
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, scenes.add_scene("activities"))
+    call: this.check.assertEquals(1, scenes.add_scene("settings"))
+    call: this.check.assertEquals(1, scenes.add_scene("patterns"))
+    set this.math: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.math.start(7))
+    set this.patterns: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.patterns.configure_patterns())
+    call: this.check.assertEquals(1, this.patterns.start(7))
+    set this.activity: new NativePatternsActivity(this.patterns)
+    set this.menu: new NativeMenuRouter(scenes)
+    call: this.check.assertEquals(1, this.menu.open_menu())
+
+  @AfterEach
+  fn cleanup():
+    call: this.root.stop()
+
+  @Test
+  fn allSixSkillsAccessibleAndPatternsSceneUsesOriginalSkill():
+    call: this.check.assertEquals(1, this.menu.open_activities(1))
+    call: this.check.assertEquals("PATTERNS", this.menu.options()[2])
+    call: this.check.assertEquals(1, this.menu.choose(2))
+    call: this.check.assertEquals("patterns", this.menu.screen())
+    call: this.check.assertEquals(6, this.root.app.service("scenes").active_entities())
+    call: this.check.assertEquals("patterns", this.patterns.skill_name)
+    call: this.check.assertEquals("choice", this.patterns.game.skill.mode())
+    call: this.check.assertEquals(4, len(this.patterns.options()))
+    call: this.check.assertEquals(this.patterns.game.problem.solution(), this.patterns.options()[1])
+    call: this.check.assertEquals(0, this.patterns.configure_patterns())
+
+  @Test
+  fn studyReplayAndHelpNeverAnswerOrDamage():
+    set hp int: this.patterns.game.mob.cur_hp()
+    set prompt: this.patterns.game.problem.ask()
+    call: this.check.assertEquals(0, this.activity.phase)
+    call: this.check.assertEquals(prompt, this.activity.shown_pattern())
+    call: this.check.assertEquals("RECALL", this.activity.options()[0])
+    call: this.check.assertEquals("REPLAY", this.activity.options()[1])
+    call: this.check.assertEquals(2, this.activity.choose(1))
+    call: this.check.assertEquals(2, this.activity.choose(2))
+    call: this.check.assertEquals(prompt, this.activity.shown_pattern())
+    call: this.check.assertEquals(0, this.activity.rounds)
+    call: this.check.assertEquals(hp, this.patterns.game.mob.cur_hp())
+    call: this.check.assertEquals(0 - 1, this.activity.choose(0 - 1))
+    call: this.check.assertEquals(0 - 1, this.activity.choose(4))
+    call: this.check.assertEquals(3, this.activity.choose(3))
+    call: this.check.assertEquals(hp, this.patterns.game.mob.cur_hp())
+
+  @Test
+  fn recallHidesSourceAndCorrectColorUsesCombatExactlyOnce():
+    set expected: this.patterns.game.problem.solution()
+    set choices: this.patterns.options()
+    set hp int: this.patterns.game.mob.cur_hp()
+    set mathHp int: this.math.game.mob.cur_hp()
+    call: this.check.assertEquals(expected, choices[1])
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(1, this.activity.phase)
+    call: this.check.assertEquals("HIDDEN  WHAT COMES NEXT?", this.activity.shown_pattern())
+    call: this.check.assertEquals(expected, this.activity.options()[1])
+    call: this.check.assertEquals(hp, this.patterns.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.activity.choose(1))
+    call: this.check.assertEquals(0, this.activity.phase)
+    call: this.check.assertEquals(1, this.activity.rounds)
+    call: this.check.assertEquals(1, this.activity.successes)
+    call: this.check.assertEquals(0, this.activity.mistakes)
+    call: this.check.assertLessThan(this.patterns.game.mob.cur_hp(), hp)
+    call: this.check.assertEquals(mathHp, this.math.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.patterns.feedback_kind)
+    call: this.check.assertEquals(4, len(this.patterns.options()))
+    call: this.check.assertEquals(this.patterns.game.problem.solution(), this.patterns.options()[1])
+
+  @Test
+  fn wrongColorDoesNotAwardDamageAndReturnsToStudy():
+    set hp int: this.patterns.game.mob.cur_hp()
+    set mathHp int: this.math.game.mob.cur_hp()
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(0, this.activity.choose(0))
+    call: this.check.assertEquals(0, this.activity.phase)
+    call: this.check.assertEquals(1, this.activity.rounds)
+    call: this.check.assertEquals(0, this.activity.successes)
+    call: this.check.assertEquals(1, this.activity.mistakes)
+    call: this.check.assertEquals(hp, this.patterns.game.mob.cur_hp())
+    call: this.check.assertEquals(mathHp, this.math.game.mob.cur_hp())
+    call: this.check.assertEquals(2, this.patterns.feedback_kind)
+
+  @Test
+  fn pauseResumesCurrentSequenceWithoutChangingOtherActivities():
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, this.menu.start_patterns())
+    set prompt: this.patterns.game.problem.ask()
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(1, this.menu.back())
+    call: this.check.assertEquals(0, scenes.active_entities())
+    call: this.check.assertEquals(1, this.menu.start_math())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(1, this.menu.start_patterns())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(prompt, this.patterns.game.problem.ask())
+    call: this.check.assertEquals(1, this.activity.phase)
+    call: this.check.assertEquals("HIDDEN  WHAT COMES NEXT?", this.activity.shown_pattern())
+    set glyphs: new BattleHudText()
+    set vertices: glyphs.patterns_vertices(this.patterns, this.activity)
+    call: this.check.assertEquals(4320, len(vertices))
+    call: this.check.assertEquals(88, vertices[2])
+
+  @Test
+  fn originalPatternsSkillSupportsAllSixColorsAndFourChoices():
+    set skill: new PatternsSkill()
+    call: this.check.assertEquals(2, skill.palette_size(1))
+    call: this.check.assertEquals(4, skill.palette_size(3))
+    call: this.check.assertEquals(6, skill.palette_size(7))
+    set easy: skill.generate(1)
+    call: this.check.assertEquals(4, len(skill.options(easy)))
+    set hard: skill.generate(7)
+    set options: skill.options(hard)
+    call: this.check.assertEquals(6, len(skill.palette))
+    call: this.check.assertEquals(4, len(options))
+    call: this.check.assertEquals(hard.solution(), options[1])
+    call: this.check.assertEquals(0, options[0] == hard.solution())
