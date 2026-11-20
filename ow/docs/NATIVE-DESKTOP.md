@@ -342,3 +342,39 @@ still need native ports. Do not claim full visual or functional parity.
 Regression tests verify the original pattern bytes/dimensions and offline
 staging. A Mesa/OpenGL smoke tests CSS-derived red/purple/blue surfaces,
 lower dark material, all six cards, carousel animation and resource cleanup.
+
+## PR #41 — Screenshot-based header, icon and label corrections (v1.13.8)
+
+User's Windows native screenshot revealed several regressions after the
+source-based Cubes material pass. The fixes here target those exact pixels:
+
+- All five toolbar buttons now use `NativeToolbarArt.ow`, a dedicated
+  OpenGL 3.3 signed-distance icon shader. It draws a toothed gear, two
+  pointed sparkles, four fullscreen brackets, three round-ended menu
+  lines and a six-legged bug. This replaces the chunky orange/green
+  rectangles that mimicked icons but did not match React's Lucide UI.
+- Rounded graphite buttons use clear white/gray, purple and pink icon
+  palettes matching the Electron header. Their **real** click targets
+  remain shared with `NativeMenuLayout` and `NativeMenuPointer`.
+- The Bug Report control is raised and resized to stay completely
+  within the 1280x720 window framebuffer instead of falling below
+  the window/taskbar boundary.
+- The overlaid activity emblems are removed from the card headers.
+  Electron `SkillCard.jsx` shows category/fantasy text only there.
+- Long fantasy titles wrap naturally at original word boundaries,
+  leaving the level badge a separate safe column. Bitmap glyph
+  spacing is capped so short words do not stretch the full panel.
+  Monster name and CTA text are centered in their actual card pills.
+- All scene navigation remains available: Settings, Themes, Menu, Bug
+  Report, carousel and game input; existing functionality gaps in
+  those panels/fullscreen are not misrepresented as completed.
+
+OWUnit geometry regression tests cover title/badge clearance at all
+five carousel depths. Mesa/OpenGL toolbar smoke probes visible
+fullscreen/menu/sparkle/bug pixels, tests drawer navigation and verifies
+shader/mesh cleanup. The full Windows, Linux and macOS packaging
+matrix remains required.
+
+**This is a correction PR, not a declaration of 1:1 Electron parity.**
+Font rendering, real dynamic full-screen behavior, full settings and
+report forms, and exact blurred glass/lighting need further work.
