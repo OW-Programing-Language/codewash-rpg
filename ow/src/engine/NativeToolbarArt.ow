@@ -1,0 +1,63 @@
+# Signed-distance native OpenGL reproductions of the five actual
+# lucide-react controls in Electron src/App.jsx: Settings, Sparkles,
+# Maximize, Menu and Bug. No icon font, CSS, network fetch, or + glyph.
+class NativeToolbarArt:
+  field meshes
+  field shaders
+  field renderer
+  field layout
+  field quad
+  field program
+
+  fn new(meshes, shaders, renderer, layout):
+    set this.meshes: meshes
+    set this.shaders: shaders
+    set this.renderer: renderer
+    set this.layout: layout
+    set this.quad: 0
+    set this.program: 0
+
+  fn start():
+    set this.quad: this.meshes.create([0.0,0.0,0.0, 1.0,0.0,0.0, 1.0,1.0,0.0, 0.0,0.0,0.0, 1.0,1.0,0.0, 0.0,1.0,0.0])
+    if: this.quad < 1
+      return: 0
+    set vertex: "#version 330 core\nlayout(location=0) in vec3 aPos;\nout vec2 uv;\nuniform vec4 uRect;\nvoid main() {\n  uv=aPos.xy;\n  gl_Position=vec4(uRect.xy+aPos.xy*uRect.zw,0.0,1.0);\n}"
+    set fragment: "#version 330 core\nin vec2 uv;\nout vec4 pixel;\nuniform int uIcon;   // 0 settings, 1 cosmetics, 2 fullscreen, 3 menu, 4 bug\nuniform float uHover;\nfloat segment(vec2 p,vec2 a,vec2 b) {\n  vec2 d=b-a;\n  return length(p-a-d*clamp(dot(p-a,d)/dot(d,d),0.0,1.0));\n}\nfloat rounded(vec2 p,vec2 halfSize,float radius) {\n  vec2 q=abs(p)-halfSize+vec2(radius);\n  return length(max(q,0.0))+min(max(q.x,q.y),0.0)-radius;\n}\nfloat gear(vec2 p) {\n  float angle=atan(p.y,p.x);\n  float radial=length(p);\n  float teeth=0.256+0.047*smoothstep(0.55,0.83,cos(8.0*angle));\n  float outer=radial-teeth;\n  float center=0.105-radial;\n  return max(outer,center);\n}\nfloat sparkle(vec2 p,float scale) {\n  vec2 q=abs(p)/scale;\n  // Four tapered rays, instead of the solid plus seen in the prototype.\n  return max((q.x+q.y-0.62)*0.70,min(q.x,q.y)-0.078);\n}\nfloat iconDistance(vec2 p) {\n  if(uIcon==0) {\n    return min(gear(p),abs(length(p)-0.11)-0.017);\n  }\n  if(uIcon==1) {\n    float big=sparkle(p-vec2(-0.05,-0.03),0.75);\n    float small=sparkle(p-vec2(0.29,0.27),0.32);\n    return min(big,small);\n  }\n  if(uIcon==2) {\n    float d=1.0;\n    // Exactly four separate corner brackets, no orange filled rectangle.\n    for(int sx=-1;sx<=1;sx+=2) {\n      for(int sy=-1;sy<=1;sy+=2) {\n        vec2 corner=vec2(float(sx)*0.30,float(sy)*0.30);\n        d=min(d,segment(p,corner,corner-vec2(float(sx)*0.16,0.0))-0.022);\n        d=min(d,segment(p,corner,corner-vec2(0.0,float(sy)*0.16))-0.022);\n      }\n    }\n    return d;\n  }\n  if(uIcon==3) {\n    float d=1.0;\n    for(int n=-1;n<=1;n++) {\n      float yy=float(n)*0.18;\n      d=min(d,segment(p,vec2(-0.32,yy),vec2(0.32,yy))-0.030);\n    }\n    return d;\n  }\n  // Lucide-style bug: body with head, six legs and separated antennae.\n  float body=max((length(p/vec2(0.23,0.28))-1.0)*0.22,0.078-length(p));\n  float head=length(p-vec2(0.0,0.27))-0.11;\n  float d=min(body,head);\n  for(int n=-1;n<=1;n++){\n    float yy=float(n)*0.17;\n    d=min(d,segment(p,vec2(-0.17,yy),vec2(-0.35,yy+float(n)*0.045))-0.023);\n    d=min(d,segment(p,vec2(0.17,yy),vec2(0.35,yy+float(n)*0.045))-0.023);\n  }\n  d=min(d,segment(p,vec2(-0.055,0.35),vec2(-0.16,0.43))-0.020);\n  d=min(d,segment(p,vec2(0.055,0.35),vec2(0.16,0.43))-0.020);\n  return d;\n}\nvoid main() {\n  vec2 p=(uv-vec2(0.5))*2.0;\n  // At 1280x720 the NDC control is ~56x58 physical pixels.\n  float box=rounded(p,vec2(0.96,0.96),0.14);\n  if(box>0.01) discard;\n  float rim=smoothstep(-0.94,-0.84,box);\n  vec3 back=mix(vec3(0.175,0.175,0.19),vec3(0.215,0.215,0.235),uv.y);\n  back=mix(back,vec3(0.37,0.38,0.42),rim*0.75);\n  back+=vec3(0.045)*uHover;\n  vec3 ink=vec3(0.91,0.93,0.97);\n  if(uIcon==0)ink=vec3(0.65,0.75,0.85);\n  if(uIcon==1)ink=vec3(0.78,0.46,0.98);\n  if(uIcon==4)ink=vec3(1.0,0.38,0.46);\n  float d=iconDistance(p);\n  float coverage=1.0-smoothstep(-0.018,0.025,d);\n  pixel=vec4(mix(back,ink,coverage),1.0);\n}"
+    set this.program: this.shaders.create(vertex, fragment)
+    if: this.program < 1
+      return: 0
+    return: 1
+
+  fn render(pointer):
+    if: this.program < 1
+      return: 0
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shaders.bind(this.program) != 1
+      return: 0
+    set i int: 0
+    while: i < 5
+      if: this.shaders.set_vec4(this.program, "uRect", this.layout.toolbar_x(i), this.layout.toolbar_y(i), this.layout.button_width(), this.layout.button_height()) != 1
+        return: 0
+      if: this.shaders.set_int(this.program, "uIcon", i) != 1
+        return: 0
+      set hover float: 0.0
+      if: pointer != 0
+        if: pointer.hovered == 10 + i
+          set hover: 1.0
+      # Color change on hover without moving the hitbox or card layout.
+      if: this.shaders.set_float(this.program, "uHover", hover) != 1
+        return: 0
+      if: this.renderer.draw_mesh(this.quad) != 1
+        return: 0
+      set i: i + 1
+    return: 1
+
+  fn stop():
+    if: this.quad > 0
+      call: this.meshes.destroy(this.quad)
+      set this.quad: 0
+    if: this.program > 0
+      call: this.shaders.destroy(this.program)
+      set this.program: 0
+    return: 1
