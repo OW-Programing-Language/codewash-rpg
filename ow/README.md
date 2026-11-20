@@ -298,3 +298,9 @@ OpenGL scene combining **OW Engine** ECS, **OW Graphics** and the existing
 OW math-combat service. The separate `src/engine/battle_gpu.ow` entrypoint
 uses procedural block placeholders and terminal-based math choices; it does
 not replace `src/main_ui.ow` or the React/Electron deliverable.
+
+## PR #3: native battle feedback
+
+The [experimental GPU battle](docs/GPU-BATTLE.md) now adds gold/pink hit/miss
+markers and recoil, with OWUnit and actual Mesa framebuffer pixel tests.
+No production browser/Electron game code or save formats are changed.
