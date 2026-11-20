@@ -387,3 +387,14 @@ gold/pink combat effects and separate HP/progression. This completes the
 **six native activity adapters**, but **does not yet replicate** the timed
 flashing/sound of React's Simon-Says, original artwork, input accessibility,
 persistent saves or distributable desktop packages.
+
+## Phase 3 PR #12 — Original OW Graphics art overlays
+
+The experimental native preview now loads **original repository PNG portraits
+and activity badges** through the pinned OW Graphics texture API, animates
+billboards on idle/hit/miss and frees GPU resources on stop. Asset paths are
+strictly sandbox-relative: `node ow/scripts/stage-native-assets.mjs` copies
+approved files from `public/assets/` into ignored `ow/assets/native/`;
+`npm run ow:gpu` runs staging automatically. Mob portraits fall back to a
+neutral egg for unsupported GIF/WebP. This is a first sprite-based graphics
+upgrade, **not** full original character models or audio/animation parity.

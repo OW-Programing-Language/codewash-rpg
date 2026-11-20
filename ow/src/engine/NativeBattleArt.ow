@@ -43,14 +43,15 @@ class NativeBattleArt:
     if: this.program < 1
       return: 0
     set pool: array(6, 0)
+    set this.icons: pool
     set i int: 0
     while: i < 6
       set texture int: this.textures.load_image(this.catalog.icon_path(i))
       if: texture < 1
+        call: this.stop()
         return: 0
       set pool[i]: texture
       set i: i + 1
-    set this.icons: pool
     return: 1
 
   # Cache the current actual mob portrait. Replace only after successful

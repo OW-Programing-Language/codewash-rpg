@@ -409,3 +409,47 @@ of a shipping game. The native UI still needs a full asset pipeline,
 real text/voice input, original image and audio challenges, mouse/touch
 accessibility, durable profiles/saves, settings and cross-platform installers.
 The existing complete React/Electron and browser games remain unchanged.
+
+## Phase 3 PR #12 — Original sprite art and deterministic animation
+
+The separate experimental OW Engine + OW Graphics preview now draws **actual
+original repository PNG/JPEG imagery** as GPU-textured portraits, without
+changing the existing source artwork or six-skill rules. Each playable activity
+has a distinct badge: the existing Math, Writing, Cleaning/farm and Patterns
+icons, the book/map reading item, and the wood badge for Memory. A mob portrait
+uses the **actual current enemy name** where a PNG is present (Creeper, Zombie,
+Skeleton, etc.); mobs whose only files are GIF/WebP show a neutral egg emblem
+instead of a misleading other mob. These art billboards coexist with the
+existing 3D block proxies and text-based battle HUD.
+
+The pinned OW Graphics native decoder **rejects parent path traversal**:
+`../public/assets/...` cannot load from the `ow/` interpreter root. New
+`ow/scripts/stage-native-assets.mjs` reads a restricted allowlist from
+`NativeArtCatalog.ow`, verifies those original images, and copies them
+to the ignored `ow/assets/native/` directory. The developer launcher
+stages them automatically for prepare/check/run; CI stages before GPU tests.
+No binary duplication is committed.
+
+`NativeBattleArt.ow` binds real `GRAPHICS_TEXTURE` and
+`GRAPHICS_MESH` services, decodes PNGs into GPU textures once, uses a
+bounded 2-triangle billboard mesh with alpha discard, animates a gentle
+deterministic idle bob, and briefly shifts/tints the portrait on hit/miss.
+The current mob image is replaced and the previous GPU texture is freed when
+a new foe spawns. Both the six-icon cache and active enemy portrait, quad
+and shader are explicitly destroyed **before closing the OpenGL context**,
+also when two independent sessions are started sequentially.
+
+The real Mesa/Xvfb `native_art_smoke.ow` validates original image handles,
+billboard framebuffer pixels, visual animation, image switching and cleanup.
+Pure OWUnit tests validate the asset catalog; Node tests verify the staging
+allowlist, safe paths and byte-preserving copies. Existing GPU and OWUnit
+tests remain active.
+
+### Remaining native art and gameplay parity
+
+This PR integrates **original 2D portraits and first native animation passes**,
+not mesh-based character-model import, animated GIF decoding, skeletal
+animation, timed Simon-Says, full sound playback or a complete art pipeline.
+The existing cubes are still procedural placeholders. Advanced 3D models,
+animation blending, audio, saves, accessible input and desktop packaging
+require further PRs.

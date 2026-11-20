@@ -29,6 +29,9 @@ jobs:
         run: |
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar deps install
           git diff --exit-code -- dependencies.lock.yml
+      - name: Stage original PNG assets inside OW Graphics image sandbox
+        run: node ow/scripts/stage-native-assets.mjs
+
       - name: Check OW GPU examples
         working-directory: ow
         run: |
@@ -41,6 +44,7 @@ jobs:
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/cleaning_smoke.ow
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/memory_smoke.ow
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/patterns_smoke.ow
+          java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/native_art_smoke.ow
       - name: Build pinned OW Graphics native extension
         run: |
           git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git /tmp/ow-battle-graphics
@@ -112,3 +116,10 @@ jobs:
           xvfb-run -a -s "-screen 0 1024x768x24" env LIBGL_ALWAYS_SOFTWARE=1 \
             java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
             dev.oreo.Main run src/engine/patterns_smoke.ow
+
+      - name: Verify original textured art, idle/hit animation and framebuffer
+        working-directory: ow
+        run: |
+          xvfb-run -a -s "-screen 0 1024x768x24" env LIBGL_ALWAYS_SOFTWARE=1 \
+            java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
+            dev.oreo.Main run src/engine/native_art_smoke.ow
