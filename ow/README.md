@@ -304,3 +304,11 @@ not replace `src/main_ui.ow` or the React/Electron deliverable.
 The [experimental GPU battle](docs/GPU-BATTLE.md) now adds gold/pink hit/miss
 markers and recoil, with OWUnit and actual Mesa framebuffer pixel tests.
 No production browser/Electron game code or save formats are changed.
+
+## Experimental OpenGL battle HUD (PR #4)
+
+The opt-in [OW Engine + OW Graphics battle preview](docs/GPU-BATTLE.md)
+now draws level/monster HP, math questions and four highlighted answer cards
+in the native OpenGL window. The text uses an original 5x7 OW bitmap mesh;
+W/A/S/D answers directly, or use arrows + Space to select. The full browser
+game, React/Electron app and saves remain unchanged.

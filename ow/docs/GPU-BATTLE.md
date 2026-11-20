@@ -82,3 +82,37 @@ placeholders; no text/2D GUI, migrated artwork, audio or save migration yet.
 `BattleFeedbackTest.ow` checks hit/miss recoil, correct/wrong damage, effect
 expiration and replacement headlessly. The Mesa/Xvfb native smoke reads real
 gold and pink framebuffer pixels and verifies both effects disappear.
+
+## PR #4 — GPU HUD and graphical choice cards
+
+The native 640x480 battle preview now displays **level, monster HP, current
+math question and all four answer values in the OpenGL window**. OW builds
+vertices for a small, original 5x7 uppercase ASCII font. OW Graphics uploads
+and renders those glyphs as triangles after the ECS world, without Swing,
+browser overlays, or a Java font engine. Unsupported glyphs fall back to `?`.
+
+The four answer cards have a dark blue background, with the current selection
+highlighted in teal. **W/A/S/D** still answers immediately; alternatively,
+use **arrow keys** to move the selection and **Space** to submit. Escape quits.
+Key-edge tracking prevents automatic repeated submissions.
+
+The on-screen HUD is refreshed after an answer changes the problem. Replaced
+text meshes are freed after successful new uploads, and all HUD shader and
+mesh resources are destroyed before closing the graphics context.
+
+### Automated verification
+
+`BattleHudTest.ow` verifies glyph bounds, operator support, the 2x2
+directional selection grid, invalid choices and reuse of the existing
+`Game.answer()` logic. GPU CI builds the pinned OW Graphics native bridge,
+renders the HUD with Mesa/Xvfb, samples real framebuffer pixels for
+text/selected-card highlights and checks hit/miss feedback still renders.
+
+### Known limitations
+
+This is still an **opt-in MathSkill 3D prototype**. Current OW Graphics input
+has arrow keys, Space, W/A/S/D and mouse button state, but it does not expose
+reliable absolute cursor coordinates; therefore the cards are keyboard
+operable, **not mouse-clickable**. Native text input, accessibility,
+the other five learning activities, original sprites, audio and save migration
+are not implemented. The existing CodeWash browser/Electron games are intact.

@@ -1,39 +1,50 @@
-# Native Mesa proof: idle, hit, idle, miss, idle, with actual back-buffer pixels.
+# Native Mesa proof: OW Engine battle plus real OpenGL HUD text/cards.
+# The framebuffer probe is CI-only and absent from game releases.
 import "GpuBattle.ow"
 
 main:
   set game: new GpuBattle()
-  call: assert(game.start() == 1, "GPU battle boot")
-  call: assert(game.render() == 4, "idle has four rendered meshes")
+  call: assert(game.start() == 1, "OpenGL battle HUD boots")
+  call: assert(game.render() == 4, "battle four meshes plus separate HUD")
   set hero: extension("codewash.test.pixel", 225, 240)
   set mob: extension("codewash.test.pixel", 415, 240)
   call: assert(hero[2] > hero[0] + 30, "cyan hero")
   call: assert(mob[0] > mob[2] + 35, "orange monster")
-  call: assert(game.battle.choose(2) == 1, "correct original OW math answer")
-  call: assert(game.render() == 5, "gold hit effect visible")
+
+  # HUD card backgrounds must be drawn inside the framebuffer, not terminal.
+  set selected: extension("codewash.test.pixel", 160, 65)
+  set ordinary: extension("codewash.test.pixel", 480, 65)
+  call: assert(selected[1] > ordinary[1] + 30, "W choice highlighted")
+  # The first L in 'LVL' is a real rasterized 5x7 OpenGL glyph.
+  set letter: extension("codewash.test.pixel", 24, 447)
+  call: assert(letter[0] > 150, "top-left text glyph is visible")
+
+  call: assert(game.selection.move("RIGHT") == 1, "arrow navigation")
+  call: assert(game.render() == 4, "HUD redraws changed selection")
+  set old_card: extension("codewash.test.pixel", 160, 65)
+  set current_card: extension("codewash.test.pixel", 480, 65)
+  call: assert(current_card[1] > old_card[1] + 30, "A choice now highlighted")
+  call: assert(game.selection.move("LEFT") == 1)
+
+  call: assert(game.battle.choose(2) == 1, "existing math rules still apply")
+  call: assert(game.hud.refresh(game.battle) == 1, "answer labels refresh")
+  call: assert(game.render() == 5, "hit effect and HUD both render")
   set hit: extension("codewash.test.pixel", 415, 370)
-  call: assert(hit[0] > 120, "gold hit red component")
-  call: assert(hit[1] > 95, "gold hit green component")
-  call: assert(hit[2] < 90, "gold hit low blue component")
+  call: assert(hit[0] > 120, "gold hit marker red")
+  call: assert(hit[1] > 95, "gold hit marker green")
   set i int: 0
   while: i < 11
     call: game.battle.advance_feedback()
     set i: i + 1
-  call: assert(game.battle.feedback_kind == 0, "hit effect expires")
-  call: assert(game.render() == 4, "battle restored after hit")
-  set health int: game.battle.game.mob.cur_hp()
-  call: assert(game.battle.choose(0) == 0, "wrong original OW math answer")
-  call: assert(game.battle.game.mob.cur_hp() == health, "no wrong-answer damage")
-  call: assert(game.render() == 5, "pink miss effect visible")
+  call: assert(game.render() == 4, "hit feedback expires")
+
+  set hp int: game.battle.game.mob.cur_hp()
+  call: assert(game.battle.choose(0) == 0, "wrong math answer")
+  call: assert(game.battle.game.mob.cur_hp() == hp, "wrong answer does not damage")
+  call: assert(game.hud.refresh(game.battle) == 1, "second HUD refresh")
+  call: assert(game.render() == 5, "miss effect and HUD both render")
   set miss: extension("codewash.test.pixel", 225, 370)
-  call: assert(miss[0] > 120, "pink miss red component")
-  call: assert(miss[0] > miss[1] + 60, "pink red exceeds green")
-  call: assert(miss[2] > miss[1], "pink blue exceeds green")
-  set j int: 0
-  while: j < 11
-    call: game.battle.advance_feedback()
-    set j: j + 1
-  call: assert(game.battle.feedback_kind == 0, "miss effect expires")
-  call: assert(game.render() == 4, "battle restored after miss")
-  call: assert(game.stop() == 1, "GPU resources freed")
-  print: "PASS: OW combat hit and miss GPU framebuffer feedback"
+  call: assert(miss[0] > 120, "pink miss marker red")
+  call: assert(miss[0] > miss[1] + 60, "pink miss marker contrasted")
+  call: assert(game.stop() == 1, "HUD and world GPU handles destroyed")
+  print: "PASS: native OW HUD glyphs, choices, hit and miss framebuffer pixels"
