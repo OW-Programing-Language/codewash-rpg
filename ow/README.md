@@ -356,3 +356,12 @@ W/A/S/D selects letters, Check submits and Delete edits. This is an explicit
 word-copy prototype: original item-image clues and general OS text input are
 not available in the pinned graphics runtime yet. Math, Reading and Writing
 remain independent; the browser and React/Electron games are unaffected.
+
+## Phase 2 PR #9 — Native Cleaning activity
+
+The [native OpenGL activity catalog](docs/GPU-BATTLE.md) now supports
+**Cleaning** on the second Activities page. Each task uses the existing
+`CleaningSkill` list and an independent OW Engine/Game run, with Start →
+Mark Done, Cancel, and Help buttons rendered by OW Graphics. This is
+**self-reported** completion, without parent verification or real-world
+detection. All prior game modes, tests and browser deliverables remain intact.

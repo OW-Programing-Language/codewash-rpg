@@ -1,0 +1,50 @@
+# Native Cleaning is a real-world task acknowledgement, not a quiz.
+# No hardware/sensor or parental confirmation is implied. Only START ->
+# MARK DONE may call the existing CleaningSkill / Game.answer("DONE").
+class NativeCleaningActivity:
+  field scene
+  field started
+  field status
+  field completed
+
+  fn new(scene):
+    set this.scene: scene
+    set this.started: 0
+    set this.status: "START THE CHORE BEFORE MARKING DONE"
+    set this.completed: 0
+
+  fn options():
+    if: this.started == 1
+      return: ["MARK DONE", "CANCEL", "MENU", "HELP"]
+    return: ["START TASK", "TASK INFO", "MENU", "HELP"]
+
+  # 1=credited, 2=UI updated, 3=navigate to menu, 0=cancel, -1=invalid.
+  fn choose(index):
+    if: index < 0
+      return: 0 - 1
+    if: index > 3
+      return: 0 - 1
+    if: index == 2
+      return: 3
+    if: index == 3
+      set this.status: "SELF REPORTED  NOT PARENT VERIFIED"
+      return: 2
+    if: this.started == 0
+      if: index == 1
+        set this.status: "DO THE CHORE  THEN MARK DONE"
+        return: 2
+      set this.started: 1
+      set this.status: "CHORE IN PROGRESS  MARK WHEN FINISHED"
+      return: 2
+    if: index == 1
+      set this.started: 0
+      set this.status: "CANCELLED  NO CREDIT GIVEN"
+      return: 0
+    # Clear the state BEFORE game advancement: repeat presses now only START.
+    set this.started: 0
+    if: this.scene.complete_task() != 1
+      set this.status: "COULD NOT RECORD COMPLETION"
+      return: 0 - 1
+    set this.completed: this.completed + 1
+    set this.status: "COMPLETE  NEXT TASK READY"
+    return: 1
