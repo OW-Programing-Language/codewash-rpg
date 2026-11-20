@@ -112,8 +112,6 @@ class NativeMenuCarousel:
   # Select the focused skill directly, independently from the four fixed
   # quick-action hotkeys. This uses the same existing scene router methods.
   fn launch(router):
-    if: this.active == 1
-      return: 0
     if: this.selected == 0
       return: router.start_math()
     if: this.selected == 1

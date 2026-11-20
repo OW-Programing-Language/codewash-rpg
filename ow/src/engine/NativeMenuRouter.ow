@@ -78,6 +78,15 @@ class NativeMenuRouter:
       return: 1
     return: this.open_menu()
 
+  fn focus_card(name):
+    if: this.screen() == "menu"
+      set this.status: "CARD " + name + "  LEFT RIGHT TO BROWSE"
+      return: 1
+    if: this.screen() == "activities"
+      set this.status: "CARD " + name + "  SPACE TO PLAY"
+      return: 1
+    return: 0
+
   fn title():
     if: this.screen() == "battle"
       return: "MATH BATTLE"

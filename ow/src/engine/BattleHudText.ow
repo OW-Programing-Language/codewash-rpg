@@ -113,10 +113,7 @@ class BattleHudText:
     set screen: router.screen()
     set at: this.menu_line(buffer, at, "LEVEL UP!", 0.0 - 0.45, 0.50, 10, 0.069, 0.10, 0.10)
     set at: this.menu_line(buffer, at, router.title(), 0.0 - 0.29, 0.405, 27, 0.020, 0.052, 0.023)
-    set names: ["MATH", "READING", "WRITING"]
-    if: screen == "activities"
-      if: router.activity_page == 1
-        set names: ["CLEANING", "MEMORY", "PATTERNS"]
+    set names: ["PREVIOUS", "FOCUSED", "NEXT"]
     set at: this.menu_line(buffer, at, names[0], 0.0 - 0.79, 0.24, 16, 0.023, 0.055, 0.028)
     set at: this.menu_line(buffer, at, names[1], 0.0 - 0.16, 0.24, 16, 0.023, 0.055, 0.028)
     set at: this.menu_line(buffer, at, names[2], 0.60, 0.24, 16, 0.023, 0.055, 0.028)
