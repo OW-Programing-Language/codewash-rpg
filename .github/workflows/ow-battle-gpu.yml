@@ -50,10 +50,11 @@ jobs:
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/menu_carousel_smoke.ow
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/menu_rich_cards_smoke.ow
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/menu_polish_smoke.ow
+          java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/menu_pointer_smoke.ow
       - name: Build pinned OW Graphics native extension
         run: |
           git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git /tmp/ow-battle-graphics
-          git -C /tmp/ow-battle-graphics checkout --quiet e0b6b3ad7d3e04fb47ec80a03eaf28e392ee30d6
+          git -C /tmp/ow-battle-graphics checkout --quiet 08f633185966f80751e8aae9063163e10b86e8d3
           mvn -B -q -f /tmp/ow-battle-graphics/native-bridge/pom.xml package dependency:copy-dependencies -DoutputDirectory=target/lib
       - name: Install Mesa/Xvfb
         run: |
@@ -163,3 +164,10 @@ jobs:
           xvfb-run -a -s "-screen 0 1600x900x24" env LIBGL_ALWAYS_SOFTWARE=1 \
             java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
             dev.oreo.Main run src/engine/menu_polish_smoke.ow
+
+      - name: Verify native pointer hitboxes and GPU hover glow on real Mesa
+        working-directory: ow
+        run: |
+          xvfb-run -a -s "-screen 0 1600x900x24" env LIBGL_ALWAYS_SOFTWARE=1 \
+            java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
+            dev.oreo.Main run src/engine/menu_pointer_smoke.ow
