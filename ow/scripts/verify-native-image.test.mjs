@@ -26,6 +26,8 @@ test('verification catches incomplete packaged image and approves staged layout'
       join(image.app, 'payload/ow/dependencies.lock.yml'),
       join(image.app, 'payload/ow/src/engine/battle_gpu.ow'),
       join(image.app, 'payload/ow/assets/native/skills/math_icon.png'),
+      join(image.app, 'payload/ow/assets/native/themes/minecraft.png'),
+      join(image.app, 'payload/ow/assets/native/themes/minecraft_logo.png'),
       join(image.app, 'payload/ow/.ow/deps/graphics/.ow-resolved')]) {
       mkdirSync(dirname(p), {recursive: true});
       writeFileSync(p, 'test');

@@ -16,8 +16,13 @@ public final class FramebufferProbe implements RuntimeExtension {
         if (!supports(operation)) throw new IllegalArgumentException("Unknown pixel operation");
         if (args.size() != 2 || !(args.get(0) instanceof Integer x) || !(args.get(1) instanceof Integer y))
             throw new IllegalArgumentException("Expected integer X and Y");
-        if (x < 0 || x >= 640 || y < 0 || y >= 480)
-            throw new IllegalArgumentException("Pixel outside 640x480 frame");
+        java.nio.IntBuffer viewport = BufferUtils.createIntBuffer(4);
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        int width = viewport.get(2);
+        int height = viewport.get(3);
+        if (x < 0 || x >= width || y < 0 || y >= height)
+            throw new IllegalArgumentException(
+                    "Pixel outside " + width + "x" + height + " framebuffer");
         ByteBuffer pixel = BufferUtils.createByteBuffer(4);
         glFinish();
         glReadBuffer(GL_BACK);
