@@ -13,7 +13,7 @@ main:
   call: assert(sparkle[2] > sparkle[1], "native Themes sparkle contains colored icon, not an empty button")
   set menu_ink: extension("codewash.test.pixel", 1216, 669)
   call: assert(menu_ink[0] > 160, "native top-right Menu has visible white horizontal bars")
-  set bug: extension("codewash.test.pixel", 1223, 64)
+  set bug: extension("codewash.test.pixel", 1228, 64)
   call: assert(bug[0] > bug[1] + 45, "bug report icon is visible above the bottom edge")
   call: assert(game.pointer.hit(0.0 - 0.91, 0.85, "menu", game.carousel, game.layout) == 10, "gear hitbox")
   call: assert(game.pointer.hit(0.0 - 0.77, 0.85, "menu", game.carousel, game.layout) == 11, "theme sparkle hitbox")
