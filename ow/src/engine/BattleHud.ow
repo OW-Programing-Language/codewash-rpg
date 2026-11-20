@@ -81,6 +81,16 @@ class BattleHud:
     set this.text_mesh: updated
     return: 1
 
+  fn refresh_patterns(battle, activity):
+    # Swap uploaded glyph buffers atomically to avoid blank frames.
+    set updated int: this.meshes.create(this.text_builder.patterns_vertices(battle, activity))
+    if: updated < 1
+      return: 0
+    if: this.text_mesh > 0
+      call: this.meshes.destroy(this.text_mesh)
+    set this.text_mesh: updated
+    return: 1
+
   fn render():
     if: this.text_mesh < 1
       return: 0

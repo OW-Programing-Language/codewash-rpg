@@ -40,6 +40,15 @@ class BattleScene:
     set this.skill_name: "math"
     set this.cached_options: []
 
+  # Patterns has its own Game/ECS state, as every other native activity.
+  fn configure_patterns():
+    if: this.hero != 0
+      return: 0
+    set this.scene_name: "patterns"
+    set this.skill_name: "patterns"
+    set this.game: new Game()
+    return: 1
+
   # Memory keeps one independent ECS Game and the original MemorySkill deck.
   fn configure_memory():
     if: this.hero != 0

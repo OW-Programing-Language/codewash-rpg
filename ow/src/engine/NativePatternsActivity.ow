@@ -1,0 +1,59 @@
+# Native Patterns study/recall controller. PatternsSkill still owns
+# sequence generation and four color choices; Game.answer owns combat.
+# No timed flashing, animation or sound: OW text-based sequence prototype.
+class NativePatternsActivity:
+  field scene
+  field phase
+  field status
+  field rounds
+  field successes
+  field mistakes
+
+  fn new(scene):
+    set this.scene: scene
+    set this.phase: 0
+    set this.status: "STUDY THE SEQUENCE THEN RECALL"
+    set this.rounds: 0
+    set this.successes: 0
+    set this.mistakes: 0
+
+  # The full prompt is visible only during the study phase.
+  fn shown_pattern():
+    if: this.phase == 0
+      return: this.scene.game.problem.ask()
+    return: "HIDDEN  WHAT COMES NEXT?"
+
+  fn options():
+    if: this.phase == 0
+      return: ["RECALL", "REPLAY", "HELP", "MENU"]
+    return: this.scene.options()
+
+  # -1 invalid, 0 wrong, 1 correct, 2 phase/help refresh, 3 menu.
+  fn choose(index):
+    if: index < 0
+      return: 0 - 1
+    if: index > 3
+      return: 0 - 1
+    if: this.phase == 0
+      if: index == 3
+        return: 3
+      if: index == 2
+        set this.status: "REMEMBER THE NEXT COLOR IN THE SEQUENCE"
+        return: 2
+      if: index == 1
+        set this.status: "REPLAY TEXT  THEN CHOOSE RECALL"
+        return: 2
+      set this.phase: 1
+      set this.status: "NOW PICK THE MISSING COLOR"
+      return: 2
+    # Only the recall phase can award damage or advance the question.
+    set outcome int: this.scene.choose(index)
+    set this.rounds: this.rounds + 1
+    if: outcome == 1
+      set this.successes: this.successes + 1
+      set this.status: "CORRECT  NEW SEQUENCE READY"
+    else:
+      set this.mistakes: this.mistakes + 1
+      set this.status: "WRONG  STUDY THE NEXT SEQUENCE"
+    set this.phase: 0
+    return: outcome
