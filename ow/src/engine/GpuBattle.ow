@@ -232,6 +232,8 @@ class GpuBattle:
       return: 0
     if: this.hud.bind_pointer(this.pointer) != 1
       return: 0
+    if: this.hud.bind_materials(this.menu_materials) != 1
+      return: 0
     call: this.menu.focus_card(this.carousel.focused())
     if: this.hud.refresh_menu(this.menu) != 1
       return: 0
@@ -578,14 +580,6 @@ class GpuBattle:
     else:
       if: this.art.menu_background() != 1
         return: 0 - 1
-      set scene: this.menu.screen()
-      if: scene == "menu"
-        if: this.menu_materials.render(this.carousel) != 1
-          return: 0 - 1
-      else:
-        if: scene == "activities"
-          if: this.menu_materials.render(this.carousel) != 1
-            return: 0 - 1
     if: this.hud.render() != 2
       return: 0 - 1
     if: this.playing() == 0
