@@ -21,7 +21,7 @@
     "ow:gpu:check": "node ow/scripts/gpu-preview.mjs --check",
     "ow:gpu:test": "node --test ow/scripts/gpu-preview.test.mjs ow/scripts/stage-native-assets.test.mjs",
     "ow:native:package": "node ow/scripts/package-native.mjs",
-    "ow:native:test": "node --test ow/scripts/package-native.test.mjs ow/scripts/verify-native-image.test.mjs"
+    "ow:native:test": "node --test ow/scripts/package-native.test.mjs ow/scripts/verify-native-image.test.mjs ow/scripts/native-startup.test.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.555.0",
