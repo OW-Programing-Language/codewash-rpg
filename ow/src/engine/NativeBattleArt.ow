@@ -226,7 +226,7 @@ class NativeBattleArt:
     if: this.menu_theme < 1
       return: 0
     set this.menu_ticks: this.menu_ticks + 1
-    set shade float: 0.38 + this.menu_bob() * 0.9
+    set shade float: 0.51 + this.menu_bob() * 1.2
     if: this.renderer.depth_test(0) != 1
       return: 0
     if: this.shaders.bind(this.program) != 1
@@ -255,27 +255,29 @@ class NativeBattleArt:
 
     if: screen != "settings"
       set i int: 0
-      while: i < 5
-        set rel float: carousel.relative(i)
+      while: i < 7
+        set rel float: carousel.visual_relative(i)
         set rect: this.layout.card_rect(rel)
         if: rect[2] > 0.0
-          set slot int: carousel.slot(i)
+          set slot int: carousel.visual_slot(i)
           if: this.use_card_portrait(slot, cards.mob_name(slot)) != 1
             return: 0
           set distance float: rel
           if: distance < 0.0
             set distance: 0.0 - distance
-          set tint float: 0.74
+          set tint float: 0.32
+          if: distance < 1.52
+            set tint: 0.66
           if: distance < 0.55
             set tint: 1.0
-          set width float: rect[2] * 0.65
-          set height float: rect[3] * 0.32
+          set width float: rect[2] * 0.87
+          set height float: rect[3] * 0.38
           set x float: rect[0] + (rect[2] - width) / 2.0
-          set y float: rect[1] + rect[3] * 0.46 + this.menu_bob()
+          set y float: rect[1] + rect[3] * 0.41 + this.menu_bob()
           if: this.draw_sprite(this.card_portraits[slot], x, y, width, height, tint) != 1
             return: 0
           # Genuine skill emblem in the upper-left edge of each card.
-          if: this.draw_sprite(this.icons[slot], rect[0] + 0.014, rect[1] + rect[3] - 0.105, 0.065, 0.077, 1.0) != 1
+          if: this.draw_sprite(this.icons[slot], rect[0] + 0.008, rect[1] + rect[3] - 0.098, 0.044, 0.061, tint) != 1
             return: 0
         set i: i + 1
     if: this.renderer.depth_test(1) != 1
