@@ -299,3 +299,46 @@ visual parity remain outstanding. No false 1:1-complete claim.
 The native build still packages offline without Maven/Git at launch,
 and runs `menu_toolbar_smoke.ow` under Mesa as well as OWUnit
 and Windows/Linux/macOS portable packaging checks.
+
+## PR #40 — Source-exact Electron card materials (v1.13.7)
+
+Reference: `src/components/skills/SkillCard.jsx` (`h-[55%]` upper card,
+`bg-[#3a3a3a]` lower panel, translucent cube pattern overlay,
+dark monster label, border/glow styling) and
+`src/constants/gameData.jsx` (six `colorStyle.background` gradients).
+
+Native OW now uses its **own OpenGL 3.3 material shader** to reproduce the
+same six CSS top/bottom gradient stops per activity, a 55% upper material,
+dark lower panel, 6-pixel equivalent rounded clipping, a darker HP rail,
+and deliberate center / near / far card brightness tiers.
+The **original 67x100 transparent Cubes PNG**, referenced verbatim in
+Electron from `https://www.transparenttextures.com/patterns/cubes.png`,
+is vendored under `public/assets/patterns/cubes.png`, copied into the
+native offline asset sandbox, and sampled as a seamlessly tiled repeating
+`sampler2D` in GPU materials. No network dependency at runtime.
+Because OW Graphics clamps GL texture edges, tiling is done with
+`fract()` in GLSL.
+
+Legacy solid-body and rectangle portrait backdrops have been removed so
+the gradient is visible. The Minecraft mob portrait now sits in the upper
+55%; the name, HP, two-line description and CTA are shifted into zones
+corresponding more closely to their Electron layout.
+The existing carousel advances and uploads texture/frame positions **once
+per frame** in the same HUD pass: no texture lag during sliding.
+Side-card text uses tagged native bitmap glyphs with near/far brightness
+scales, preserving the old font and all keyboard controls.
+
+Upstream cube pattern attribution: **Cubes** by **Sander Ottens**, via
+Transparent Textures (https://www.transparenttextures.com/patterns/cubes.png).
+Original source copy: https://github.com/mfurlend/transparenttextures/blob/master/cubes.png.
+Review the original pattern's applicable redistribution terms before
+shipping this bundled texture commercially; credit is retained here.
+
+**Still not exact screenshot parity:** the rounded glass badges, polished
+SDF/TTF glyphs, CSS-quality anti-aliased outer shadow compositing, actual
+sprite GIF animation, dynamic scale, and complete Electron panel behavior
+still need native ports. Do not claim full visual or functional parity.
+
+Regression tests verify the original pattern bytes/dimensions and offline
+staging. A Mesa/OpenGL smoke tests CSS-derived red/purple/blue surfaces,
+lower dark material, all six cards, carousel animation and resource cleanup.

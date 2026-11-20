@@ -138,8 +138,16 @@ class NativeMenuLayout:
     set y float: (0.0 - 0.19) - height / 2.0
     return: [x, y, width, height]
 
-  # Color-banded glow + shadow, with bright gold focus ring. Keep all
-  # visual geometry generated in native OW and drawn with OpenGL shaders.
+  # Four border strips, never a filled quad: the gradient and exact
+  # cube texture underneath must remain visible within each framed card.
+  fn outline(buffer, at, x, y, w, h, thick, material):
+    set at: this.quad(buffer, at, x, y, w, thick, material)
+    set at: this.quad(buffer, at, x, y + h - thick, w, thick, material)
+    set at: this.quad(buffer, at, x, y, thick, h, material)
+    set at: this.quad(buffer, at, x + w - thick, y, thick, h, material)
+    return: at
+
+  # Source-based focus border and side-card edge hierarchy.
   fn carousel_vertices(carousel):
     set buffer: array(1008, 0.0)
     set at int: 0
@@ -155,20 +163,18 @@ class NativeMenuLayout:
         set y float: rect[1]
         set w float: rect[2]
         set h float: rect[3]
-        set border int: 0 - 10
-        set body int: 0 - 5
-        set thick float: 0.006
         if: dist < 0.52
-          set border: 0 - 7
-          set body: 0 - 6
-          set thick: 0.009
-          # Large dim gold ring and smaller luminous rim.
-          set at: this.quad(buffer, at, x - 0.024, y - 0.024, w + 0.048, h + 0.048, 0 - 19)
-          set at: this.quad(buffer, at, x - 0.014, y - 0.014, w + 0.028, h + 0.028, 0 - 18)
+          # Near/far gold rings approximate CSS box-shadow without
+          # obscuring the real source-texture gradients inside the card.
+          set at: this.outline(buffer, at, x - 0.022, y - 0.022, w + 0.044, h + 0.044, 0.008, 0 - 19)
+          set at: this.outline(buffer, at, x - 0.012, y - 0.012, w + 0.024, h + 0.024, 0.008, 0 - 18)
+          set at: this.outline(buffer, at, x - 0.003, y - 0.003, w + 0.006, h + 0.006, 0.004, 0 - 7)
         else:
-          set at: this.quad(buffer, at, x + 0.012, y - 0.012, w, h, 0 - 10)
-        set at: this.quad(buffer, at, x - thick, y - thick, w + thick * 2.0, h + thick * 2.0, border)
-        set at: this.quad(buffer, at, x, y, w, h, body)
+          # Stone-colored outline + bottom/right drop shadow, not an
+          # opaque black rectangle that would hide the cube texture.
+          set at: this.quad(buffer, at, x + w, y - 0.012, 0.010, h + 0.012, 0 - 10)
+          set at: this.quad(buffer, at, x, y - 0.012, w, 0.012, 0 - 10)
+          set at: this.outline(buffer, at, x, y, w, h, 0.006, 0 - 10)
       set i: i + 1
     return: buffer
 
@@ -192,24 +198,29 @@ class NativeMenuLayout:
         set w float: rect[2]
         set h float: rect[3]
         set accent int: (0 - 11) - slot
-        # Electron: skill category + fantasy title live in a dark label
-        # panel at the top-left; the level badge has its own reserved area.
-        # All dimensions are shared by NativeCardLabelLayout.ow.
-        set at: this.quad(buffer, at, x, y + h - 0.152, w, 0.152, accent)
-        set at: this.quad(buffer, at, x + 0.009, y + h - 0.136, w - 0.127, 0.126, 0 - 9)
-        set at: this.quad(buffer, at, x + w - 0.112, y + h - 0.113, 0.101, 0.096, 0 - 10)
-        # Dark inset for the current real mob portrait.
-        set at: this.quad(buffer, at, x + 0.04, y + h * 0.45, w - 0.08, h * 0.36, 0 - 5)
-        # Current mob-name backing and black HP rail.
-        set at: this.quad(buffer, at, x + 0.021, y + 0.305, w - 0.042, 0.072, 0 - 9)
-        set at: this.quad(buffer, at, x + 0.025, y + 0.245, w - 0.050, 0.046, 0 - 9)
+        # Keep the original gradient/pattern visible throughout the 55%
+        # upper body. Small dark badges float over it, as in SkillCard.jsx.
+        set at: this.quad(buffer, at, x + 0.012, y + h - 0.145, w - 0.136, 0.123, 0 - 9)
+        set at: this.quad(buffer, at, x + w - 0.112, y + h - 0.111, 0.100, 0.096, 0 - 10)
+
+        # Monster name pill at the foot of the gradient/portrait region.
+        set at: this.quad(buffer, at, x + w * 0.18, y + h * 0.465, w * 0.64, 0.074, 0 - 10)
+        # Electron's dark separator hosts the red HP bar (rounded HUD
+        # materials will be a separate follow-up; HP still uses live state).
+        set at: this.quad(buffer, at, x + 0.017, y + h * 0.348, w - 0.034, 0.106, 0 - 9)
+        set at: this.quad(buffer, at, x + 0.028, y + h * 0.370, w - 0.056, 0.056, 0 - 5)
         set hp float: cards.hp_percent(slot)
         if: hp > 0.0
-          set at: this.quad(buffer, at, x + 0.030, y + 0.250, (w - 0.060) * hp / 100.0, 0.036, 0 - 8)
-        # Original-themed text panel and elevated colored CTA.
-        set at: this.quad(buffer, at, x + 0.019, y + 0.106, w - 0.038, 0.123, 0 - 9)
-        set at: this.quad(buffer, at, x + 0.025, y + 0.015, w - 0.050, 0.082, 0 - 10)
-        set at: this.quad(buffer, at, x + 0.025, y + 0.026, w - 0.050, 0.082, accent)
+          set at: this.quad(buffer, at, x + 0.032, y + h * 0.376, (w - 0.064) * hp / 100.0, 0.044, 0 - 8)
+
+        # Electron #3a3a3a lower panel is painted by NativeMenuMaterials.
+        # Keep its description legible without covering the material relief.
+        set at: this.quad(buffer, at, x + 0.023, y + 0.214, w - 0.046, 0.146, 0 - 9)
+
+        # Elevated CTA button. The base GPU material has dark shadow,
+        # while this activity accent inherits the actual CSS skill palette.
+        set at: this.quad(buffer, at, x + 0.022, y + 0.022, w - 0.044, 0.171, 0 - 10)
+        set at: this.quad(buffer, at, x + 0.025, y + 0.042, w - 0.050, 0.154, accent)
       set i: i + 1
     return: buffer
 

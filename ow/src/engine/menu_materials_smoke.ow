@@ -1,0 +1,55 @@
+# Real OpenGL/Mesa proof of CSS-derived native materials and exact cubes.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "native app starts with original Electron pattern")
+  call: assert(game.menu_materials.program > 0, "gradient shader uploaded")
+  call: assert(game.menu_materials.pattern > 0, "original Cubes PNG decoded and bound")
+  call: assert(game.menu_materials.quad > 0, "material draw mesh uploaded")
+  call: assert(game.render() == 0, "source-authentic redstone material draws")
+  # Inside the top edge of the center card; above the badges and mob.
+  set red: extension("codewash.test.pixel", 600, 501)
+  call: assert(red[0] > red[2] + 35, "Math gradient #b91c1c is red")
+  # Inside the lower left margin: dark #3a3a3a, not the old purple fill.
+  set lower: extension("codewash.test.pixel", 537, 155)
+  call: assert(lower[0] > 25, "dark Electron lower panel not transparent")
+  call: assert(lower[0] < 110, "original card lower material is not flat bright")
+  call: assert(lower[0] < lower[2] + 35, "dark panel is neutrally colored")
+  # Check all six CSS-derived activity colors on a live GPU.
+  call: assert(game.carousel.jump_to(1) == 1, "Reading focus")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "rebuild Reading geometry")
+  call: assert(game.render() == 0, "Reading gradient")
+  set purple: extension("codewash.test.pixel", 600, 501)
+  call: assert(purple[2] > purple[0] + 25, "Reading uses violet/indigo")
+  call: assert(game.carousel.jump_to(2) == 1, "Writing focus")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "rebuild Writing")
+  call: assert(game.render() == 0, "Writing gradient")
+  set blue: extension("codewash.test.pixel", 600, 501)
+  call: assert(blue[2] > blue[0] + 60, "Writing uses blue")
+  call: assert(game.carousel.jump_to(3) == 1, "Cleaning focus")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "rebuild Cleaning")
+  call: assert(game.render() == 0, "Cleaning gradient")
+  set green: extension("codewash.test.pixel", 600, 501)
+  call: assert(green[1] > green[0] + 20, "Cleaning uses emerald")
+  call: assert(game.carousel.jump_to(4) == 1, "Memory focus")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "rebuild Memory")
+  call: assert(game.render() == 0, "Memory gradient")
+  set pink: extension("codewash.test.pixel", 600, 501)
+  call: assert(pink[0] > pink[1] + 40, "Memory uses pink/crimson")
+  call: assert(game.carousel.jump_to(5) == 1, "Patterns focus")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "rebuild Patterns")
+  call: assert(game.render() == 0, "Patterns gradient")
+  set orange: extension("codewash.test.pixel", 600, 501)
+  call: assert(orange[0] > orange[2] + 60, "Patterns uses orange")
+  call: assert(game.move_carousel(1) == 1, "animated wrap to Math still works")
+  set i int: 0
+  while: i < 12
+    call: assert(game.render() == 0, "pattern/gradient/material stays aligned during carousel")
+    set i: i + 1
+  call: assert(game.carousel.selected == 0, "selected Math after wrap")
+  call: assert(game.stop() == 1, "native GPU teardown")
+  call: assert(game.menu_materials.pattern == 0, "pattern texture released")
+  call: assert(game.menu_materials.program == 0, "material shader released")
+  call: assert(game.menu_materials.quad == 0, "material geometry released")
+  print: "PASS: native original 67x100 Cubes texture, six Electron CSS gradients, GPU resources"

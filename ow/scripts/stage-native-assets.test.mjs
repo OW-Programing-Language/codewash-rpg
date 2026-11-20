@@ -104,3 +104,26 @@ test('original browser-sniffed JPEG backgrounds are staged with honest extension
     rmSync(tmp, {recursive: true, force: true});
   }
 });
+
+test('exact Electron Cubes pattern is an offline 67x100 PNG and stages without CDN access', () => {
+  const realRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+  const src = readFileSync(join(realRoot, 'public/assets/patterns/cubes.png'));
+  assert.deepEqual([...src.subarray(0, 8)], [137,80,78,71,13,10,26,10]);
+  assert.equal(src.readUInt32BE(16), 67);
+  assert.equal(src.readUInt32BE(20), 100);
+  const tmp = mkdtempSync(join(tmpdir(), 'codewash-cubes-pattern-'));
+  try {
+    const catalog = join(tmp, 'ow/src/engine/NativeArtCatalog.ow');
+    const into = join(tmp, 'public/assets/patterns/cubes.png');
+    mkdirSync(dirname(catalog), {recursive: true});
+    mkdirSync(dirname(into), {recursive: true});
+    writeFileSync(catalog, 'return: "assets/native/patterns/cubes.png"\\n');
+    copyFileSync(join(realRoot, 'public/assets/patterns/cubes.png'), into);
+    const staged = stageNativeAssets(tmp);
+    assert.deepEqual(staged, ['patterns/cubes.png']);
+    const exact = readFileSync(join(tmp, 'ow/assets/native/patterns/cubes.png'));
+    assert.deepEqual(exact, src);
+  } finally {
+    rmSync(tmp, {recursive: true, force: true});
+  }
+});

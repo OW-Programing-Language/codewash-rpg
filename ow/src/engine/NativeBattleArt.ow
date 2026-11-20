@@ -307,10 +307,12 @@ class NativeBattleArt:
             set tint: 0.66
           if: distance < 0.55
             set tint: 1.0
+          # Electron artwork is centered in the upper 55% of the card.
+          # Reserve the bottom of that zone for the rounded monster name.
           set width float: rect[2] * 0.87
-          set height float: rect[3] * 0.38
+          set height float: rect[3] * 0.36
           set x float: rect[0] + (rect[2] - width) / 2.0
-          set y float: rect[1] + rect[3] * 0.41 + this.menu_bob()
+          set y float: rect[1] + rect[3] * 0.52 + this.menu_bob()
           if: this.draw_sprite(this.card_portraits[slot], x, y, width, height, tint) != 1
             return: 0
           # Genuine skill emblem in the upper-left edge of each card.
