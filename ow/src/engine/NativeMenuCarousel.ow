@@ -109,6 +109,26 @@ class NativeMenuCarousel:
       return: offset - (this.direction * this.progress())
     return: offset
 
+  # Seven candidates are required for a seamless five-visible-card
+  # transition: the incoming sixth item must exist before final rebase.
+  # Keep legacy slot()/relative() unchanged for game logic and old tests.
+  fn visual_slot(ordinal):
+    if: ordinal < 0
+      return: 0 - 1
+    if: ordinal > 6
+      return: 0 - 1
+    return: mod(this.source + ordinal + 3, 6)
+
+  fn visual_relative(ordinal):
+    if: ordinal < 0
+      return: 100.0
+    if: ordinal > 6
+      return: 100.0
+    set offset float: 1.0 * (ordinal - 3)
+    if: this.active == 1
+      return: offset - (this.direction * this.progress())
+    return: offset
+
   # Select the focused skill directly, independently from the four fixed
   # quick-action hotkeys. This uses the same existing scene router methods.
   fn launch(router):
