@@ -163,7 +163,8 @@ export function buildNativeImage(options) {
   // It creates CodeWashRPG.exe (Windows), a launcher (Linux), or a .app (macOS),
   // and bundles a private Java runtime (via jlink). No extra Java install.
   const dest = join(options.out, 'images');
-  rmSync(join(dest, 'CodeWashRPG'), {recursive: true, force: true});
+  const imageName = process.platform === 'darwin' ? 'CodeWashRPG.app' : 'CodeWashRPG';
+  rmSync(join(dest, imageName), {recursive: true, force: true});
   mkdirSync(dest, {recursive: true});
   execute('jpackage', ['--type', 'app-image',
     '--name', 'CodeWashRPG', '--app-version', options.version,
@@ -172,7 +173,7 @@ export function buildNativeImage(options) {
     '--main-class', 'org.oreostudios.codewash.NativeLauncher',
     '--dest', dest, '--add-modules', 'java.se,jdk.unsupported,jdk.crypto.ec',
     '--java-options', '-Dfile.encoding=UTF-8']);
-  return join(dest, 'CodeWashRPG');
+  return join(dest, imageName);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
