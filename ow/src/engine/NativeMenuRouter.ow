@@ -5,12 +5,14 @@ class NativeMenuRouter:
   field activity_page
   field status
   field quitting
+  field theme_id
 
   fn new(scenes):
     set this.scenes: scenes
     set this.activity_page: 0
     set this.status: ""
     set this.quitting: 0
+    set this.theme_id: 0
 
   fn screen():
     return: this.scenes.active_name()
@@ -34,6 +36,48 @@ class NativeMenuRouter:
     if: this.scenes.activate("settings") != 1
       return: 0
     set this.status: "SETTINGS ARE NOT IMPLEMENTED YET"
+    return: 1
+
+  fn open_cosmetics():
+    if: this.scenes.activate("cosmetics") != 1
+      return: 0
+    set this.status: "ACTIVE THEME " + this.theme_name()
+    return: 1
+
+  fn open_bugreport():
+    if: this.scenes.activate("bugreport") != 1
+      return: 0
+    set this.status: "REPORT BUGS IN GITHUB ISSUES"
+    return: 1
+
+  fn open_menu_panel():
+    if: this.scenes.activate("menu_panel") != 1
+      return: 0
+    set this.status: "SIX PLAYABLE OW ACTIVITIES"
+    return: 1
+
+  fn theme_name():
+    if: this.theme_id == 0
+      return: "MINECRAFT"
+    if: this.theme_id == 1
+      return: "KPOP"
+    if: this.theme_id == 2
+      return: "POKEMON"
+    if: this.theme_id == 3
+      return: "SPY"
+    if: this.theme_id == 4
+      return: "SCIFI"
+    return: "FANTASY"
+
+  fn switch_theme(direction):
+    if: direction == 1
+      set this.theme_id: mod(this.theme_id + 1, 6)
+    else:
+      if: direction == 0 - 1
+        set this.theme_id: mod(this.theme_id + 5, 6)
+      else:
+        return: 0
+    set this.status: "ACTIVE THEME " + this.theme_name()
     return: 1
 
   fn start_math():
@@ -105,7 +149,13 @@ class NativeMenuRouter:
         return: "ACTIVITIES  PAGE 1 OF 2"
       return: "ACTIVITIES  PAGE 2 OF 2"
     if: this.screen() == "settings"
-      return: "SETTINGS PREVIEW"
+      return: "SETTINGS"
+    if: this.screen() == "cosmetics"
+      return: "THEMES"
+    if: this.screen() == "bugreport"
+      return: "BUG REPORT"
+    if: this.screen() == "menu_panel"
+      return: "MENU"
     return: "CODEWASH RPG"
 
   fn subtitle():
@@ -120,7 +170,13 @@ class NativeMenuRouter:
     if: this.screen() == "reading"
       return: "MATCH THE WORD  FOUR CHOICES"
     if: this.screen() == "settings"
-      return: "NO SETTINGS ARE ACTIVE YET"
+      return: "AUDIO DISPLAY AND ACCESSIBILITY PENDING"
+    if: this.screen() == "cosmetics"
+      return: "SELECT ORIGINAL GAME BACKGROUND"
+    if: this.screen() == "bugreport"
+      return: "BUG SUBMISSION STILL REQUIRES GITHUB"
+    if: this.screen() == "menu_panel"
+      return: "ACTIVITIES AND PROGRESSION TO COME"
     if: this.screen() == "activities"
       return: "SELECT AN ACTIVITY WITH W A S D"
     return: "NATIVE OW ENGINE AND GRAPHICS"
@@ -132,6 +188,12 @@ class NativeMenuRouter:
       return: ["CLEANING", "MEMORY", "PATTERNS", "BACK"]
     if: this.screen() == "settings"
       return: ["AUDIO SOON", "VIDEO SOON", "ACCESS SOON", "BACK"]
+    if: this.screen() == "cosmetics"
+      return: ["NEXT THEME", "PREV THEME", "MINECRAFT", "BACK"]
+    if: this.screen() == "bugreport"
+      return: ["GITHUB ISSUES", "COPY DETAILS", "NO SEND YET", "BACK"]
+    if: this.screen() == "menu_panel"
+      return: ["ACTIVITIES", "SETTINGS", "THEMES", "BACK"]
     return: ["PLAY MATH", "ACTIVITIES", "SETTINGS", "QUIT"]
 
   # Returns 1 for a valid routed action, 0 when no action exists, -1
@@ -155,6 +217,29 @@ class NativeMenuRouter:
         return: this.open_menu()
       set this.status: "COMING SOON  FEATURE NOT AVAILABLE"
       return: 0
+    if: this.screen() == "cosmetics"
+      if: index == 0
+        return: this.switch_theme(1)
+      if: index == 1
+        return: this.switch_theme(0 - 1)
+      if: index == 2
+        set this.theme_id: 0
+        set this.status: "ACTIVE THEME MINECRAFT"
+        return: 1
+      return: this.open_menu()
+    if: this.screen() == "bugreport"
+      if: index == 3
+        return: this.open_menu()
+      set this.status: "OPEN GITHUB ISSUES TO SUBMIT"
+      return: 0
+    if: this.screen() == "menu_panel"
+      if: index == 0
+        return: this.open_activities(0)
+      if: index == 1
+        return: this.open_settings()
+      if: index == 2
+        return: this.open_cosmetics()
+      return: this.open_menu()
     if: this.screen() == "activities"
       if: this.activity_page == 0
         if: index == 0
