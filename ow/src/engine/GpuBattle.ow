@@ -108,6 +108,7 @@ class GpuBattle:
     set this.art: 0
 
   fn start():
+    print: "GPU STARTUP: OW ENGINE BOOT"
     if: this.app.boot() != 1
       return: 0
     set this.window: this.app.service("window")
@@ -119,10 +120,12 @@ class GpuBattle:
     set this.camera: this.app.service("camera")
     set this.world: this.app.service("render_world")
     set this.runtime: this.app.service("runtime")
+    print: "GPU STARTUP: OPENGL WINDOW"
     if: this.window.open(640, 480, "CodeWash RPG / OW Graphics battle") != 1
       return: 0
     if: this.renderer.depth_test(1) != 1
       return: 0
+    print: "GPU STARTUP: MESHES AND SHADERS"
     set geometry GRAPHICS_CUBE_GEOMETRY: this.app.service("geometry")
     set this.cube: this.meshes.create_lit_indexed(geometry.positions(), geometry.uvs(), geometry.normals(), geometry.indices())
     if: this.cube < 1
@@ -187,9 +190,11 @@ class GpuBattle:
     if: this.patterns.start(this.cube) != 1
       return: 0
     set this.patterns_activity: new NativePatternsActivity(this.patterns)
+    print: "GPU STARTUP: LOADING ORIGINAL ART"
     set this.art: new NativeBattleArt(this.meshes, this.shader, textures, this.renderer)
     if: this.art.start() != 1
       return: 0
+    print: "GPU STARTUP: HUD AND NATIVE MENU"
     set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
     if: this.hud.start(this.battle) != 1
       return: 0
@@ -198,6 +203,7 @@ class GpuBattle:
       return: 0
     if: this.hud.refresh_menu(this.menu) != 1
       return: 0
+    print: "GPU STARTUP: INITIALIZED"
     return: 1
 
   fn active_battle():
