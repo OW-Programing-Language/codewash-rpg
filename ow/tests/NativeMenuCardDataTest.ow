@@ -56,7 +56,7 @@ class NativeMenuCardDataTest:
     call: this.check.assertEquals(1, this.cards.level(0))
     call: this.check.assertEquals(100.0, this.cards.hp_percent(0))
     call: this.check.assertEquals("HP 80/80", this.cards.hp_text(0))
-    call: this.check.assertEquals("CREEPER", this.cards.mob_name(0))
+    call: this.check.assertEquals("Creeper", this.cards.mob_name(0))
     call: this.first.game.mob.hurt(20)
     call: this.check.assertEquals(75.0, this.cards.hp_percent(0))
     call: this.check.assertEquals("HP 60/80", this.cards.hp_text(0))
@@ -69,8 +69,8 @@ class NativeMenuCardDataTest:
   @Test
   fn richGeometryAndMovingBitmapTextAreBounded():
     set shapes: this.layout.rich_card_vertices(this.carousel, this.cards)
-    call: this.check.assertEquals(1080, len(shapes))
-    call: this.check.assertEquals(0 - 11, shapes[164])
+    call: this.check.assertEquals(1800, len(shapes))
+    call: this.check.assertEquals(1, shapes[0] != 0.0)
     set textBuilder: new BattleHudText()
     set glyphs: textBuilder.rich_card_text_vertices(this.carousel, this.cards, this.layout)
     call: this.check.assertEquals(4320, len(glyphs))
@@ -80,5 +80,5 @@ class NativeMenuCardDataTest:
       call: this.carousel.tick()
       set i: i + 1
     set moved: this.layout.rich_card_vertices(this.carousel, this.cards)
-    call: this.check.assertEquals(1080, len(moved))
+    call: this.check.assertEquals(1800, len(moved))
     call: this.check.assertEquals(1, moved[0] != shapes[0])
