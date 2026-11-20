@@ -387,3 +387,22 @@ gold/pink combat effects and separate HP/progression. This completes the
 **six native activity adapters**, but **does not yet replicate** the timed
 flashing/sound of React's Simon-Says, original artwork, input accessibility,
 persistent saves or distributable desktop packages.
+
+## Phase 3 PR #12 — Original OW Graphics art overlays
+
+The experimental native preview now loads **original repository PNG portraits
+and activity badges** through the pinned OW Graphics texture API, animates
+billboards on idle/hit/miss and frees GPU resources on stop. Asset paths are
+strictly sandbox-relative: `node ow/scripts/stage-native-assets.mjs` copies
+approved files from `public/assets/` into ignored `ow/assets/native/`;
+`npm run ow:gpu` runs staging automatically. Mob portraits fall back to a
+neutral egg for unsupported GIF/WebP. This is a first sprite-based graphics
+upgrade, **not** full original character models or audio/animation parity.
+
+## Phase 3 PR #13 — Fast native Windows/Linux/macOS launchers
+
+The [native desktop guide](docs/NATIVE-DESKTOP.md) explains how to build
+and download standalone OW Engine + OW Graphics app-images. Bundled Java,
+LWJGL and pinned OW source modules mean **no Maven/Git/Node/build steps at
+startup**. The native loading splash closes once the actual game window
+is initialized. The original Electron EXE is a different distribution.

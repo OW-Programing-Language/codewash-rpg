@@ -1,0 +1,78 @@
+# Paths relative to the ow/ working directory used by the launcher and CI.
+# Reuse existing repository PNG artwork; no downloaded or generated placeholders.
+# OW Graphics' pinned ImageIO path decodes PNG/JPEG, not animated GIF/WebP.
+class NativeArtCatalog:
+  fn icon_slot(skill):
+    if: skill == "math"
+      return: 0
+    if: skill == "reading"
+      return: 1
+    if: skill == "writing"
+      return: 2
+    if: skill == "cleaning"
+      return: 3
+    if: skill == "memory"
+      return: 4
+    if: skill == "patterns"
+      return: 5
+    return: 0 - 1
+
+  fn icon_path(index):
+    if: index == 0
+      return: "assets/native/skills/math_icon.png"
+    if: index == 1
+      return: "assets/native/items/map.png"
+    if: index == 2
+      return: "assets/native/skills/writing_icon.png"
+    if: index == 3
+      return: "assets/native/skills/farm_icon.png"
+    if: index == 4
+      return: "assets/native/badges/wood_badge.png"
+    if: index == 5
+      return: "assets/native/skills/pattern_icon.png"
+    return: ""
+
+  # Resolve only verified original PNGs. If a mob only ships as GIF/WebP
+  # use the neutral egg emblem; never display a different named mob.
+  fn mob_path(label):
+    if: label == "Creeper"
+      return: "assets/native/mobs/hostile/creeper.png"
+    if: label == "Zombie"
+      return: "assets/native/mobs/hostile/zombie.png"
+    if: label == "Bogged"
+      return: "assets/native/mobs/hostile/bogged.png"
+    if: label == "Drowned"
+      return: "assets/native/mobs/hostile/drowned.png"
+    if: label == "Enderman"
+      return: "assets/native/mobs/hostile/enderman.png"
+    if: label == "Evoker"
+      return: "assets/native/mobs/hostile/evoker.png"
+    if: label == "Hoglin"
+      return: "assets/native/mobs/hostile/hoglin.png"
+    if: label == "Magma Cube"
+      return: "assets/native/mobs/hostile/magmacube.png"
+    if: label == "Parched"
+      return: "assets/native/mobs/hostile/parched.png"
+    if: label == "Piglin"
+      return: "assets/native/mobs/hostile/piglin.png"
+    if: label == "Pillager"
+      return: "assets/native/mobs/hostile/pillager.png"
+    if: label == "Skeleton"
+      return: "assets/native/mobs/hostile/skeleton.png"
+    if: label == "Slime"
+      return: "assets/native/mobs/hostile/slime.png"
+    if: label == "Spider"
+      return: "assets/native/mobs/hostile/spider.png"
+    if: label == "Witch"
+      return: "assets/native/mobs/hostile/witch.png"
+    if: label == "Creaking"
+      return: "assets/native/mobs/miniboss/creaking.png"
+    if: label == "Ravager"
+      return: "assets/native/mobs/miniboss/ravager.png"
+    if: label == "Wither Skeleton"
+      return: "assets/native/mobs/miniboss/witherskeleton.png"
+    if: label == "Herobrine"
+      return: "assets/native/mobs/boss/Herobrine.png"
+    if: label == "Wither"
+      return: "assets/native/mobs/boss/wither.png"
+    return: "assets/native/items/egg.png"

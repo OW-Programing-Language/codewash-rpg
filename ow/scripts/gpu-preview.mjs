@@ -7,6 +7,7 @@ import {spawnSync} from 'node:child_process';
 import {readFileSync, existsSync, readdirSync} from 'node:fs';
 import {dirname, join, resolve, delimiter} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {stageNativeAssets} from './stage-native-assets.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const owRoot = join(repoRoot, 'ow');
@@ -129,6 +130,8 @@ async function main(argv) {
   if (before === null || before !== after) {
     throw new Error('OW dependency lockfile changed. Review/pin and commit ow/dependencies.lock.yml.');
   }
+  const staged = stageNativeAssets(repoRoot);
+  process.stdout.write('Native art: staged ' + staged.length + ' repository PNG/JPEG assets.\n');
   if (opts.mode === 'prepare') {
     process.stdout.write('Native OW Graphics dependencies built and locked. Run --run to play.\n');
     return;

@@ -1,0 +1,146 @@
+# OW Graphics native art layer — original repo PNG textures, two screen
+# portraits, deterministic idle bob and hit/miss tint reactions.
+# This is a sprite overlay, not a finished 3D character importer.
+import "NativeArtCatalog.ow"
+
+class NativeBattleArt:
+  field meshes
+  field shaders
+  field textures
+  field renderer
+  field quad
+  field program
+  field icons
+  field enemy
+  field enemy_path
+  field ticks
+  field catalog
+
+  fn new(meshes, shaders, textures, renderer):
+    set this.meshes: meshes
+    set this.shaders: shaders
+    set this.textures: textures
+    set this.renderer: renderer
+    set this.catalog: new NativeArtCatalog()
+    set this.quad: 0
+    set this.program: 0
+    set this.icons: []
+    set this.enemy: 0
+    set this.enemy_path: ""
+    set this.ticks: 0
+
+  fn start():
+    # NDC billboard quad with bottom-up UVs, keeping shader-independent
+    # geometry alive throughout the GLFW session.
+    set xyz: [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0]
+    set uv: [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]
+    set this.quad: this.meshes.create_indexed(xyz, uv, [0, 1, 2, 2, 3, 0])
+    if: this.quad < 1
+      return: 0
+    set vs: "#version 330 core\nlayout(location=0) in vec3 aPos;\nlayout(location=1) in vec2 aUv;\nout vec2 vUv;\nuniform vec4 uRect;\nvoid main(){vUv=aUv;gl_Position=vec4(uRect.xy+aPos.xy*uRect.zw,0.0,1.0);}"
+    set fs: "#version 330 core\nin vec2 vUv;\nout vec4 pixel;\nuniform sampler2D uImage;\nuniform vec4 uTint;\nvoid main(){vec4 c=texture(uImage,vUv);if(c.a<0.20)discard;pixel=vec4(c.rgb*uTint.rgb,1.0);}"
+    set this.program: this.shaders.create(vs, fs)
+    if: this.program < 1
+      return: 0
+    set pool: array(6, 0)
+    set this.icons: pool
+    set i int: 0
+    while: i < 6
+      set texture int: this.textures.load_image(this.catalog.icon_path(i))
+      if: texture < 1
+        call: this.stop()
+        return: 0
+      set pool[i]: texture
+      set i: i + 1
+    return: 1
+
+  # Cache the current actual mob portrait. Replace only after successful
+  # loading, and release the old GPU texture immediately on a mob change.
+  fn use_enemy(label):
+    set path: this.catalog.mob_path(label)
+    if: path == this.enemy_path
+      if: this.enemy > 0
+        return: 1
+    set next int: this.textures.load_image(path)
+    if: next < 1
+      return: 0
+    if: this.enemy > 0
+      call: this.textures.destroy(this.enemy)
+    set this.enemy: next
+    set this.enemy_path: path
+    return: 1
+
+  # Simple deterministic frame-step animation. Avoid wall-clock dependence;
+  # this can be exercised with real OpenGL framebuffer tests.
+  fn bob():
+    set frame int: mod(this.ticks, 32)
+    if: frame < 16
+      return: (1.0 * frame) / 1200.0
+    return: (1.0 * (32 - frame)) / 1200.0
+
+  fn frame(skill, label, feedback, feedback_frame):
+    set slot int: this.catalog.icon_slot(skill)
+    if: slot < 0
+      return: 0
+    if: this.use_enemy(label) != 1
+      return: 0
+    set this.ticks: this.ticks + 1
+    set b float: this.bob()
+    # Keep portraits above the 3D gameplay, to the left/right of the
+    # central combat, without covering the fixed HUD answer cards.
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shaders.bind(this.program) != 1
+      return: 0
+    if: this.shaders.set_int(this.program, "uImage", 0) != 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uRect", 0.0 - 0.94, 0.07 + b, 0.27, 0.30) != 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uTint", 1.0, 1.0, 1.0, 1.0) != 1
+      return: 0
+    if: this.textures.bind(this.icons[slot], 0) != 1
+      return: 0
+    if: this.renderer.draw_mesh(this.quad) != 1
+      return: 0
+    set tintR float: 1.0
+    set tintG float: 1.0
+    set tintB float: 1.0
+    set shift float: b
+    if: feedback_frame > 0
+      if: feedback == 1
+        set shift: shift + 0.035
+        set tintB: 0.52
+      else:
+        if: feedback == 2
+          set tintG: 0.40
+          set tintB: 0.65
+    if: this.shaders.set_vec4(this.program, "uRect", 0.67, 0.06 + shift, 0.27, 0.35) != 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uTint", tintR, tintG, tintB, 1.0) != 1
+      return: 0
+    if: this.textures.bind(this.enemy, 0) != 1
+      return: 0
+    if: this.renderer.draw_mesh(this.quad) != 1
+      return: 0
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    return: 2
+
+  fn stop():
+    set i int: 0
+    while: i < len(this.icons)
+      if: this.icons[i] > 0
+        call: this.textures.destroy(this.icons[i])
+      set i: i + 1
+    set this.icons: []
+    if: this.enemy > 0
+      call: this.textures.destroy(this.enemy)
+      set this.enemy: 0
+    set this.enemy_path: ""
+    if: this.quad > 0
+      call: this.meshes.destroy(this.quad)
+      set this.quad: 0
+    if: this.program > 0
+      call: this.shaders.destroy(this.program)
+      set this.program: 0
+    return: 1
