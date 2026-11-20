@@ -5,6 +5,9 @@ import "GpuBattle.ow"
 main:
   set first: new GpuBattle()
   call: assert(first.start() == 1, "first OpenGL context boots")
+  call: assert(first.menu.screen() == "menu", "first native menu boots")
+  call: assert(first.menu.start_math() == 1, "first battle scene")
+  call: assert(first.hud.refresh(first.battle) == 1, "first HUD battle display")
   call: assert(first.render() == 4, "first battle HUD draws")
   call: assert(first.hud.text_mesh > 0, "first HUD mesh allocated")
   call: assert(first.hud.shader_program > 0, "first HUD shader allocated")
@@ -21,6 +24,9 @@ main:
 
   set second: new GpuBattle()
   call: assert(second.start() == 1, "second OpenGL context boots after first")
+  call: assert(second.menu.screen() == "menu", "second native menu starts clean")
+  call: assert(second.menu.start_math() == 1, "second battle scene")
+  call: assert(second.hud.refresh(second.battle) == 1, "second HUD battle display")
   call: assert(second.render() == 4, "new ECS state starts idle")
   call: assert(second.battle.feedback_kind == 0, "no stale combat animation")
   call: assert(second.selection.selected == 0, "new HUD starts at first card")

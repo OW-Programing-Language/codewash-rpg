@@ -66,3 +66,19 @@ class BattleHudText:
     set at: this.line(buffer, at, "S  " + str(answers[2]), 0.0 - 0.88, 0.0 - 0.94, 20)
     set at: this.line(buffer, at, "D  " + str(answers[3]), 0.09, 0.0 - 0.94, 20)
     return: buffer
+
+  # Reuse the very same OW bitmap-glyph mesh generator for every menu.
+  # HUD shaders/cards stay alive across scene changes; no UI duplication.
+  fn menu_vertices(router):
+    set buffer: array(4320, 0.0)
+    set at int: 0
+    set at: this.line(buffer, at, router.title(), 0.0 - 0.93, 0.86, 45)
+    set at: this.line(buffer, at, router.subtitle(), 0.0 - 0.93, 0.68, 45)
+    set at: this.line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.93, 0.42, 45)
+    set at: this.line(buffer, at, router.status, 0.0 - 0.93, 0.26, 45)
+    set options: router.options()
+    set at: this.line(buffer, at, "W  " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.line(buffer, at, "A  " + options[1], 0.09, 0.0 - 0.75, 20)
+    set at: this.line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
+    return: buffer

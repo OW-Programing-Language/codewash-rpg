@@ -30,6 +30,7 @@ import "../modules/combat/infra/CombatFunctor.ow"
 import "BattleScene.ow"
 import "BattleHud.ow"
 import "BattleHudSelection.ow"
+import "NativeMenuRouter.ow"
 
 class GpuBattle:
   field app
@@ -49,6 +50,8 @@ class GpuBattle:
   field submit_held
   field selection
   field hud
+  field menu
+  field escape_held
 
   fn new():
     set entities: new EngineEntitiesModule()
@@ -81,6 +84,8 @@ class GpuBattle:
     set this.submit_held: 0
     set this.selection: new BattleHudSelection()
     set this.hud: 0
+    set this.menu: 0
+    set this.escape_held: 0
 
   fn start():
     if: this.app.boot() != 1
@@ -116,11 +121,20 @@ class GpuBattle:
       return: 0
     if: scenes.add_scene("battle") != 1
       return: 0
+    if: scenes.add_scene("activities") != 1
+      return: 0
+    if: scenes.add_scene("settings") != 1
+      return: 0
     set this.battle: new BattleScene(this.app)
     if: this.battle.start(this.cube) != 1
       return: 0
     set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
     if: this.hud.start(this.battle) != 1
+      return: 0
+    set this.menu: new NativeMenuRouter(scenes)
+    if: this.menu.open_menu() != 1
+      return: 0
+    if: this.hud.refresh_menu(this.menu) != 1
       return: 0
     return: 1
 
@@ -132,8 +146,17 @@ class GpuBattle:
 
   fn poll():
     call: this.window.poll()
-    if: this.input.key_down("ESCAPE") == 1
-      call: this.window.request_close()
+    if: this.input.key_down("ESCAPE") == 0
+      set this.escape_held: 0
+    else:
+      if: this.escape_held == 0
+        set this.escape_held: 1
+        call: this.menu.back()
+        if: this.menu.quitting == 1
+          call: this.window.request_close()
+        else:
+          call: this.selection.pick(0)
+          call: assert(this.hud.refresh_menu(this.menu) == 1, "back screen refresh")
       return: 0
 
     # Move the highlighted answer card with arrow-key edges.
@@ -185,6 +208,20 @@ class GpuBattle:
       return: 0
     set this.held: choice
     call: this.selection.pick(choice)
+    if: this.menu.screen() != "battle"
+      set handled int: this.menu.choose(choice)
+      if: this.menu.quitting == 1
+        call: this.window.request_close()
+        return: handled
+      if: handled >= 0
+        if: handled == 1
+          call: this.selection.pick(0)
+        if: this.menu.screen() == "battle"
+          call: assert(this.hud.refresh(this.battle) == 1, "battle screen refresh")
+          call: this.show_question()
+        else:
+          call: assert(this.hud.refresh_menu(this.menu) == 1, "menu screen refresh")
+      return: handled
     set outcome int: this.battle.choose(choice)
     if: outcome == 1
       print: "Correct! " + this.battle.game.message
@@ -198,7 +235,8 @@ class GpuBattle:
     return: 1 - this.window.should_close()
 
   fn render():
-    call: this.battle.advance_feedback()
+    if: this.menu.screen() == "battle"
+      call: this.battle.advance_feedback()
     set view: this.camera.view_from_position(0.0, 0.0, 7.0)
     set projection: this.camera.perspective(1.0, 1.3333333333333, 0.1, 50.0)
     set drawn int: this.world.render_frame(this.program, view, projection, 12, 18, 29)
