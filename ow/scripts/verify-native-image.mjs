@@ -77,6 +77,41 @@ export function checkBundledOwRuntime(output, platform = process.platform) {
   console.log('PASS: bundled OW runtime checks the game offline on ' + platform);
 }
 
+/**
+ * Diagnostic GPU smoke on a Windows CI worker, using the bundled Java
+ * interpreter and native LWJGL dependencies, not the development classpath.
+ * This runs the existing OW OpenGL lifecycle test and prints its stdout and
+ * stderr even when GLFW fails (e.g. headless CI with OpenGL 1.1 driver).
+ */
+export function probeBundledGpu(output, platform = process.platform) {
+  const image = pathsForOS(output, platform);
+  verifyContents(image);
+  const java = platform === 'win32'
+    ? join(image.root, 'runtime/bin/java.exe')
+    : platform === 'darwin'
+      ? join(image.root, 'Contents/runtime/Contents/Home/bin/java')
+      : join(image.root, 'lib/runtime/bin/java');
+  if (!existsSync(java)) throw new Error('Bundled Java executable missing: ' + java);
+  const sep = platform === 'win32' ? ';' : ':';
+  const cp = [join(image.app, 'OwIDE.jar'),
+    join(image.app, 'ow-graphics-native.jar'),
+    join(image.app, 'lib/*')].join(sep);
+  const game = join(image.app, 'payload/ow');
+  const p = spawnSync(java, ['-Dorg.lwjgl.util.Debug=true', '-cp', cp,
+    'dev.oreo.Main', 'run', 'src/engine/battle_lifecycle_smoke.ow'], {
+    cwd: game, encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'], timeout: 90_000,
+    windowsHide: true,
+  });
+  const report = (p.stdout || '') + '\\n' + (p.stderr || '');
+  console.log('Packaged OpenGL smoke output:\\n' + report);
+  if (p.error) throw p.error;
+  if (p.status !== 0) {
+    throw new Error('Packaged Windows OpenGL smoke failed, exit=' + p.status);
+  }
+  console.log('PASS: packaged OW OpenGL lifecycle on ' + platform);
+}
+
 export function runPackagedImage(output, args = ['--self-test'], platform = process.platform) {
   const image = pathsForOS(output, platform);
   verifyContents(image);
@@ -104,6 +139,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       runPackagedImage(out, ['--check']);
     }
     if (process.argv.includes('--smoke')) runPackagedImage(out, ['--smoke']);
+    if (process.argv.includes('--gpu-probe')) probeBundledGpu(out);
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;
