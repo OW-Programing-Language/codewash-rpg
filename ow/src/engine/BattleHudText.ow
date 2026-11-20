@@ -60,7 +60,7 @@ class BattleHudText:
     set answers: battle.options()
     set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
     set at: this.line(buffer, at, question, 0.0 - 0.93, 0.69, 45)
-    set at: this.line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.93, 0.55, 45)
+    set at: this.line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.93, 0.43, 45)
     set at: this.line(buffer, at, "W  " + str(answers[0]), 0.0 - 0.88, 0.0 - 0.75, 20)
     set at: this.line(buffer, at, "A  " + str(answers[1]), 0.09, 0.0 - 0.75, 20)
     set at: this.line(buffer, at, "S  " + str(answers[2]), 0.0 - 0.88, 0.0 - 0.94, 20)
