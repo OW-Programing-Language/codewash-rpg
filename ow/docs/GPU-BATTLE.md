@@ -567,3 +567,45 @@ clickable UI widgets, resizing/fullscreen, accessibility and audio parity.
 The transition is deterministic frame-based rather than time-based, so
 high/low FPS machines may see different durations until the render loop is
 time-stepped. All game window rendering remains OW + OpenGL.
+
+## PR #34 — Rich native OW cards with live monster health
+
+The OW-only carousel now renders a **distinct colored header and CTA for
+each of the six native activities**, a native level badge, the activity's
+actual current enemy name/PNG portrait, a real OW Game monster-HP bar and
+short themed descriptions adapted from the original
+`src/constants/gameData.jsx`. These include Redstone/Calculate!,
+Enchanting/Enchant!, Crafting/Craft!, Chest Management/Organize!,
+Match n Hatch/Match!, and Logic Building/Solve!. The six activity cards
+remain navigable with Left/Right, and Space launches the focused skill.
+
+**Not fake data:** `NativeMenuCardData.ow` reads `hero.lvl()`,
+`mob.label()`, `mob.cur_hp()` and `mob.max_hp()` directly from the six
+independent existing OW Engine Game instances. Each card uses its real
+current opponent. When an enemy has only a GIF/WebP source unavailable to
+the pinned PNG/JPEG texture loader, the menu uses the **neutral egg** PNG,
+not a picture of a different monster. The hero level and HP display
+refresh when returning from gameplay, and a changed enemy texture is
+replaced lazily without reloading the unchanged other five portraits.
+
+New `NativeMenuLayout.rich_card_vertices` produces GPU panels for the
+colored header, level badge, portrait backdrop, HP rail and red health,
+text description area and raised CTA. `BattleHudText` generates sliding
+bitmap labels sharing the exact `card_rect()` eased coordinates. Native
+GPU buffers are replaced atomically only when the carousel animates or
+the menu refreshes. All new meshes and the six portrait PNG handles are
+destroyed before the OpenGL window shuts down.
+
+Tests:
+- `NativeMenuCardDataTest.ow` checks original card metadata, live HP/level
+  and geometry/text bounds using native combat Game states.
+- `menu_rich_cards_smoke.ow` checks red/violet/blue card-header pixels,
+  a **real HP bar shrinking after a real Mob.hurt()**, carousel animation,
+  activity launch/return, and GPU texture/mesh cleanup under Mesa/Xvfb.
+- The entire earlier OWUnit, native carousel, combat and packaged-launcher
+  test suite remains required.
+
+The rich cards are still *not* a complete recreation of Electron:
+no animated GIF rendering, physically correct mob 3D models, mouse-click
+controls, live audio, profile persistence or dynamic theme selection.
+The low-level 5×7 font is also still temporary (font upgrade follows).

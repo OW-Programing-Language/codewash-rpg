@@ -151,7 +151,7 @@ class BattleHudText:
           set distance: 0.0 - distance
 
         # Header, real (per-activity) current level and mob name.
-        set at: this.menu_line(buffer, at, cards.title(slot), x + 0.022, y + h - 0.084, 11, 0.020, 0.044, 0.022)
+        set at: this.menu_line(buffer, at, cards.title(slot), x + 0.093, y + h - 0.084, 10, 0.015, 0.044, 0.016)
         set at: this.menu_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.122, y + h - 0.079, 7, 0.014, 0.038, 0.016)
         set at: this.menu_line(buffer, at, cards.mob_name(slot), x + 0.033, y + 0.326, 17, 0.017, 0.037, 0.019)
         if: distance < 0.52
