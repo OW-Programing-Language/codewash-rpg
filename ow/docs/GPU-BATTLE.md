@@ -215,3 +215,44 @@ repeatable lifecycle smokes remain in CI.
 
 The non-math activities, functional settings, profiles, audio, mouse support
 and a native game distribution are **future PRs**, not implemented by PR #6.
+
+## Phase 2 PR #7 — Native Reading word matching
+
+**Reading** is now playable from **Activities → Reading** in the separate
+OW Engine + OW Graphics preview. Its text prompt and **four word choices**
+are drawn inside the real OpenGL window using the existing 5×7 bitmap HUD.
+Use **W/A/S/D** or arrow keys plus Space to choose the word matching the
+target. The challenge and distractors use the existing
+`ow/src/modules/skills/api/ReadingSkill.ow` word pools for difficulty
+tiers 1–7; the playable native run begins at difficulty 1 and continues
+with the existing `Game` progression/combat system.
+
+A Reading run has a **separate Game instance and separate OW Engine scene**;
+it does not overwrite Math HP, progression, question or status. Each
+challenge's four randomized options are now **cached** in `BattleScene`
+until the player submits an answer. This fixes a consistency issue when
+using ReadingSkill: generating the options twice could display different
+distractors from the ones actually accepted as the answer. Math keeps the
+same existing answer ordering and damage behavior.
+
+On a correct Reading answer, the same existing combat service damages
+the enemy, awards XP/levels as appropriate, and displays a gold hit effect;
+incorrect answers show the pink miss effect without damage. Escape returns
+to the main menu. Switching to Math and back preserves both run states.
+
+### Important scope and accessibility limitations
+
+This is an **on-screen visual word-matching mode**, *not* microphone-based
+reading. The React/browser version contains voice/speech recognition and
+homophone handling; that microphone interaction is **not ported** to this
+native OpenGL preview. The bitmap HUD uses an uppercase ASCII font; answer
+cards clip long words after the first 20 characters on-screen, while
+the current word prompt can show up to 45 characters. Long words are still
+checked against their full original values by the ReadingSkill.
+
+OWUnit verifies source-pool integration, stable distractors, correct/wrong
+damage, independent Math and Reading states, and pause/resume scene isolation.
+The Mesa/Xvfb smoke checks the real word glyph pixels, 3D reading scene,
+selected cards and hit/miss graphics as well as switching to Math and back.
+The complete six-skill browser game, microphone support and profile save
+formats remain unchanged.
