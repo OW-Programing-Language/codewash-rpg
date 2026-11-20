@@ -41,6 +41,7 @@ import "NativeBattleArt.ow"
 import "NativeMenuLayout.ow"
 import "NativeMenuCardData.ow"
 import "NativeMenuCarousel.ow"
+import "NativeMenuPointer.ow"
 
 class GpuBattle:
   field app
@@ -74,6 +75,7 @@ class GpuBattle:
   field layout
   field carousel
   field card_data
+  field pointer
   field escape_held
 
   fn new():
@@ -115,6 +117,7 @@ class GpuBattle:
     set this.layout: new NativeMenuLayout()
     set this.carousel: new NativeMenuCarousel()
     set this.card_data: 0
+    set this.pointer: new NativeMenuPointer()
 
   fn start():
     print: "GPU STARTUP: OW ENGINE BOOT"
@@ -215,6 +218,8 @@ class GpuBattle:
       return: 0
     if: this.hud.bind_carousel(this.carousel, this.card_data) != 1
       return: 0
+    if: this.hud.bind_pointer(this.pointer) != 1
+      return: 0
     call: this.menu.focus_card(this.carousel.focused())
     if: this.hud.refresh_menu(this.menu) != 1
       return: 0
@@ -292,6 +297,16 @@ class GpuBattle:
     call: this.selection.pick(this.carousel.local_slot())
     return: this.hud.refresh_menu(this.menu)
 
+  # Pointer and keyboard play use the same scene launch and HUD refresh.
+  fn launch_focus():
+    set this.held: 0 - 1
+    set launched int: this.carousel.launch(this.menu)
+    if: launched == 1
+      call: this.selection.pick(0)
+      call: assert(this.refresh_active_hud() == 1, "focused native activity HUD")
+      call: this.show_question()
+    return: launched
+
   fn poll():
     call: this.window.poll()
     if: this.input.key_down("ESCAPE") == 0
@@ -308,6 +323,22 @@ class GpuBattle:
             call: this.menu.focus_card(this.carousel.focused())
           call: assert(this.hud.refresh_menu(this.menu) == 1, "back screen refresh")
       return: 0
+
+    # Absolute GLFW pointer in OpenGL NDC: top-left window maps to
+    # (-1,+1), matching NativeMenuLayout and avoiding DPI-dependent
+    # framebuffer coordinate guesses. No mouse interaction in gameplay.
+    set pointer_pos: this.input.cursor_ndc()
+    set pointer_action int: this.pointer.sample(pointer_pos[0], pointer_pos[1], this.input.mouse_button_down("LEFT"), this.menu.screen(), this.carousel, this.layout)
+    if: pointer_action == 2
+      return: this.move_carousel(0 - 1)
+    if: pointer_action == 3
+      return: this.move_carousel(1)
+    if: pointer_action == 1
+      return: this.launch_focus()
+    set mouse_choice int: 0 - 1
+    if: pointer_action >= 10
+      if: pointer_action <= 13
+        set mouse_choice: pointer_action - 10
 
     # Move the highlighted answer card with arrow-key edges.
     set navigation: ""
@@ -386,6 +417,11 @@ class GpuBattle:
         else:
           if: this.input.key_down("D") == 1
             set choice: 3
+    if: mouse_choice >= 0
+      set choice: mouse_choice
+      # An independent mouse press may select the same quick action as a
+      # previously held keyboard key. Pointer.sample() debounces the click.
+      set this.held: 0 - 1
     # ENTER and keypad ENTER are supported by our SHA-pinned OW Graphics
     # key bridge. Share a single rising-edge latch with Space, so holding
     # either key cannot activate a card repeatedly or skip gameplay states.
@@ -408,13 +444,7 @@ class GpuBattle:
     if: submit == 1
       set this.submit_held: 1
     if: carousel_play == 1
-      set this.held: 0 - 1
-      set launched int: this.carousel.launch(this.menu)
-      if: launched == 1
-        call: this.selection.pick(0)
-        call: assert(this.refresh_active_hud() == 1, "carousel launches focused native activity")
-        call: this.show_question()
-      return: launched
+      return: this.launch_focus()
     if: choice < 0
       set this.held: 0 - 1
       return: 0
