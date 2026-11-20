@@ -43,7 +43,7 @@ class NativeMenuPointer:
     # Footer action buttons are usable on all native menu pages.
     set i int: 0
     while: i < 4
-      if: this.inside(x, y, layout.button_x(i), layout.button_y(), 0.43, 0.17) == 1
+      if: this.inside(x, y, layout.button_x(i), layout.button_y(), layout.button_width(), layout.button_height()) == 1
         return: 10 + i
       set i: i + 1
     if: screen == "settings"
@@ -59,8 +59,8 @@ class NativeMenuPointer:
       return: 3
 
     set i: 0
-    while: i < 5
-      set rel float: carousel.relative(i)
+    while: i < 7
+      set rel float: carousel.visual_relative(i)
       set rect: layout.card_rect(rel)
       if: rect[2] > 0.0
         if: this.inside(x, y, rect[0], rect[1], rect[2], rect[3]) == 1

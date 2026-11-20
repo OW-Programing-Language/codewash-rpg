@@ -24,10 +24,10 @@ class NativeMenuPointerTest:
     call: this.check.assertEquals(3, this.pointer.hit(0.70, 0.0, "menu", this.carousel, this.layout))
     call: this.check.assertEquals(2, this.pointer.hit(0.0 - 0.95, 0.0, "menu", this.carousel, this.layout))
     call: this.check.assertEquals(3, this.pointer.hit(0.95, 0.0, "menu", this.carousel, this.layout))
-    call: this.check.assertEquals(10, this.pointer.hit(0.0 - 0.75, 0.0 - 0.75, "menu", this.carousel, this.layout))
-    call: this.check.assertEquals(11, this.pointer.hit(0.0 - 0.28, 0.0 - 0.75, "menu", this.carousel, this.layout))
-    call: this.check.assertEquals(12, this.pointer.hit(0.24, 0.0 - 0.75, "menu", this.carousel, this.layout))
-    call: this.check.assertEquals(13, this.pointer.hit(0.75, 0.0 - 0.75, "settings", this.carousel, this.layout))
+    call: this.check.assertEquals(10, this.pointer.hit(0.0 - 0.91, 0.85, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(11, this.pointer.hit(0.0 - 0.77, 0.85, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(12, this.pointer.hit(0.77, 0.85, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(13, this.pointer.hit(0.91, 0.85, "settings", this.carousel, this.layout))
 
   @Test
   fn offWindowAndGameplayClicksCannotLaunchMenu():
@@ -48,7 +48,7 @@ class NativeMenuPointerTest:
 
   @Test
   fn hoverGlowEasesInAndOutAndGpuGeometryRemainsBounded():
-    call: this.pointer.sample(0.0 - 0.75, 0.0 - 0.75, 0, "menu", this.carousel, this.layout)
+    call: this.pointer.sample(0.0 - 0.91, 0.85, 0, "menu", this.carousel, this.layout)
     call: this.check.assertEquals(1, this.pointer.tick())
     call: this.check.assertEquals(10, this.pointer.visual)
     call: this.check.assertEquals(1, this.pointer.eased > 0.0)

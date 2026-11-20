@@ -12,10 +12,10 @@ main:
   call: assert(game.hud.menu_chrome > 0, "three panel outlines and hearts")
   call: assert(game.art.menu_logo > 0, "original Minecraft logo loaded")
   call: assert(game.render() == 0, "native widescreen menu draws")
-  set border: extension("codewash.test.pixel", 461, 420)
+  set border: extension("codewash.test.pixel", 523, 420)
   call: assert(border[0] > 145, "center feature panel has gold rim")
   call: assert(border[1] > 105, "gold feature-card border visible")
-  set panel: extension("codewash.test.pixel", 640, 208)
+  set panel: extension("codewash.test.pixel", 640, 96)
   # PR #34 replaces the old empty violet body with a raised red Math CTA.
   call: assert(panel[0] > panel[2] + 30, "center card has red Math action button")
   set heart: extension("codewash.test.pixel", 671, 25)

@@ -7,11 +7,22 @@
  * No remote downloads or binary blobs are committed to Git.
  */
 import {readFileSync, mkdirSync, copyFileSync, existsSync, statSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {dirname, join, resolve, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const catalogPath = join(root, 'ow/src/engine/NativeArtCatalog.ow');
+// Only allow these known original GIF-only mobs to become PNG stills.
+// Native ImageIO does not animate GIF/WebP; never substitute an unrelated egg.
+export const originalGifForPng = Object.freeze({
+  'mobs/hostile/ghast.png': 'mobs/hostile/ghast.gif',
+  'mobs/hostile/blaze.png': 'mobs/hostile/blaze.gif',
+  'mobs/hostile/guardian.png': 'mobs/hostile/guardian.gif',
+  'mobs/hostile/phantom.png': 'mobs/hostile/phantom.gif',
+  'mobs/miniboss/elderguardian.png': 'mobs/miniboss/elderguardian.gif',
+  'mobs/boss/warden.png': 'mobs/boss/warden.gif',
+  'mobs/boss/enderdragon.png': 'mobs/boss/enderdragon.gif',
+});
 
 export function listNativeAssets(catalogSource) {
   const refs = [...catalogSource.matchAll(/"assets\/native\/([^"]+)"/g)];
@@ -38,11 +49,21 @@ export function stageNativeAssets(repoRoot = root) {
     if (!origin.startsWith(source + sep) || !destination.startsWith(target + sep)) {
       throw new Error('Asset escapes its designated root: ' + name);
     }
-    if (!existsSync(origin) || !statSync(origin).isFile()) {
+    mkdirSync(dirname(destination), {recursive: true});
+    if (existsSync(origin) && statSync(origin).isFile()) {
+      copyFileSync(origin, destination);
+    } else if (Object.hasOwn(originalGifForPng, name)) {
+      const gifSource = resolve(source, originalGifForPng[name]);
+      if (!gifSource.startsWith(source + sep) || !existsSync(gifSource) ||
+          !statSync(gifSource).isFile()) {
+        throw new Error('Original GIF source is missing: ' + gifSource);
+      }
+      execFileSync('java', [
+        join(repoRoot, 'ow/scripts/GifFirstFrame.java'), gifSource, destination
+      ], {stdio: 'pipe'});
+    } else {
       throw new Error('Original artwork is missing: ' + origin);
     }
-    mkdirSync(dirname(destination), {recursive: true});
-    copyFileSync(origin, destination);
   }
   return names;
 }

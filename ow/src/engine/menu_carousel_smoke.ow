@@ -9,7 +9,7 @@ main:
   call: assert(game.hud.carousel_panels > 0, "animated GPU card frames cached")
   call: assert(game.render() == 0, "first centered carousel frame")
   set first_card: game.layout.card_rect(game.carousel.relative(2))
-  set original: extension("codewash.test.pixel", 461, 420)
+  set original: extension("codewash.test.pixel", 523, 420)
   call: assert(original[0] > 145, "gold selection outline visible")
   call: assert(game.move_carousel(1) == 1, "right navigates to Reading")
   call: assert(game.carousel.selected == 1, "new focus selected immediately")

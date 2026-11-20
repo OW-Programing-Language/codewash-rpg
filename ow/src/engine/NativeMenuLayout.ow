@@ -42,11 +42,24 @@ class NativeMenuLayout:
       return: 0.88
     return: 0.80
 
+  # Compact top-corner actions instead of four huge footer rectangles.
   fn button_x(index):
-    return: (0.0 - 0.96) + index * 0.48
+    if: index == 0
+      return: 0.0 - 0.963
+    if: index == 1
+      return: 0.0 - 0.820
+    if: index == 2
+      return: 0.715
+    return: 0.857
 
   fn button_y():
-    return: 0.0 - 0.83
+    return: 0.78
+
+  fn button_width():
+    return: 0.106
+
+  fn button_height():
+    return: 0.137
 
   # Quad writer for the native UI geometry. Z encodes themed GPU colors.
   # The HUD's shader is shared with the original OW bitmap glyph renderer.
@@ -76,14 +89,10 @@ class NativeMenuLayout:
   fn chrome_vertices():
     set buffer: array(1728, 0.0)
     set at int: 0
-    # The three floating card frames live in carousel_vertices(), not in
-    # this static mesh. Top keyboard ornaments and pixel hearts never move.
-    set i: 0
+    # Top-corner icon drop shadows and unchanged ten-pixel-heart strip.
+    set i int: 0
     while: i < 4
-      set x float: (0.0 - 0.96) + i * 0.14
-      if: i > 1
-        set x: 0.66 + (i - 2) * 0.14
-      set at: this.quad(buffer, at, x, 0.77, 0.115, 0.145, 0 - 9)
+      set at: this.quad(buffer, at, this.button_x(i) + 0.006, this.button_y() - 0.008, this.button_width(), this.button_height(), 0 - 10)
       set i: i + 1
     set i: 0
     while: i < 10
@@ -98,47 +107,56 @@ class NativeMenuLayout:
     return: buffer
 
 
-  # The whole card travels with the same eased fraction as its portrait.
-  # Center width 0.54, side width 0.39; partially visible overflow cards
-  # clip naturally to the 16:9 OpenGL viewport.
+  # Reference screenshot geometry: five visible cards, a tall focused
+  # portrait, and diminishing, darkened neighbors at +/-1 and +/-2.
+  # NDC coordinates are shared with pointer hit-testing and texture quads.
+  # Seven potential cards are sampled during transitions so incoming edge
+  # cards do not pop into view when the carousel rebases.
   fn card_rect(relative):
     set distance float: relative
     if: distance < 0.0
       set distance: 0.0 - distance
-    if: distance > 1.85
+    if: distance > 2.65
       return: [0.0, 0.0, 0.0, 0.0]
-    if: distance > 1.0
-      set distance: 1.0
-    set width float: 0.54 - 0.15 * distance
-    set height float: 0.88 - 0.08 * distance
-    set x float: 0.685 * relative - width / 2.0
-    set y float: (0.0 - 0.07) - height / 2.0
+    if: distance > 2.0
+      set distance: 2.0
+    set width float: 0.352 - 0.055 * distance
+    set height float: 1.19 - 0.175 * distance
+    set x float: 0.352 * relative - width / 2.0
+    set y float: (0.0 - 0.19) - height / 2.0
     return: [x, y, width, height]
 
-  # GPU-generated moving card borders and dark/violet card fills.
-  # Exactly five candidates are considered to handle full wrap-around and
-  # allow the entering fourth card to slide in before the old one exits.
+  # Color-banded glow + shadow, with bright gold focus ring. Keep all
+  # visual geometry generated in native OW and drawn with OpenGL shaders.
   fn carousel_vertices(carousel):
-    set buffer: array(180, 0.0)
+    set buffer: array(1008, 0.0)
     set at int: 0
     set i int: 0
-    while: i < 5
-      set rel float: carousel.relative(i)
+    while: i < 7
+      set rel float: carousel.visual_relative(i)
       set rect: this.card_rect(rel)
       if: rect[2] > 0.0
-        set distance float: rel
-        if: distance < 0.0
-          set distance: 0.0 - distance
+        set dist float: rel
+        if: dist < 0.0
+          set dist: 0.0 - dist
+        set x float: rect[0]
+        set y float: rect[1]
+        set w float: rect[2]
+        set h float: rect[3]
         set border int: 0 - 10
         set body int: 0 - 5
-        if: distance < 0.55
+        set thick float: 0.006
+        if: dist < 0.52
           set border: 0 - 7
           set body: 0 - 6
-        set thick float: 0.008
-        if: distance < 0.55
-          set thick: 0.014
-        set at: this.quad(buffer, at, rect[0] - thick, rect[1] - thick, rect[2] + thick * 2, rect[3] + thick * 2, border)
-        set at: this.quad(buffer, at, rect[0], rect[1], rect[2], rect[3], body)
+          set thick: 0.009
+          # Large dim gold ring and smaller luminous rim.
+          set at: this.quad(buffer, at, x - 0.024, y - 0.024, w + 0.048, h + 0.048, 0 - 19)
+          set at: this.quad(buffer, at, x - 0.014, y - 0.014, w + 0.028, h + 0.028, 0 - 18)
+        else:
+          set at: this.quad(buffer, at, x + 0.012, y - 0.012, w, h, 0 - 10)
+        set at: this.quad(buffer, at, x - thick, y - thick, w + thick * 2.0, h + thick * 2.0, border)
+        set at: this.quad(buffer, at, x, y, w, h, body)
       set i: i + 1
     return: buffer
 
@@ -149,14 +167,14 @@ class NativeMenuLayout:
   # Negative vertex Z = a material index in BattleHud's OpenGL shader:
   # -11..-16 activity-specific accents; -8 red HP; -9 charcoal; -10 ink.
   fn rich_card_vertices(carousel, cards):
-    set buffer: array(1080, 0.0)
+    set buffer: array(1800, 0.0)
     set at int: 0
     set i int: 0
-    while: i < 5
-      set rel float: carousel.relative(i)
+    while: i < 7
+      set rel float: carousel.visual_relative(i)
       set rect: this.card_rect(rel)
       if: rect[2] > 0.0
-        set slot int: carousel.slot(i)
+        set slot int: carousel.visual_slot(i)
         set x float: rect[0]
         set y float: rect[1]
         set w float: rect[2]
@@ -197,8 +215,8 @@ class NativeMenuLayout:
   fn arrow_vertices():
     set buffer: array(54, 0.0)
     set at int: 0
-    set at: this.quad(buffer, at, 0.0 - 0.995, 0.0 - 0.20, 0.110, 0.30, 0 - 9)
-    set at: this.quad(buffer, at, 0.885, 0.0 - 0.20, 0.110, 0.30, 0 - 9)
+    set at: this.quad(buffer, at, 0.0 - 0.973, 0.0 - 0.24, 0.005, 0.44, 0 - 7)
+    set at: this.quad(buffer, at, 0.968, 0.0 - 0.24, 0.005, 0.44, 0 - 7)
     set at: this.triangle(buffer, at, 0.0 - 0.970, 0.0 - 0.05, 0.0 - 0.910, 0.02, 0.0 - 0.910, 0.0 - 0.12, 0 - 7)
     set at: this.triangle(buffer, at, 0.970, 0.0 - 0.05, 0.910, 0.02, 0.910, 0.0 - 0.12, 0 - 7)
     return: buffer
@@ -219,8 +237,8 @@ class NativeMenuLayout:
       if: target <= 13
         set x: this.button_x(target - 10)
         set y: this.button_y()
-        set w: 0.43
-        set h: 0.17
+        set w: this.button_width()
+        set h: this.button_height()
     else:
       if: target == 2
         set x: 0.0 - 0.995
@@ -236,8 +254,8 @@ class NativeMenuLayout:
         else:
           if: target == 1
             set i int: 0
-            while: i < 5
-              set rel float: carousel.relative(i)
+            while: i < 7
+              set rel float: carousel.visual_relative(i)
               if: rel >= 0.0 - 0.5
                 if: rel <= 0.5
                   set rect: this.card_rect(rel)
@@ -261,6 +279,6 @@ class NativeMenuLayout:
     set at int: 0
     set i int: 0
     while: i < 4
-      set at: this.quad(buffer, at, this.button_x(i), this.button_y(), 0.43, 0.17, 0 - 1 - i)
+      set at: this.quad(buffer, at, this.button_x(i), this.button_y(), this.button_width(), this.button_height(), 0 - 5)
       set i: i + 1
     return: buffer
