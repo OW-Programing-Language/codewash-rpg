@@ -138,8 +138,16 @@ class NativeMenuLayout:
     set y float: (0.0 - 0.19) - height / 2.0
     return: [x, y, width, height]
 
-  # Color-banded glow + shadow, with bright gold focus ring. Keep all
-  # visual geometry generated in native OW and drawn with OpenGL shaders.
+  # Four border strips, never a filled quad: the gradient and exact
+  # cube texture underneath must remain visible within each framed card.
+  fn outline(buffer, at, x, y, w, h, thick, material):
+    set at: this.quad(buffer, at, x, y, w, thick, material)
+    set at: this.quad(buffer, at, x, y + h - thick, w, thick, material)
+    set at: this.quad(buffer, at, x, y, thick, h, material)
+    set at: this.quad(buffer, at, x + w - thick, y, thick, h, material)
+    return: at
+
+  # Source-based focus border and side-card edge hierarchy.
   fn carousel_vertices(carousel):
     set buffer: array(1008, 0.0)
     set at int: 0
@@ -155,21 +163,18 @@ class NativeMenuLayout:
         set y float: rect[1]
         set w float: rect[2]
         set h float: rect[3]
-        set border int: 0 - 10
-        set body int: 0 - 5
-        set thick float: 0.006
         if: dist < 0.52
-          set border: 0 - 7
-          set body: 0 - 6
-          set thick: 0.009
-          # Large dim gold ring and smaller luminous rim.
-          set at: this.quad(buffer, at, x - 0.024, y - 0.024, w + 0.048, h + 0.048, 0 - 19)
-          set at: this.quad(buffer, at, x - 0.014, y - 0.014, w + 0.028, h + 0.028, 0 - 18)
+          # Near/far gold rings approximate CSS box-shadow without
+          # obscuring the real source-texture gradients inside the card.
+          set at: this.outline(buffer, at, x - 0.022, y - 0.022, w + 0.044, h + 0.044, 0.008, 0 - 19)
+          set at: this.outline(buffer, at, x - 0.012, y - 0.012, w + 0.024, h + 0.024, 0.008, 0 - 18)
+          set at: this.outline(buffer, at, x - 0.003, y - 0.003, w + 0.006, h + 0.006, 0.004, 0 - 7)
         else:
-          set at: this.quad(buffer, at, x + 0.012, y - 0.012, w, h, 0 - 10)
-        set at: this.quad(buffer, at, x - thick, y - thick, w + thick * 2.0, h + thick * 2.0, border)
-        # Do NOT overpaint the actual textured/gradient surface. The material
-        # shader renders that card body immediately before HUD overlays.
+          # Stone-colored outline + bottom/right drop shadow, not an
+          # opaque black rectangle that would hide the cube texture.
+          set at: this.quad(buffer, at, x + w, y - 0.012, 0.010, h + 0.012, 0 - 10)
+          set at: this.quad(buffer, at, x, y - 0.012, w, 0.012, 0 - 10)
+          set at: this.outline(buffer, at, x, y, w, h, 0.006, 0 - 10)
       set i: i + 1
     return: buffer
 
