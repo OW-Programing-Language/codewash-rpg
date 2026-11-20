@@ -299,6 +299,31 @@ class NativeMenuLayout:
       set i: i + 1
     return: buffer
 
+  # Accessible native fallback panels for settings, themes, bug reporting
+  # and menu. Separate clear hit regions permit mouse or W/A/S/D navigation.
+  fn panel_option_x():
+    return: 0.0 - 0.39
+
+  fn panel_option_y(index):
+    return: 0.0 - 0.15 - index * 0.15
+
+  fn panel_option_width():
+    return: 0.78
+
+  fn panel_option_height():
+    return: 0.12
+
+  fn panel_vertices():
+    set buffer: array(180, 0.0)
+    set at int: 0
+    set at: this.quad(buffer, at, 0.0 - 0.46, 0.0 - 0.68, 0.92, 1.10, 0 - 10)
+    set at: this.quad(buffer, at, 0.0 - 0.445, 0.0 - 0.665, 0.89, 1.07, 0 - 4)
+    set i int: 0
+    while: i < 4
+      set at: this.quad(buffer, at, this.panel_option_x(), this.panel_option_y(i), this.panel_option_width(), this.panel_option_height(), 0 - 5)
+      set i: i + 1
+    return: buffer
+
   # GPU vector-style glyphs, not W/A/S/D proxy hotkeys.
   # Approximate Lucide icon silhouettes using the same native primitives.
   fn toolbar_icon_vertices():
