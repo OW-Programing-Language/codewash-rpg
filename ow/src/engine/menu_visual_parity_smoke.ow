@@ -1,0 +1,29 @@
+# Actual Mesa/OpenGL smoke of screenshot-inspired five-card arrangement.
+# Verifies GIF mob conversion, original textures, tinted typography and halo.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "native five-card visual shell boots")
+  call: game.battle.game.mob.init("Pillager", 60)
+  call: game.reading.game.mob.init("Ghast", 90)
+  call: assert(game.art.bind_cards(game.card_data) == 1, "bind original mob PNGs")
+  call: assert(game.art.card_paths[0] == "assets/native/mobs/hostile/pillager.png", "Pillager resolves real original PNG")
+  call: assert(game.art.card_paths[1] == "assets/native/mobs/hostile/ghast.png", "Ghast resolves staged first GIF frame")
+  call: assert(game.carousel.visual_slot(3) == 0, "Math centered")
+  call: assert(game.layout.card_rect(0.0 - 2.0)[2] > 0.0, "outer left card visible")
+  call: assert(game.layout.card_rect(2.0)[2] > 0.0, "outer right card visible")
+  call: assert(game.render() == 0, "five cards rendered in original theme")
+  set halo: extension("codewash.test.pixel", 523, 420)
+  call: assert(halo[0] > 150, "golden center focus frame glows")
+  set heart: extension("codewash.test.pixel", 671, 25)
+  call: assert(heart[0] > heart[1] + 70, "heart HUD preserved")
+  call: assert(game.move_carousel(1) == 1, "navigation remains functional")
+  set i int: 0
+  while: i < 12
+    call: assert(game.render() == 0, "five-card native animation frame")
+    set i: i + 1
+  call: assert(game.carousel.visual_slot(3) == 1, "Reading becomes centered")
+  call: assert(game.art.card_paths[1] == "assets/native/mobs/hostile/ghast.png", "Ghast portrait remains cached")
+  call: assert(game.stop() == 1, "native GPU resources released")
+  print: "PASS: native five-card UI, golden frame, Pillow-free GIF portraits"
