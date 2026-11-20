@@ -38,13 +38,22 @@ class NativeMenuPointer:
     if: screen != "menu"
       if: screen != "activities"
         if: screen != "settings"
-          return: 0 - 1
+          if: screen != "cosmetics"
+            if: screen != "bugreport"
+              if: screen != "menu_panel"
+                return: 0 - 1
 
-    # The Electron toolbar's four commands are not native parity yet.
-    # W/A/S/D proxy glyphs were removed; their old invisible click regions
-    # must never route quick actions or trigger any hover outline.
-    if: screen == "settings"
-      return: 0 - 1
+    # Icons are actual settings, themes, fullscreen, menu and bug buttons.
+    # All five remain clickable on native menu/drawer pages, but NEVER
+    # reuse their input regions for W/A/S/D quick-play commands.
+    set i int: 0
+    while: i < 5
+      if: this.inside(x, y, layout.toolbar_x(i), layout.toolbar_y(i), layout.button_width(), layout.button_height()) == 1
+        return: 10 + i
+      set i: i + 1
+    if: screen != "menu"
+      if: screen != "activities"
+        return: 0 - 1
     # Reject clicks mid-transition, matching keyboard navigation lock.
     if: carousel.active == 1
       return: 0 - 1
