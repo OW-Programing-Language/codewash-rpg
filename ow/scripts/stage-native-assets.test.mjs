@@ -1,10 +1,10 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync, existsSync, mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs';
+import {readFileSync, existsSync, copyFileSync, mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {listNativeAssets, stageNativeAssets} from './stage-native-assets.mjs';
+import {listNativeAssets, stageNativeAssets, originalGifForPng} from './stage-native-assets.mjs';
 
 test('native art catalogue references original files with safe sandbox-relative paths', () => {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -18,7 +18,8 @@ test('native art catalogue references original files with safe sandbox-relative 
   assert.ok(names.includes('themes/minecraft_logo.png'));
   assert.equal(new Set(names).size, names.length);
   for (const name of names) {
-    assert.ok(existsSync(join(root, 'public/assets', name)), 'missing original asset: ' + name);
+    const source = originalGifForPng[name] ?? name;
+    assert.ok(existsSync(join(root, 'public/assets', source)), 'missing original asset: ' + source);
   }
 });
 
@@ -45,5 +46,41 @@ test('copy original art into sandbox without changing source files', () => {
     assert.equal(readFileSync(src, 'utf8'), 'safe-content');
   } finally {
     rmSync(root, {recursive: true, force: true});
+  }
+});
+
+test('GIF-only native mobs convert to stable PNG first frames during staging', () => {
+  const realRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+  const tmp = mkdtempSync(join(tmpdir(), 'codewash-gif-art-'));
+  try {
+    const from = join(realRoot, 'public/assets/mobs/hostile/ghast.gif');
+    const into = join(tmp, 'public/assets/mobs/hostile/ghast.gif');
+    const cat = join(tmp, 'ow/src/engine/NativeArtCatalog.ow');
+    const java = join(tmp, 'ow/scripts/GifFirstFrame.java');
+    mkdirSync(dirname(into), {recursive: true});
+    mkdirSync(dirname(cat), {recursive: true});
+    mkdirSync(dirname(java), {recursive: true});
+    copyFileSync(from, into);
+    copyFileSync(join(realRoot, 'ow/scripts/GifFirstFrame.java'), java);
+    writeFileSync(cat, 'return: "assets/native/mobs/hostile/ghast.png"\\n');
+    const staged = stageNativeAssets(tmp);
+    assert.deepEqual(staged, ['mobs/hostile/ghast.png']);
+    const png = readFileSync(join(tmp, 'ow/assets/native/mobs/hostile/ghast.png'));
+    assert.deepEqual([...png.subarray(0, 8)], [137,80,78,71,13,10,26,10]);
+    assert.ok(png.length > 250, 'decoded portrait must not be empty');
+  } finally {
+    rmSync(tmp, {recursive: true, force: true});
+  }
+});
+
+test('GIF transcode allowlist cannot be extended by an arbitrary catalogue path', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'codewash-unsafe-gif-'));
+  try {
+    const cat = join(tmp, 'ow/src/engine/NativeArtCatalog.ow');
+    mkdirSync(dirname(cat), {recursive: true});
+    writeFileSync(cat, 'return: "assets/native/mobs/hostile/unknown.png"\\n');
+    assert.throws(() => stageNativeAssets(tmp), /Original artwork is missing/);
+  } finally {
+    rmSync(tmp, {recursive: true, force: true});
   }
 });
