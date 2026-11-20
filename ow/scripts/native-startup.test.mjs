@@ -29,3 +29,14 @@ test('Windows native launcher records failures and never closes silently', () =>
   assert.ok(launcher.includes('falling back to java.exe'));
   assert.ok(launcher.includes('OpenGL 3.3 window creation failed'));
 });
+
+test('Windows classpath wildcard is appended as a string, never parsed as a filename', () => {
+  const launcher = readFileSync(resolve(root,
+    'ow/native-launcher/src/main/java/org/oreostudios/codewash/NativeLauncher.java'), 'utf8');
+  assert.ok(launcher.includes('static String runtimeClasspath(Path appDir)'));
+  assert.ok(launcher.includes('appDir.resolve("lib").toString()'));
+  assert.ok(launcher.includes('java.io.File.separator + "*"'));
+  assert.ok(launcher.includes('verifyClasspath(appDir);'));
+  assert.ok(!launcher.includes('.resolve("*")'),
+    'Path.resolve("*") crashes on Windows: InvalidPathException');
+});

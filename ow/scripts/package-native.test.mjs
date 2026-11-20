@@ -6,7 +6,7 @@ import {join, dirname} from 'node:path';
 import {parseArgs, parseLock, copySafeTree, stageOwPayload} from './package-native.mjs';
 
 test('native packager has platform-specific image output and rejects bad flags', () => {
-  assert.equal(parseArgs([]).version, '1.13.1');
+  assert.equal(parseArgs([]).version, '1.13.2');
   assert.equal(parseArgs(['--version', '1.2.3']).version, '1.2.3');
   assert.throws(() => parseArgs(['--version', 'latest']), /Version/);
   assert.throws(() => parseArgs(['--out']), /requires a value/);

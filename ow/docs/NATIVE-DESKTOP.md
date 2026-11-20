@@ -141,3 +141,19 @@ cd "C:\path\to\CodeWashRPG\app\payload\ow"
 This uses the bundled Java installation and source dependencies; it does
 not require Maven, Git, a JDK, or Node. If a GLFW exception is raised, copy
 the stack trace instead of assuming a missing texture.
+
+## Windows startup classpath bug fix (v1.13.2)
+
+An actual Windows 11 crash report identified
+`java.nio.file.InvalidPathException: Illegal char <*> at index 0: *`
+inside `NativeLauncher.launch`. The previous code invoked
+`appDir.resolve("lib").resolve("*")`, which Windows rejects before the
+OW runtime ever starts. The fixed launcher appends `*\` to a **string
+classpath**, without using `Path.resolve("*")`; the Windows packaged
+`--self-test` now builds and validates the same JVM classpath string.
+
+**Download the build from the new PR #30 workflow run**. Do not reuse an
+older `1.13.1` archive, which still contains the invalid wildcard path.
+A valid Java classpath does not by itself guarantee that OpenGL 3.3 is
+available on an individual's graphics driver; a separate JVM or GLFW error
+will now be captured in `latest.log`.
