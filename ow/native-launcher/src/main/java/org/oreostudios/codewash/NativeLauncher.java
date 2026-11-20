@@ -63,8 +63,12 @@ public final class NativeLauncher {
                 ? "src/engine/battle_lifecycle_smoke.ow"
                 : "src/engine/battle_gpu.ow";
         String action = "--check".equals(mode) ? "check" : "run";
-        Path java = Path.of(System.getProperty("java.home"), "bin",
-                isWindows() ? "javaw.exe" : "java");
+        // javaw.exe is GUI-friendly for normal Windows double-clicks.
+        // CLI verification needs a console-capable child (java.exe) so
+        // stdout/exit reliably propagate to CI without a hanging javaw pipe.
+        String javaName = isWindows() && "run".equals(mode) ? "javaw.exe"
+                : isWindows() ? "java.exe" : "java";
+        Path java = Path.of(System.getProperty("java.home"), "bin", javaName);
         if (!Files.isRegularFile(java)) {
             throw new IllegalStateException("Bundled Java runtime not found: " + java);
         }
@@ -114,7 +118,7 @@ public final class NativeLauncher {
         int exitCode;
         try {
             exitCode = process.waitFor();
-            pump.join();
+            pump.join(2000); // a GUI javaw child may retain inherited pipe handles
         } finally {
             closeSplash(splash);
         }
