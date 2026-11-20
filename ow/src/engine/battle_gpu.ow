@@ -1,0 +1,14 @@
+# Interactive preview only; the six-skill browser game is unchanged.
+import "GpuBattle.ow"
+
+main:
+  set preview: new GpuBattle()
+  call: assert(preview.start() == 1, "OW Engine + OpenGL battle boot")
+  print: "CodeWash RPG / experimental GPU math battle"
+  call: preview.show_question()
+  while: preview.running() == 1
+    call: preview.poll()
+    if: preview.running() == 1
+      call: assert(preview.render() == 4, "draw hero, monster, HP bar and floor")
+      call: preview.present()
+  call: assert(preview.stop() == 1)

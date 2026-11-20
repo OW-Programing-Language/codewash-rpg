@@ -1,0 +1,18 @@
+# One real OpenGL frame + OW combat action; includes test-only pixel probe.
+# The Java probe is not a production OW Graphics dependency.
+import "GpuBattle.ow"
+
+main:
+  set preview: new GpuBattle()
+  call: assert(preview.start() == 1, "OpenGL battle preview boot")
+  call: assert(preview.render() == 4, "render four ECS battle meshes")
+  set player: extension("codewash.test.pixel", 225, 240)
+  set enemy: extension("codewash.test.pixel", 415, 240)
+  set middle: extension("codewash.test.pixel", 320, 240)
+  call: assert(player[2] > player[0] + 30, "hero blue/cyan pixel")
+  call: assert(enemy[0] > enemy[2] + 35, "monster red pixel")
+  call: assert(middle[0] < 35, "center pixel is dark background")
+  call: assert(preview.battle.choose(2) == 1, "correct MathSkill answer")
+  call: assert(preview.render() == 4, "scene still renders after combat")
+  call: assert(preview.stop() == 1, "GPU resources released")
+  print: "PASS: native OW -> ECS -> OpenGL battle framebuffer + combat action"

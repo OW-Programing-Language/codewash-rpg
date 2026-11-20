@@ -1,0 +1,93 @@
+# OW Engine owns ECS entities/transforms and active scenes; OW Graphics
+# owns mesh handles and drawing. CodeWash's existing combat service owns rules.
+# No OpenGL or GLFW imports here: identical gameplay in GPU and headless tests.
+class BattleScene:
+  field app
+  field scenes
+  field ecs
+  field world
+  field game
+  field hero
+  field monster
+  field health
+  field ground
+
+  fn new(app):
+    set this.app: app
+    set this.scenes: app.service("scenes")
+    set this.ecs: app.service("components")
+    set this.world: app.service("render_world")
+    set this.game: app.service("game")
+    set this.hero: 0
+    set this.monster: 0
+    set this.health: 0
+    set this.ground: 0
+
+  fn start(mesh):
+    if: mesh < 1
+      return: 0
+    if: this.hero != 0
+      return: 0
+    if: this.scenes.activate("battle") != 1
+      return: 0
+    call: this.game.use_skill(this.app.service("skills").make("math"))
+    call: this.game.start(1)
+    set this.hero: this.scenes.spawn("hero")
+    set this.monster: this.scenes.spawn("monster")
+    set this.health: this.scenes.spawn("monster-health")
+    set this.ground: this.scenes.spawn("battle-floor")
+    if: this.hero == 0
+      return: 0
+    if: this.monster == 0
+      return: 0
+    if: this.health == 0
+      return: 0
+    if: this.ground == 0
+      return: 0
+    call: this.ecs.set_transform(this.hero, 0.0 - 1.55, 0.0, 0.0)
+    call: this.ecs.set_transform(this.monster, 1.55, 0.0, 0.0)
+    call: this.ecs.set_transform(this.health, 1.55, 1.35, 0.0)
+    call: this.ecs.set_transform(this.ground, 0.0, 0.0 - 1.32, 0.0 - 0.45)
+    call: this.ecs.get("transform", this.hero).set_scale(0.72, 1.0, 0.56)
+    call: this.ecs.get("transform", this.monster).set_scale(0.95, 1.15, 0.72)
+    call: this.ecs.get("transform", this.ground).set_scale(5.2, 0.16, 1.8)
+    if: this.world.set_mesh(this.hero, mesh) != 1
+      return: 0
+    if: this.world.set_mesh(this.monster, mesh) != 1
+      return: 0
+    if: this.world.set_mesh(this.health, mesh) != 1
+      return: 0
+    if: this.world.set_mesh(this.ground, mesh) != 1
+      return: 0
+    return: this.sync_health()
+
+  fn sync_health():
+    set maximum float: 1.0 * this.game.mob.max_hp()
+    if: maximum <= 0.0
+      return: 0
+    set ratio float: (1.0 * this.game.mob.cur_hp()) / maximum
+    if: ratio < 0.0
+      set ratio: 0.0
+    if: ratio > 1.0
+      set ratio: 1.0
+    # An almost-empty bar stays visible; a defeated foe is respawned by Game.
+    return: this.ecs.get("transform", this.health).set_scale(1.20 * ratio + 0.03, 0.15, 0.18)
+
+  fn options():
+    return: this.game.skill.options(this.game.problem)
+
+  # 0..3 are the original MathSkill choices (W/A/S/D). Returns -1 for invalid,
+  # 0 for an incorrect answer, 1 for correct. Never duplicates combat rules.
+  fn choose(index):
+    if: index < 0
+      return: 0 - 1
+    if: index > 3
+      return: 0 - 1
+    set answers: this.options()
+    set value int: answers[index]
+    set correct int: 0
+    if: value == this.game.problem.solution()
+      set correct: 1
+    call: this.game.answer(value)
+    call: this.sync_health()
+    return: correct
