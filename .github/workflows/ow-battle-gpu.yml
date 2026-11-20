@@ -39,6 +39,7 @@ jobs:
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/reading_smoke.ow
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/writing_smoke.ow
           java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/cleaning_smoke.ow
+          java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/memory_smoke.ow
       - name: Build pinned OW Graphics native extension
         run: |
           git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git /tmp/ow-battle-graphics
@@ -96,3 +97,10 @@ jobs:
           xvfb-run -a -s "-screen 0 1024x768x24" env LIBGL_ALWAYS_SOFTWARE=1 \
             java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
             dev.oreo.Main run src/engine/cleaning_smoke.ow
+
+      - name: Verify native Memory matching, real Mesa framebuffer and ECS isolation
+        working-directory: ow
+        run: |
+          xvfb-run -a -s "-screen 0 1024x768x24" env LIBGL_ALWAYS_SOFTWARE=1 \
+            java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
+            dev.oreo.Main run src/engine/memory_smoke.ow

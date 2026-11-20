@@ -71,6 +71,16 @@ class BattleHud:
     set this.text_mesh: updated
     return: 1
 
+  fn refresh_memory(battle, activity):
+    # Upload the new board/status first to prevent empty frames on refresh.
+    set updated int: this.meshes.create(this.text_builder.memory_vertices(battle, activity))
+    if: updated < 1
+      return: 0
+    if: this.text_mesh > 0
+      call: this.meshes.destroy(this.text_mesh)
+    set this.text_mesh: updated
+    return: 1
+
   fn render():
     if: this.text_mesh < 1
       return: 0

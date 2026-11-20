@@ -1,5 +1,5 @@
 # Pure OW menu controller: OW Engine owns the scenes; UI owns input/presentation.
-# Math, Reading, Writing and Cleaning are playable. Memory and Patterns remain previews
+# Math, Reading, Writing, Cleaning and Memory are playable; Patterns remains a preview
 # until their respective native activity-porting PRs.
 class NativeMenuRouter:
   field scenes
@@ -28,7 +28,7 @@ class NativeMenuRouter:
     if: this.scenes.activate("activities") != 1
       return: 0
     set this.activity_page: page
-    set this.status: "FOUR ACTIVITIES READY  MEMORY PATTERNS SOON"
+    set this.status: "FIVE ACTIVITIES READY  PATTERNS SOON"
     return: 1
 
   fn open_settings():
@@ -61,6 +61,12 @@ class NativeMenuRouter:
     set this.status: ""
     return: 1
 
+  fn start_memory():
+    if: this.scenes.activate("memory") != 1
+      return: 0
+    set this.status: ""
+    return: 1
+
   fn back():
     if: this.screen() == "menu"
       set this.quitting: 1
@@ -76,6 +82,8 @@ class NativeMenuRouter:
       return: "WRITING BATTLE"
     if: this.screen() == "cleaning"
       return: "CLEANING TASK"
+    if: this.screen() == "memory"
+      return: "MEMORY MATCHING"
     if: this.screen() == "activities"
       if: this.activity_page == 0
         return: "ACTIVITIES  PAGE 1 OF 2"
@@ -85,6 +93,8 @@ class NativeMenuRouter:
     return: "CODEWASH RPG"
 
   fn subtitle():
+    if: this.screen() == "memory"
+      return: "FLIP TWO CARDS  MATCH FOUR PAIRS"
     if: this.screen() == "cleaning"
       return: "COMPLETE A REAL CHORE  SELF REPORT"
     if: this.screen() == "writing"
@@ -140,6 +150,8 @@ class NativeMenuRouter:
       else:
         if: index == 0
           return: this.start_cleaning()
+        if: index == 1
+          return: this.start_memory()
         if: index == 3
           return: this.open_activities(0)
       set this.status: "COMING SOON  FEATURE NOT AVAILABLE"

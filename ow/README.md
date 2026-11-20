@@ -365,3 +365,13 @@ The [native OpenGL activity catalog](docs/GPU-BATTLE.md) now supports
 Mark Done, Cancel, and Help buttons rendered by OW Graphics. This is
 **self-reported** completion, without parent verification or real-world
 detection. All prior game modes, tests and browser deliverables remain intact.
+
+## Phase 2 PR #10 — Native Memory matching
+
+The [native OpenGL preview](docs/GPU-BATTLE.md) now includes **Memory**:
+eight shuffled cards in two four-card pages, cross-page pair matching, correct
+pair damage, mismatches that flip back on the next attempt, and automatic
+re-deal after all four pairs are found. The existing OW `MemorySkill` owns
+the shuffled card state and matching logic; OW Engine keeps progress in its
+own ECS scene, and OW Graphics renders cards with the existing native HUD.
+Only Patterns remains unported to native; the browser/React game is unchanged.
