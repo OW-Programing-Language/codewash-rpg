@@ -15,6 +15,7 @@ class NativeBattleArt:
   field enemy_path
   field menu_theme
   field ticks
+  field menu_ticks
   field catalog
 
   fn new(meshes, shaders, textures, renderer):
@@ -30,6 +31,7 @@ class NativeBattleArt:
     set this.enemy_path: ""
     set this.menu_theme: 0
     set this.ticks: 0
+    set this.menu_ticks: 0
 
   fn start():
     # NDC billboard quad with bottom-up UVs, keeping shader-independent
@@ -133,6 +135,13 @@ class NativeBattleArt:
     return: 2
 
 
+  # Distinct clocks: battle feedback animation stays frozen on menu pages.
+  fn menu_bob():
+    set frame int: mod(this.menu_ticks, 32)
+    if: frame < 16
+      return: (1.0 * frame) / 1200.0
+    return: (1.0 * (32 - frame)) / 1200.0
+
   # Shared textured quad rendering. OW Graphics loads original PNG assets;
   # both menu backgrounds and activity cards use this same shader/mesh.
   fn draw_sprite(texture, x, y, width, height, tint):
@@ -151,8 +160,8 @@ class NativeBattleArt:
   fn menu_background():
     if: this.menu_theme < 1
       return: 0
-    set this.ticks: this.ticks + 1
-    set shade float: 0.38 + this.bob() * 0.9
+    set this.menu_ticks: this.menu_ticks + 1
+    set shade float: 0.38 + this.menu_bob() * 0.9
     if: this.renderer.depth_test(0) != 1
       return: 0
     if: this.shaders.bind(this.program) != 1
@@ -200,7 +209,7 @@ class NativeBattleArt:
         set y: 0.0 - 0.96
       set glow float: 0.83
       if: i == selected
-        set y: y + this.bob()
+        set y: y + this.menu_bob()
         set glow: 1.0
       if: this.draw_sprite(this.icons[slot], x, y, 0.13, 0.12, glow) != 1
         return: 0
@@ -215,7 +224,7 @@ class NativeBattleArt:
     while: j < showcase
       set slot int: j
       set x float: (0.0 - 0.90) + j * 0.31
-      set y float: 0.0 - 0.30 + this.bob()
+      set y float: 0.0 - 0.30 + this.menu_bob()
       set width float: 0.23
       if: screen == "activities"
         set slot: j
