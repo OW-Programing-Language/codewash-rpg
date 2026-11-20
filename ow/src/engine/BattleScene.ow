@@ -40,6 +40,15 @@ class BattleScene:
     set this.skill_name: "math"
     set this.cached_options: []
 
+  # Memory keeps one independent ECS Game and the original MemorySkill deck.
+  fn configure_memory():
+    if: this.hero != 0
+      return: 0
+    set this.scene_name: "memory"
+    set this.skill_name: "memory"
+    set this.game: new Game()
+    return: 1
+
   # Keep Cleaning tasks and progression independent of other activities.
   fn configure_cleaning():
     if: this.hero != 0
@@ -230,6 +239,21 @@ class BattleScene:
       return: 0 - 1
     call: this.game.answer(this.game.problem.solution())
     set this.cached_options: this.game.skill.options(this.game.problem)
+    call: this.sync_health()
+    call: this.show_feedback(1)
+    return: 1
+
+  # A matched pair deals one regular combat hit. Never call Game.answer("")
+  # here: MemorySkill's placeholder Problem uses an empty solution, and doing
+  # so would regenerate/shuffle the board after *every* pair.
+  fn hit_memory():
+    if: this.skill_name != "memory"
+      return: 0 - 1
+    if: this.hero == 0
+      return: 0 - 1
+    if: this.game.skill.mode() != "memory"
+      return: 0 - 1
+    call: this.game.hit()
     call: this.sync_health()
     call: this.show_feedback(1)
     return: 1

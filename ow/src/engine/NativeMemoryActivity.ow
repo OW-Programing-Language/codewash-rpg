@@ -1,0 +1,67 @@
+# OW-native Memory presentation controller. All card identity, shuffling,
+# reveal/matched state and pending mismatch handling remain in MemorySkill.
+# Eight cards are displayed in two pages of four for the existing GPU HUD.
+class NativeMemoryActivity:
+  field scene
+  field page
+  field matches
+  field attempts
+  field boards
+  field status
+
+  fn new(scene):
+    set this.scene: scene
+    set this.page: 0
+    set this.matches: 0
+    set this.attempts: 0
+    set this.boards: 0
+    set this.status: "FLIP TWO CARDS  FIND MATCHES"
+
+  fn visible_cards():
+    set cards: this.scene.game.skill
+    return: [cards.face(this.page * 4), cards.face(this.page * 4 + 1), cards.face(this.page * 4 + 2), cards.face(this.page * 4 + 3)]
+
+  fn change_page(delta):
+    set next int: this.page + delta
+    if: next < 0
+      return: 0
+    if: next > 1
+      return: 0
+    set this.page: next
+    return: 1
+
+  # 0=no-op, 1=first flip, 2=match, 3=mismatch, 4=board cleared,
+  # -1=invalid choice. Does not expose unrevealed card identities.
+  fn select(index):
+    if: index < 0
+      return: 0 - 1
+    if: index > 3
+      return: 0 - 1
+    set slot int: this.page * 4 + index
+    set skill: this.scene.game.skill
+    if: skill.matched[slot] == 1
+      return: 0
+    set result: skill.flip(slot)
+    if: result == "noop"
+      return: 0
+    if: result == "flip"
+      set this.status: "FIRST CARD OPEN  FIND ITS MATCH"
+      return: 1
+    set this.attempts: this.attempts + 1
+    if: result == "nomatch"
+      set this.status: "NO MATCH  NEXT PICK HIDES THESE"
+      call: this.scene.show_feedback(0)
+      return: 3
+    if: result == "match"
+      set this.matches: this.matches + 1
+      call: this.scene.hit_memory()
+      if: skill.is_cleared() == 1
+        set this.boards: this.boards + 1
+        set this.matches: 0
+        set this.page: 0
+        call: this.scene.game.next_problem()
+        set this.status: "BOARD CLEARED  NEW CARDS DEALT"
+        return: 4
+      set this.status: "MATCH FOUND  ENEMY HIT"
+      return: 2
+    return: 0
