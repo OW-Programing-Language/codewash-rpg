@@ -28,6 +28,8 @@ import "@engine/src/engine/modules/EngineRenderModule.ow"
 import "../modules/skills/infra/SkillsFunctor.ow"
 import "../modules/combat/infra/CombatFunctor.ow"
 import "BattleScene.ow"
+import "BattleHud.ow"
+import "BattleHudSelection.ow"
 
 class GpuBattle:
   field app
@@ -43,6 +45,10 @@ class GpuBattle:
   field program
   field cube
   field held
+  field nav_held
+  field submit_held
+  field selection
+  field hud
 
   fn new():
     set entities: new EngineEntitiesModule()
@@ -71,6 +77,10 @@ class GpuBattle:
     set this.program: 0
     set this.cube: 0
     set this.held: 0 - 1
+    set this.nav_held: ""
+    set this.submit_held: 0
+    set this.selection: new BattleHudSelection()
+    set this.hud: 0
 
   fn start():
     if: this.app.boot() != 1
@@ -109,6 +119,9 @@ class GpuBattle:
     set this.battle: new BattleScene(this.app)
     if: this.battle.start(this.cube) != 1
       return: 0
+    set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
+    if: this.hud.start(this.battle) != 1
+      return: 0
     return: 1
 
   fn show_question():
@@ -122,7 +135,28 @@ class GpuBattle:
     if: this.input.key_down("ESCAPE") == 1
       call: this.window.request_close()
       return: 0
-    # Key edge detection prevents auto-answering every frame on long presses.
+
+    # Move the highlighted answer card with arrow-key edges.
+    set navigation: ""
+    if: this.input.key_down("LEFT") == 1
+      set navigation: "LEFT"
+    else:
+      if: this.input.key_down("RIGHT") == 1
+        set navigation: "RIGHT"
+      else:
+        if: this.input.key_down("UP") == 1
+          set navigation: "UP"
+        else:
+          if: this.input.key_down("DOWN") == 1
+            set navigation: "DOWN"
+    if: navigation == ""
+      set this.nav_held: ""
+    else:
+      if: navigation != this.nav_held
+        call: this.selection.move(navigation)
+        set this.nav_held: navigation
+
+    # W/A/S/D answers immediately; Space chooses the highlighted card.
     set choice int: 0 - 1
     if: this.input.key_down("W") == 1
       set choice: 0
@@ -135,17 +169,28 @@ class GpuBattle:
         else:
           if: this.input.key_down("D") == 1
             set choice: 3
+    set space int: this.input.key_down("SPACE")
+    if: space == 0
+      set this.submit_held: 0
+    if: choice < 0
+      if: space == 1
+        if: this.submit_held == 0
+          set choice: this.selection.selected
+    if: space == 1
+      set this.submit_held: 1
     if: choice < 0
       set this.held: 0 - 1
       return: 0
     if: choice == this.held
       return: 0
     set this.held: choice
+    call: this.selection.pick(choice)
     set outcome int: this.battle.choose(choice)
     if: outcome == 1
       print: "Correct! " + this.battle.game.message
     else:
       print: "Incorrect. " + this.battle.game.message
+    call: assert(this.hud.refresh(this.battle) == 1, "HUD refresh")
     call: this.show_question()
     return: outcome
 
@@ -156,12 +201,19 @@ class GpuBattle:
     call: this.battle.advance_feedback()
     set view: this.camera.view_from_position(0.0, 0.0, 7.0)
     set projection: this.camera.perspective(1.0, 1.3333333333333, 0.1, 50.0)
-    return: this.world.render_frame(this.program, view, projection, 12, 18, 29)
+    set drawn int: this.world.render_frame(this.program, view, projection, 12, 18, 29)
+    if: drawn < 0
+      return: drawn
+    if: this.hud.render() != 2
+      return: 0 - 1
+    return: drawn
 
   fn present():
     return: this.window.present()
 
   fn stop():
+    if: this.hud != 0
+      call: this.hud.stop()
     # GPU objects must be deleted while GLFW/OpenGL context is still open.
     if: this.cube > 0
       call: this.meshes.destroy(this.cube)
