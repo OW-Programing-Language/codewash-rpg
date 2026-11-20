@@ -406,3 +406,13 @@ and download standalone OW Engine + OW Graphics app-images. Bundled Java,
 LWJGL and pinned OW source modules mean **no Maven/Git/Node/build steps at
 startup**. The native loading splash closes once the actual game window
 is initialized. The original Electron EXE is a different distribution.
+
+## Native Windows startup diagnostic (v1.13.1)
+
+If the loading splash disappears before the graphics window appears, the
+updated native launcher shows a startup-error dialog and writes a local log
+to `%LOCALAPPDATA%\OreoStudios\CodeWashRPG\logs\latest.log`.
+See [Windows startup troubleshooting](docs/NATIVE-DESKTOP.md#windows-splash-closes-without-the-game-window)
+for OpenGL 3.3 and driver guidance. The Windows CI's virtual GPU cannot
+currently create an OpenGL 3.3 context, so an actual Windows PC is still
+needed to validate device-driver-specific behavior.

@@ -27,4 +27,5 @@ test('Windows native launcher records failures and never closes silently', () =>
   assert.ok(launcher.includes('JOptionPane.ERROR_MESSAGE'));
   assert.ok(launcher.includes('javaw.exe'));
   assert.ok(launcher.includes('falling back to java.exe'));
+  assert.ok(launcher.includes('OpenGL 3.3 window creation failed'));
 });
