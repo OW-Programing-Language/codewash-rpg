@@ -1,0 +1,74 @@
+# OpenGL HUD overlay: an OW-generated 5x7 glyph mesh plus four answer cards.
+# This is an opt-in experiment and does not replace the six-skill browser UI.
+import "BattleHudText.ow"
+
+class BattleHud:
+  field meshes
+  field shader
+  field renderer
+  field selection
+  field text_builder
+  field shader_program
+  field option_cards
+  field text_mesh
+
+  fn new(meshes, shader, renderer, selection):
+    set this.meshes: meshes
+    set this.shader: shader
+    set this.renderer: renderer
+    set this.selection: selection
+    set this.text_builder: new BattleHudText()
+    set this.shader_program: 0
+    set this.option_cards: 0
+    set this.text_mesh: 0
+
+  fn start(battle):
+    set vertex: "#version 330 core\nlayout(location=0) in vec3 aPos;\nflat out int vKind;\nflat out int vCode;\nout vec2 vUv;\nvoid main(){\n  gl_Position=vec4(aPos.xy,0.0,1.0);\n  if(aPos.z<0.0){vKind=1;vCode=int(-aPos.z)-1;vUv=vec2(0.0);}\n  else{\n    int encoded=int(aPos.z+0.5);\n    vKind=0;vCode=encoded/8;\n    int corner=encoded%8;\n    vUv=vec2((corner==1||corner==2)?1.0:0.0,(corner==2||corner==3)?1.0:0.0);\n  }\n}"
+    set fragment: "#version 330 core\nflat in int vKind;\nflat in int vCode;\nin vec2 vUv;\nout vec4 pixel;\nuniform int uSelected;\nconst int fontRows[343]=int[343](14,17,17,31,17,17,17,30,17,17,30,17,17,30,15,16,16,16,16,16,15,30,17,17,17,17,17,30,31,16,16,30,16,16,31,31,16,16,30,16,16,16,15,16,16,23,17,17,15,17,17,17,31,17,17,17,31,4,4,4,4,4,31,7,2,2,2,18,18,12,17,18,20,24,20,18,17,16,16,16,16,16,16,31,17,27,21,21,17,17,17,17,25,21,19,17,17,17,14,17,17,17,17,17,14,30,17,17,30,16,16,16,14,17,17,17,21,18,13,30,17,17,30,20,18,17,15,16,16,14,1,1,30,31,4,4,4,4,4,4,17,17,17,17,17,17,14,17,17,17,17,17,10,4,17,17,17,21,21,21,10,17,17,10,4,10,17,17,17,17,10,4,4,4,4,31,1,2,4,8,16,31,14,19,21,21,25,17,14,4,12,4,4,4,4,14,14,17,1,2,4,8,31,30,1,1,14,1,1,30,2,6,10,18,31,2,2,31,16,16,30,1,1,30,15,16,16,30,17,17,14,31,1,2,4,8,8,8,14,17,17,14,17,17,14,14,17,17,15,1,1,30,0,4,4,31,4,4,0,0,0,0,31,0,0,0,0,21,14,31,14,21,0,1,1,2,4,8,16,16,2,4,8,8,8,4,2,8,4,2,2,2,4,8,0,31,0,31,0,0,0,14,17,1,2,4,0,4,0,0,0,0,0,0,0,0,4,4,0,4,4,0,0,0,0,0,0,4,4,4,4,4,4,4,0,4,25,26,4,8,22,6,0);\nvoid main(){\n  if(vKind==1){\n    pixel=(vCode==uSelected)?vec4(0.12,0.43,0.55,1.0):vec4(0.08,0.15,0.23,1.0);\n    return;\n  }\n  if(vCode<0||vCode>=49)discard;\n  int gx=int(floor(vUv.x*5.0));\n  int gy=int(floor((1.0-vUv.y)*7.0));\n  if(gx<0||gx>=5||gy<0||gy>=7)discard;\n  int bits=fontRows[vCode*7+gy];\n  if((bits&(1<<(4-gx)))==0)discard;\n  pixel=vec4(0.88,0.96,1.0,1.0);\n}"
+    set this.shader_program: this.shader.create(vertex, fragment)
+    if: this.shader_program < 1
+      return: 0
+    # Cards use negative Z to encode card id; glyph Z is always nonnegative.
+    set this.option_cards: this.meshes.create([-0.96, -0.81, -1, -0.05, -0.81, -1, -0.05, -0.62, -1, -0.96, -0.81, -1, -0.05, -0.62, -1, -0.96, -0.62, -1, 0.05, -0.81, -2, 0.96, -0.81, -2, 0.96, -0.62, -2, 0.05, -0.81, -2, 0.96, -0.62, -2, 0.05, -0.62, -2, -0.96, -0.99, -3, -0.05, -0.99, -3, -0.05, -0.83, -3, -0.96, -0.99, -3, -0.05, -0.83, -3, -0.96, -0.83, -3, 0.05, -0.99, -4, 0.96, -0.99, -4, 0.96, -0.83, -4, 0.05, -0.99, -4, 0.96, -0.83, -4, 0.05, -0.83, -4])
+    if: this.option_cards < 1
+      return: 0
+    return: this.refresh(battle)
+
+  fn refresh(battle):
+    # Upload replacement before freeing the old mesh, avoiding blank frames.
+    set updated int: this.meshes.create(this.text_builder.vertices(battle))
+    if: updated < 1
+      return: 0
+    if: this.text_mesh > 0
+      call: this.meshes.destroy(this.text_mesh)
+    set this.text_mesh: updated
+    return: 1
+
+  fn render():
+    if: this.text_mesh < 1
+      return: 0
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shader.bind(this.shader_program) != 1
+      return: 0
+    if: this.shader.set_int(this.shader_program, "uSelected", this.selection.selected) != 1
+      return: 0
+    if: this.renderer.draw_mesh(this.option_cards) != 1
+      return: 0
+    if: this.renderer.draw_mesh(this.text_mesh) != 1
+      return: 0
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    return: 2
+
+  fn stop():
+    if: this.text_mesh > 0
+      call: this.meshes.destroy(this.text_mesh)
+      set this.text_mesh: 0
+    if: this.option_cards > 0
+      call: this.meshes.destroy(this.option_cards)
+      set this.option_cards: 0
+    if: this.shader_program > 0
+      call: this.shader.destroy(this.shader_program)
+      set this.shader_program: 0
+    return: 1
