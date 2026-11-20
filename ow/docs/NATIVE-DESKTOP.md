@@ -225,3 +225,40 @@ window. Fullscreen/resizing and more advanced transitions remain future work.
 CI: `ow test tests/` includes `NativeMenuPointerTest.ow`, and the Linux
 Mesa/OpenGL workflow runs `menu_pointer_smoke.ow` to check GPU hover
 pixels, carousel/hover coexistence and GPU mesh cleanup.
+
+## PR #37 — Electron-reference native visual composition (v1.13.5)
+
+This is a **visual improvement**, not a claim of complete Electron parity.
+
+The user-supplied reference was compared with the native menu and the native
+renderer now places **five simultaneously visible cards** in a much tighter,
+portrait-height arrangement. The selected card is tallest with a gold
+two-stage GPU ring; two near cards and two darker outer cards flank it.
+The carousel samples seven OW candidates while moving so entering edge
+artwork is visible *before* the final selection rebase.
+
+The original Minecraft logo is followed by a large golden `LEVEL UP!`
+pixel headline. The giant bottom quick-action bars are removed in favor
+of four compact **top-corner W/A/S/D** actions, while a small bottom line
+explains arrow and Enter navigation. Ten pixel hearts remain in the footer.
+Pointer hit boxes are rebuilt from the same layout functions as the GPU
+quads (on top of PR #36).
+
+**Fixed repeated egg images:** the live game mob label is now passed to the
+case-sensitive PNG lookup without being uppercased. Only displayed text is
+uppercased. For legitimate GIF-only original enemies (Ghast, Blaze, Warden,
+Guardian, Phantom, Elder Guardian and Ender Dragon), Java 17 ImageIO converts
+the *first source GIF frame* to PNG strictly at native build time. This uses
+the project-owned `public/assets` originals and an explicit path allowlist;
+no unrelated placeholder or new runtime decoder is shipped.
+
+CI includes native OWUnit layout tests, Node stage/decoder tests, the
+existing Mesa UI smoke checks with updated calibrated coordinates, and a new
+`menu_visual_parity_smoke.ow` that verifies original textures, five cards,
+gold GPU outline and preserved hearts. Windows, Linux and macOS packaging
+remains a gate; Windows physical-device inspection remains **unchecked**.
+
+**Still missing**: true font/SDF rendering, soft blur/compositing and layered
+gradient effects, animated GIF playback (the conversion is a still frame),
+fullscreen/DPI-resize support, rounded vector UI, and full Electron art/UI
+parity. No unsupported completeness claim.
