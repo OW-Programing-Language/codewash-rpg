@@ -416,3 +416,13 @@ See [Windows startup troubleshooting](docs/NATIVE-DESKTOP.md#windows-splash-clos
 for OpenGL 3.3 and driver guidance. The Windows CI's virtual GPU cannot
 currently create an OpenGL 3.3 context, so an actual Windows PC is still
 needed to validate device-driver-specific behavior.
+
+## Native menu artwork (first visual parity pass)
+
+The OW Graphics menu now uses the original `minecraft.png` theme backdrop,
+the six original activity badges and subtle highlight/selection motion.
+It renders with native OpenGL rather than React/CSS. The artwork is
+automatically staged by the build workflow and included in Windows/Linux/
+macOS bundles. **This is only an initial native UI improvement:** full
+Electron-quality themes, profiles, animated effects, sounds and responsive
+controls remain to be ported.
