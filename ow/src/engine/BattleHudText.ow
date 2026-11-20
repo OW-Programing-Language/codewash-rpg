@@ -82,3 +82,20 @@ class BattleHudText:
     set at: this.line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
     set at: this.line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
     return: buffer
+
+  # Draw an explicit word-copy prompt; original Writing image clues are
+  # not in this prototype. Use the existing bitmap glyphs and four cards.
+  fn writing_vertices(battle, spelling):
+    set buffer: array(4320, 0.0)
+    set at int: 0
+    set status: "LVL " + str(battle.game.hero.lvl()) + "  MOB " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
+    set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
+    set at: this.line(buffer, at, "COPY WORD " + battle.game.problem.ask(), 0.0 - 0.93, 0.69, 45)
+    set at: this.line(buffer, at, "TYPED " + spelling.text, 0.0 - 0.93, 0.48, 45)
+    set at: this.line(buffer, at, "LEFT RIGHT PAGES " + str(spelling.page + 1) + "/7", 0.0 - 0.93, 0.34, 45)
+    set options: spelling.options()
+    set at: this.line(buffer, at, "W  " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.line(buffer, at, "A  " + options[1], 0.09, 0.0 - 0.75, 20)
+    set at: this.line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
+    return: buffer
