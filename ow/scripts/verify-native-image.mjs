@@ -44,6 +44,39 @@ export function verifyContents({root, binary, app}) {
   return true;
 }
 
+// Some Windows CI workers have no interactive desktop and cannot reliably
+// pipe stdout from a GUI-subsystem jpackage EXE with a nested child JVM.
+// Verify the EXE's own --self-test separately, then run the *packaged* Java
+// interpreter directly from its bundled Java runtime for offline OW imports.
+export function checkBundledOwRuntime(output, platform = process.platform) {
+  const image = pathsForOS(output, platform);
+  verifyContents(image);
+  const java = platform === 'win32'
+    ? join(image.root, 'runtime/bin/java.exe')
+    : platform === 'darwin'
+      ? join(image.root, 'Contents/runtime/Contents/Home/bin/java')
+      : join(image.root, 'lib/runtime/bin/java');
+  if (!existsSync(java)) throw new Error('Bundled Java executable missing: ' + java);
+  const sep = platform === 'win32' ? ';' : ':';
+  const cp = [join(image.app, 'OwIDE.jar'),
+    join(image.app, 'ow-graphics-native.jar'),
+    join(image.app, 'lib/*')].join(sep);
+  const game = join(image.app, 'payload/ow');
+  const p = spawnSync(java, ['-cp', cp, 'dev.oreo.Main',
+    'check', 'src/engine/battle_gpu.ow'], {
+    cwd: game,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: 90_000,
+  });
+  if (p.error) throw p.error;
+  if (p.status !== 0) {
+    throw new Error('Bundled OW interpreter offline check failed:\n' +
+      (p.stdout || '') + '\n' + (p.stderr || '') + '\nStatus ' + p.status);
+  }
+  console.log('PASS: bundled OW runtime checks the game offline on ' + platform);
+}
+
 export function runPackagedImage(output, args = ['--self-test'], platform = process.platform) {
   const image = pathsForOS(output, platform);
   verifyContents(image);
@@ -65,7 +98,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try {
     const out = process.argv[2] ? resolve(process.argv[2]) : resolve(here, 'ow/native-dist');
     runPackagedImage(out);
-    runPackagedImage(out, ['--check']);
+    if (process.platform === 'win32') {
+      checkBundledOwRuntime(out);
+    } else {
+      runPackagedImage(out, ['--check']);
+    }
     if (process.argv.includes('--smoke')) runPackagedImage(out, ['--smoke']);
   } catch (error) {
     console.error(error.message);
