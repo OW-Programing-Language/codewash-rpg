@@ -1,0 +1,32 @@
+# Real OpenGL image-aspect regression. Draw a 4:1 magenta RGBA PNG-like
+# texture into a much taller 16:9 box, compare CONTAIN with COVER pixels.
+# No GPU simulator/mock: framebuffer readback uses the real Mesa context.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "native polished menu boots")
+  call: assert(game.render() == 0, "compact OW UI menu renders")
+  set glyphs: game.hud.text_builder.rich_card_text_vertices(game.carousel, game.card_data, game.layout)
+  call: assert(glyphs[7] - glyphs[1] < 0.035, "small side-card glyphs")
+  # 4 red+blue texels create a bright magenta 4:1 aspect-ratio image.
+  set pixels: [255,0,255,255, 255,0,255,255, 255,0,255,255, 255,0,255,255]
+  set testTexture int: game.art.textures.create_rgba8(4, 1, pixels)
+  call: assert(testTexture > 0, "test texture created in OW Graphics")
+  call: assert(game.art.renderer.depth_test(0) == 1, "overlay order")
+  call: assert(game.art.shaders.bind(game.art.program) == 1, "textured sprite shader")
+  call: assert(game.art.shaders.set_int(game.art.program, "uImage", 0) == 1, "texture unit zero")
+  call: assert(game.art.draw_sprite_mode(testTexture, 0.0 - 0.40, 0.0 - 0.40, 0.80, 0.80, 1.0, 1) == 1, "contain without distortion")
+  set center: extension("codewash.test.pixel", 640, 360)
+  call: assert(center[0] > 235, "contain image still bright at center")
+  call: assert(center[2] > 235, "contain image keeps its magenta")
+  set top: extension("codewash.test.pixel", 640, 482)
+  call: assert(top[2] < 220, "contain letterbox leaves original scene at top")
+  call: assert(game.art.draw_sprite_mode(testTexture, 0.0 - 0.40, 0.0 - 0.40, 0.80, 0.80, 1.0, 2) == 1, "cover fills box without stretching")
+  set covered: extension("codewash.test.pixel", 640, 482)
+  call: assert(covered[0] > 235, "cover crops wide asset rather than letterboxing")
+  call: assert(covered[2] > 235, "cover uses accurate magenta texture")
+  call: assert(game.art.renderer.depth_test(1) == 1, "restore depth test")
+  call: assert(game.art.textures.destroy(testTexture) == 1, "test texture cleaned")
+  call: assert(game.stop() == 1, "native GPU resources cleaned")
+  print: "PASS: crisp compact OW UI, contain/cover aspect without compression"
