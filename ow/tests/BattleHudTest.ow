@@ -1,0 +1,63 @@
+# Headless OWUnit tests for native HUD text layout and keyboard selection.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/engine/BattleHudSelection.ow"
+
+class BattleHudTest:
+  field checker
+  field root
+  field battle
+  field layout
+  field selection
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.root: new CodeWashEngine()
+    call: this.checker.assertEquals(1, this.root.boot())
+    set this.battle: new BattleScene(this.root.app)
+    call: this.checker.assertEquals(1, this.battle.start(7))
+    set this.layout: new BattleHudText()
+    set this.selection: new BattleHudSelection()
+
+  @AfterEach
+  fn cleanup():
+    call: this.root.stop()
+
+  @Test
+  fn textBufferIsBoundedAndSupportsMathGlyphs():
+    set vertices: this.layout.vertices(this.battle)
+    call: this.checker.assertEquals(4320, len(vertices))
+    # The first character is 'L' in LVL. Alphabet index 11, packed as 11*8.
+    call: this.checker.assertEquals(88, vertices[2])
+    call: this.checker.assertEquals(1, this.layout.code_for("+") >= 0)
+    call: this.checker.assertEquals(1, this.layout.code_for("/") >= 0)
+    call: this.checker.assertEquals(1, this.layout.code_for("=") >= 0)
+    call: this.checker.assertEquals(this.layout.code_for("?"), this.layout.code_for("@"))
+
+  @Test
+  fn arrowNavigationStaysOnFourCards():
+    call: this.checker.assertEquals(0, this.selection.selected)
+    call: this.checker.assertEquals(1, this.selection.move("RIGHT"))
+    call: this.checker.assertEquals(1, this.selection.selected)
+    call: this.checker.assertEquals(1, this.selection.move("DOWN"))
+    call: this.checker.assertEquals(3, this.selection.selected)
+    call: this.checker.assertEquals(1, this.selection.move("LEFT"))
+    call: this.checker.assertEquals(2, this.selection.selected)
+    call: this.checker.assertEquals(1, this.selection.move("UP"))
+    call: this.checker.assertEquals(0, this.selection.selected)
+    call: this.checker.assertEquals(0, this.selection.move("UNKNOWN"))
+    call: this.checker.assertEquals(0, this.selection.selected)
+
+  @Test
+  fn submittingHighlightedChoiceUsesOriginalCombat():
+    call: this.checker.assertEquals(0, this.selection.pick(0 - 1))
+    call: this.checker.assertEquals(0, this.selection.pick(4))
+    call: this.checker.assertEquals(1, this.selection.pick(2))
+    set before int: this.battle.game.mob.cur_hp()
+    call: this.checker.assertEquals(1, this.selection.submit(this.battle))
+    call: this.checker.assertLessThan(this.battle.game.mob.cur_hp(), before)
+    call: this.checker.assertEquals(1, this.battle.feedback_kind)
+    call: this.checker.assertEquals(4320, len(this.layout.vertices(this.battle)))
