@@ -1,0 +1,56 @@
+# Pure OW asset routing tests (GPU resource lifecycle tested in Mesa).
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/NativeArtCatalog.ow"
+import "../src/engine/NativeBattleArt.ow"
+
+class NativeArtTest:
+  field check
+  field catalog
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.catalog: new NativeArtCatalog()
+
+  @Test
+  fn allSixActivitiesHaveDistinctSafeLocalSourceIcons():
+    set names: ["math", "reading", "writing", "cleaning", "memory", "patterns"]
+    set i int: 0
+    while: i < 6
+      call: this.check.assertEquals(i, this.catalog.icon_slot(names[i]))
+      set path: this.catalog.icon_path(i)
+      call: this.check.assertEquals(1, len(path) > 15)
+      call: this.check.assertEquals(0, contains(path, ".."))
+      call: this.check.assertEquals(1, contains(path, "assets/native/"))
+      set j int: 0
+      while: j < i
+        call: this.check.assertEquals(0, this.catalog.icon_path(i) == this.catalog.icon_path(j))
+        set j: j + 1
+      set i: i + 1
+    call: this.check.assertEquals(0 - 1, this.catalog.icon_slot("unknown"))
+    call: this.check.assertEquals("", this.catalog.icon_path(6))
+
+  @Test
+  fn mobPortraitUsesOnlyActualSupportedPngOrNeutralIcon():
+    call: this.check.assertEquals("assets/native/mobs/hostile/creeper.png", this.catalog.mob_path("Creeper"))
+    call: this.check.assertEquals("assets/native/mobs/hostile/zombie.png", this.catalog.mob_path("Zombie"))
+    call: this.check.assertEquals("assets/native/mobs/miniboss/ravager.png", this.catalog.mob_path("Ravager"))
+    call: this.check.assertEquals("assets/native/mobs/boss/Herobrine.png", this.catalog.mob_path("Herobrine"))
+    call: this.check.assertEquals("assets/native/items/egg.png", this.catalog.mob_path("Blaze"))
+    call: this.check.assertEquals("assets/native/items/egg.png", this.catalog.mob_path("Warden"))
+    call: this.check.assertEquals("assets/native/items/egg.png", this.catalog.mob_path("nonexistent"))
+
+  @Test
+  fn deterministicAnimationCycleRemainsWithinBounds():
+    # No OpenGL context needed; all fields are initialized in pure OW.
+    set art: new NativeBattleArt(0, 0, 0, 0)
+    call: this.check.assertEquals(0.0, art.bob())
+    set art.ticks: 8
+    call: this.check.assertEquals(1, art.bob() > 0.0)
+    set early: art.bob()
+    set art.ticks: 16
+    call: this.check.assertEquals(1, art.bob() > early)
+    set art.ticks: 32
+    call: this.check.assertEquals(0.0, art.bob())
+    set art.ticks: 64
+    call: this.check.assertEquals(0.0, art.bob())

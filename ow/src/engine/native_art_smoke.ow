@@ -1,0 +1,54 @@
+# Original PNG asset rendering in real OpenGL (Mesa/Xvfb):
+# verify resource handles, sprite frame pixels, animation and cleanup.
+# The six OW activities remain keyboard-playable and retain 3D ECS meshes.
+import "GpuBattle.ow"
+
+main:
+  set preview: new GpuBattle()
+  call: assert(preview.start() == 1, "OW Graphics art scene boots")
+  call: assert(preview.art.program > 0, "compiled original art shader")
+  call: assert(preview.art.quad > 0, "created textured quad")
+  call: assert(len(preview.art.icons) == 6, "six original skill badges loaded")
+  call: assert(preview.art.icons[0] > 0, "Math original artwork decoded")
+  call: assert(preview.art.icons[5] > 0, "Patterns original artwork decoded")
+  call: assert(preview.art.bob() == 0.0, "initial animation at rest")
+  call: assert(preview.menu.start_math() == 1, "start native Math")
+  call: assert(preview.hud.refresh(preview.battle) == 1, "Math HUD")
+  call: assert(preview.render() == 4, "four original ECS meshes plus art overlay")
+  call: assert(preview.art.enemy > 0, "original enemy PNG or neutral fallback")
+  set iconPixel: extension("codewash.test.pixel", 50, 288)
+  call: assert(iconPixel[0] + iconPixel[1] + iconPixel[2] > 65, "original activity PNG appears in framebuffer")
+  set mobPixel: extension("codewash.test.pixel", 580, 290)
+  call: assert(mobPixel[0] + mobPixel[1] + mobPixel[2] > 65, "actual enemy artwork appears in framebuffer")
+  set firstTick int: preview.art.ticks
+  set firstBob float: preview.art.bob()
+  call: assert(preview.render() == 4, "second idle art frame")
+  call: assert(preview.art.ticks == firstTick + 1, "one animation tick per frame")
+  call: assert(preview.art.bob() > firstBob, "deterministic idle bounce")
+
+  # Switching an image in the active context destroys the old texture;
+  # the next render restores the real foe for the active Game.
+  call: assert(preview.art.use_enemy("Creeper") == 1, "load Creeper original PNG")
+  call: assert(preview.art.enemy_path == "assets/native/mobs/hostile/creeper.png", "Creeper path matched name")
+  call: assert(preview.art.use_enemy("Zombie") == 1, "swap to Zombie original PNG")
+  call: assert(preview.art.enemy_path == "assets/native/mobs/hostile/zombie.png", "Zombie path matched name")
+  call: assert(preview.art.use_enemy("Blaze") == 1, "GIF-only mob uses neutral egg")
+  call: assert(preview.art.enemy_path == "assets/native/items/egg.png", "unavailable PNG fallback honest")
+  call: assert(preview.render() == 4, "mob texture restores current label")
+
+  call: assert(preview.battle.choose(2) == 1, "Math correct answer")
+  call: assert(preview.hud.refresh(preview.battle) == 1, "updated battle HUD")
+  call: assert(preview.render() == 5, "hit effect with original PNG overlay")
+  call: assert(preview.art.enemy > 0, "hit animation keeps texture live")
+  call: assert(preview.battle.feedback_kind == 1, "hit tint trigger")
+  call: assert(preview.menu.back() == 1, "return main menu")
+  call: assert(preview.hud.refresh_menu(preview.menu) == 1, "menu HUD restored")
+  set stoppedTicks int: preview.art.ticks
+  call: assert(preview.render() == 0, "inactive battle scene hidden")
+  call: assert(preview.art.ticks == stoppedTicks, "animation pauses outside games")
+  call: assert(preview.stop() == 1, "all OW Graphics resources released")
+  call: assert(preview.art.quad == 0, "quad released")
+  call: assert(preview.art.program == 0, "shader released")
+  call: assert(preview.art.enemy == 0, "enemy texture released")
+  call: assert(len(preview.art.icons) == 0, "all six badge textures released")
+  print: "PASS: original source PNGs, OW Graphics animation and GPU cleanup"
