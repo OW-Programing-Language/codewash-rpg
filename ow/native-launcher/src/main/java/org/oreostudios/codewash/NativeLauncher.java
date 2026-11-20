@@ -251,6 +251,8 @@ public final class NativeLauncher {
             }
         }
         required(root.resolve("assets/native/skills/math_icon.png"));
+        required(root.resolve("assets/native/themes/minecraft.png"));
+        required(root.resolve("assets/native/themes/minecraft_logo.png"));
         required(root.resolve("assets/native/items/egg.png"));
     }
 

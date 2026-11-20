@@ -123,6 +123,8 @@ export function stageOwPayload(projectRoot, dest) {
   assertFile(join(dest, 'src/engine/battle_gpu.ow'));
   assertFile(join(dest, 'src/engine/battle_lifecycle_smoke.ow'));
   assertFile(join(dest, 'assets/native/skills/math_icon.png'));
+  assertFile(join(dest, 'assets/native/themes/minecraft.png'));
+  assertFile(join(dest, 'assets/native/themes/minecraft_logo.png'));
   assertFile(join(dest, 'assets/native/items/egg.png'));
   return aliases.length;
 }

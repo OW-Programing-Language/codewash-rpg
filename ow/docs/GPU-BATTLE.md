@@ -488,3 +488,40 @@ profiles, achievements, theme selection, accessibility and many full-game
 interactions; current native settings remain a preview. Neither a new
 `Graphics.UI` component framework nor reusable widgets are being claimed
 here.
+
+## PR #32 — 16:9 native UI foundation from the Electron reference
+
+The experimental OW GPU app now opens a **1280×720 16:9** window instead of
+the 640×480 prototype. The `NativeMenuLayout.ow` geometry contract defines
+a centered featured card, two smaller side panels, four widescreen
+keyboard-action buttons, four top-corner key hints, and ten **decorative**
+pixel-hearts at the bottom. A real repository `minecraft_logo.png` texture
+is used for the large header, with `LEVEL UP!` text rendered directly
+through the OW 5×7 glyph shader.
+
+The three panels display cached original skill artwork. Existing activity
+pages still route all six activities, with selection updates and menu
+animation independent from combat animation. Every panel, button, heart,
+glyph and PNG is rendered by **OW Graphics + OpenGL**; the new app does not
+embed HTML, CSS, Electron, WebView or React. The original browser game remains
+untouched.
+
+`BattleHud` keeps **separate meshes** for menu cards/chrome and combat
+cards, preserving gameplay-specific hit targets and text. All GPU meshes
+and both themed PNGs are destroyed on shutdown. The native packager verifies
+that both `minecraft.png` and `minecraft_logo.png` are present; no runtime
+downloads are required.
+
+The existing Mesa framebuffer probes were recalibrated for the new
+1280×720 default viewport; `menu_widescreen_smoke.ow` additionally samples
+the feature-card gold border, purple center panel and red hearts. A new
+OWUnit `NativeMenuLayoutTest.ow` checks geometry and layout bounds.
+
+**Still missing:** smooth carousel navigation (PR #33), complete monster
+cards with HP bars and action states (PR #34), rich font hierarchy (PR #35),
+real clickable mouse UI and easing (PR #36), image/audio/gameplay parity.
+The pinned OW Graphics window interface currently does **not** expose
+resizing, DPI scale or true fullscreen controls, so this PR provides a
+fixed 16:9 initial size with NDC-based positions, not responsive window
+resizing. Top-corner glyphs are keyboard hints, **not clickable controls**,
+and hearts are decoration, **not a real player-health indicator**.

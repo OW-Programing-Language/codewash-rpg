@@ -426,3 +426,14 @@ automatically staged by the build workflow and included in Windows/Linux/
 macOS bundles. **This is only an initial native UI improvement:** full
 Electron-quality themes, profiles, animated effects, sounds and responsive
 controls remain to be ported.
+
+## PR #32 — Native 16:9 UI foundation
+
+Building on the original textured menu, the native OW Graphics game now
+opens **1280×720**, uses an original Minecraft logo/title image and shows
+three framed feature panels, four widescreen keyboard buttons and a
+ten-heart decorative footer. Gameplay retains independent battle HUD meshes.
+See [native GPU guide](docs/GPU-BATTLE.md#pr-32--169-native-ui-foundation-from-the-electron-reference).
+This is a foundational layout, not Electron UI parity: the card carousel,
+mouse/touch, responsive fullscreen settings, rich font and sound effects
+are still planned work.
