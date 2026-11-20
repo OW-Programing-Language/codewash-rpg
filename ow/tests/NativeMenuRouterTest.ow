@@ -1,0 +1,92 @@
+# Pure OW menu routing tests, based on actual OW Engine scene switching.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/engine/NativeMenuRouter.ow"
+
+class NativeMenuRouterTest:
+  field check
+  field engine
+  field router
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.engine: new CodeWashEngine()
+    call: this.check.assertEquals(1, this.engine.boot())
+    set scenes: this.engine.app.service("scenes")
+    call: this.check.assertEquals(1, scenes.add_scene("activities"))
+    call: this.check.assertEquals(1, scenes.add_scene("settings"))
+    set this.router: new NativeMenuRouter(scenes)
+    call: this.check.assertEquals(1, this.router.open_menu())
+
+  @AfterEach
+  fn cleanup():
+    call: this.engine.stop()
+
+  @Test
+  fn menuRendersFourChoicesAndHasRealSceneTransitions():
+    call: this.check.assertEquals("menu", this.router.screen())
+    call: this.check.assertEquals(4, len(this.router.options()))
+    call: this.check.assertEquals(1, this.router.choose(1))
+    call: this.check.assertEquals("activities", this.router.screen())
+    call: this.check.assertEquals(0, this.router.activity_page)
+    call: this.check.assertEquals(1, this.router.back())
+    call: this.check.assertEquals("menu", this.router.screen())
+    call: this.check.assertEquals(1, this.router.choose(2))
+    call: this.check.assertEquals("settings", this.router.screen())
+    call: this.check.assertEquals(1, this.router.choose(3))
+    call: this.check.assertEquals("menu", this.router.screen())
+
+  @Test
+  fn sixActivityChoicesUseTwoPagesAndDoNotStartUnportedSkills():
+    call: this.check.assertEquals(1, this.router.open_activities(0))
+    set first: this.router.options()
+    call: this.check.assertEquals("MATH", first[0])
+    call: this.check.assertEquals("READING", first[1])
+    call: this.check.assertEquals("WRITING", first[2])
+    call: this.check.assertEquals(0, this.router.choose(1))
+    call: this.check.assertEquals("activities", this.router.screen())
+    call: this.check.assertEquals(1, this.router.choose(3))
+    call: this.check.assertEquals(1, this.router.activity_page)
+    set second: this.router.options()
+    call: this.check.assertEquals("CLEANING", second[0])
+    call: this.check.assertEquals("MEMORY", second[1])
+    call: this.check.assertEquals("PATTERNS", second[2])
+    call: this.check.assertEquals(0, this.router.choose(0))
+    call: this.check.assertEquals("activities", this.router.screen())
+    call: this.check.assertEquals(1, this.router.choose(3))
+    call: this.check.assertEquals(0, this.router.activity_page)
+
+  @Test
+  fn routingToMathPreservesPausedEntitiesOnMenuReturn():
+    set battle: new BattleScene(this.engine.app)
+    call: this.check.assertEquals(1, battle.start(7))
+    call: this.check.assertEquals(6, this.engine.app.service("scenes").active_entities())
+    call: this.check.assertEquals(1, this.router.open_menu())
+    call: this.check.assertEquals(0, this.engine.app.service("scenes").active_entities())
+    call: this.check.assertEquals(1, this.router.choose(0))
+    call: this.check.assertEquals("battle", this.router.screen())
+    call: this.check.assertEquals(6, this.engine.app.service("scenes").active_entities())
+    call: this.check.assertEquals(1, this.router.back())
+    call: this.check.assertEquals("menu", this.router.screen())
+
+  @Test
+  fn invalidActionsAndMenuQuitAreExplicit():
+    call: this.check.assertEquals(0 - 1, this.router.choose(4))
+    call: this.check.assertEquals(0 - 1, this.router.choose(0 - 1))
+    call: this.check.assertEquals(0, this.router.open_activities(2))
+    call: this.check.assertEquals(0, this.router.open_activities(0 - 1))
+    call: this.check.assertEquals(0, this.router.quitting)
+    call: this.check.assertEquals(1, this.router.choose(3))
+    call: this.check.assertEquals(1, this.router.quitting)
+
+  @Test
+  fn menuTextSharesBoundedBitmapFontWithBattle():
+    set layout: new BattleHudText()
+    set vertices: layout.menu_vertices(this.router)
+    call: this.check.assertEquals(4320, len(vertices))
+    call: this.check.assertEquals(16, vertices[2])
+    call: this.check.assertEquals(1, this.router.open_activities(1))
+    call: this.check.assertEquals(4320, len(layout.menu_vertices(this.router)))

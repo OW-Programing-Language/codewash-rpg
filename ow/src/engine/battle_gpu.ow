@@ -7,12 +7,12 @@ main:
   print: "CodeWash RPG / experimental GPU math battle"
   print: "Questions and four answer cards now render inside the OpenGL window."
   print: "W/A/S/D: answer directly. Arrows: highlight. Space: submit. Esc: exit."
-  call: preview.show_question()
+  print: "Menu: W/A/S/D or arrows + Space. Esc backs out; Esc on menu exits."
   while: preview.running() == 1
     call: preview.poll()
     if: preview.running() == 1
       set count int: preview.render()
-      call: assert(count >= 4, "render four battlefield meshes")
+      call: assert(count >= 0, "render menu or battlefield")
       call: assert(count <= 5, "at most one hit/miss effect")
       call: preview.present()
   call: assert(preview.stop() == 1)

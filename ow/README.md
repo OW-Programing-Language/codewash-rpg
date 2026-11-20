@@ -328,3 +328,12 @@ npm run ow:gpu:test
 [Full setup, runtime constraints and feature-parity status](docs/GPU-BATTLE.md).
 This launches the **experimental OpenGL MathSkill slice only** — it does not
 package a standalone EXE or replace the full OW browser/Electron game.
+
+## Phase 2 — Native menu and activity selection (PR #6)
+
+The [experimental OpenGL preview](docs/GPU-BATTLE.md) opens with **Play Math,
+Activities, Settings and Quit**. An OW Engine scene router switches between
+these screens, preserves battle state and offers a two-page list of all six
+activities. Only **Math** is implemented; the others and settings are clearly
+marked unavailable. Use W/A/S/D or arrow keys plus Space; Escape returns to
+the menu. The original OW browser/React game is unchanged.

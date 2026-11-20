@@ -184,3 +184,34 @@ the six-skill browser version:
 
 The native launcher should not be advertised as a complete release until
 these feature-parity and packaging requirements are met.
+
+## Phase 2, PR #6 — Native menu and activity router
+
+The GPU preview now **opens at a native OpenGL main menu**, not automatically
+in math combat. The same OW 5x7 bitmap shader and four highlighted GPU choice
+cards power menu, activities, settings and battle; the cards are only placeholders,
+not a mouse interface. Use **W/A/S/D** for direct selection, **arrow keys + Space**
+to choose an active card, **Escape** to return to the main menu, and Escape on
+the main menu (or Quit) to close the preview. Keys are edge-debounced.
+
+**Play Math** starts the existing native MathSkill battle. **Activities** is
+a two-page list with **Math, Reading, Writing, Cleaning, Memory and Patterns**:
+only Math is playable in this preview. The other five display **COMING SOON**
+rather than falsely suggesting a native port. **Settings** is a nonfunctional
+preview with explicitly labeled unavailable options and a working Back button.
+
+`NativeMenuRouter.ow` handles state transitions using OW Engine's real
+`SceneManager.activate`; the inactive battle scene retains its six ECS
+entities, but the renderer draws **zero** battle meshes on menu, activity and
+settings screens. Existing combat state, math answers and native HUD are
+preserved across menu/battle transitions. No new Java, Swing or browser UI code
+is involved.
+
+OWUnit covers scene transitions, all six activity slots, disabled choices,
+the quit/back policy and menu glyph geometry. The additional `menu_smoke.ow`
+uses Mesa/Xvfb's **real OpenGL framebuffer** to check menu/card rendering,
+scene isolation and return to the math battle. The existing GPU gameplay and
+repeatable lifecycle smokes remain in CI.
+
+The non-math activities, functional settings, profiles, audio, mouse support
+and a native game distribution are **future PRs**, not implemented by PR #6.

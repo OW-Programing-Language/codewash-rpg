@@ -5,6 +5,10 @@ import "GpuBattle.ow"
 main:
   set game: new GpuBattle()
   call: assert(game.start() == 1, "OpenGL battle HUD boots")
+  call: assert(game.menu.screen() == "menu", "initially native menu")
+  call: assert(game.render() == 0, "menu scene has no 3D meshes")
+  call: assert(game.menu.start_math() == 1, "select math battle")
+  call: assert(game.hud.refresh(game.battle) == 1, "battle HUD displayed")
   call: assert(game.render() == 4, "battle four meshes plus separate HUD")
   set hero: extension("codewash.test.pixel", 225, 240)
   set mob: extension("codewash.test.pixel", 415, 240)
