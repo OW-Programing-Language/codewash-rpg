@@ -42,7 +42,7 @@ class NativeTypographyTest:
     call: this.check.assertEquals(1, firstHeight < 0.035)
     call: this.check.assertEquals(1, firstHeight > 0.020)
     # The first visible card is the left neighbor; its text fits its header.
-    set left: this.layout.card_rect(this.carousel.relative(1))
+    set left: this.layout.card_rect(this.carousel.visual_relative(1))
     call: this.check.assertEquals(1, vertices[0] > left[0])
     call: this.check.assertEquals(1, vertices[0] < left[0] + left[2])
 
