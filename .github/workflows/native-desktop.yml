@@ -51,7 +51,15 @@ jobs:
         shell: bash
         run: |
           git clone --quiet --depth 1 https://github.com/OW-Programing-Language/ow-lang.git "$RUNNER_TEMP/ow-lang"
-          mvn -B -q -f "$RUNNER_TEMP/ow-lang/pom.xml" -DskipTests install
+          # Maven Central's plugin CDN may return temporary 404s during
+          # propagation. Retry only this build-time dependency resolution.
+          for attempt in 1 2 3; do
+            if mvn -B -q -U -f "$RUNNER_TEMP/ow-lang/pom.xml" -DskipTests install; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep 10
+          done
 
       - name: Build the SHA-pinned OS-specific OW Graphics native provider
         shell: bash
