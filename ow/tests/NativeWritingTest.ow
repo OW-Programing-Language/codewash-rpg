@@ -1,0 +1,145 @@
+# Pure OW Writing / input tests; no GLFW dependency.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/engine/NativeMenuRouter.ow"
+import "../src/engine/NativeSpellingInput.ow"
+import "../src/modules/skills/api/WritingSkill.ow"
+
+class NativeWritingTest:
+  field check
+  field root
+  field math
+  field reading
+  field writing
+  field menu
+  field input
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.root: new CodeWashEngine()
+    call: this.check.assertEquals(1, this.root.boot())
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, scenes.add_scene("activities"))
+    call: this.check.assertEquals(1, scenes.add_scene("settings"))
+    call: this.check.assertEquals(1, scenes.add_scene("reading"))
+    call: this.check.assertEquals(1, scenes.add_scene("writing"))
+    set this.math: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.math.start(7))
+    set this.reading: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.reading.configure_reading())
+    call: this.check.assertEquals(1, this.reading.start(7))
+    set this.writing: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.writing.configure_writing())
+    call: this.check.assertEquals(1, this.writing.start(7))
+    set this.menu: new NativeMenuRouter(scenes)
+    call: this.check.assertEquals(1, this.menu.open_menu())
+    set this.input: new NativeSpellingInput()
+
+  @AfterEach
+  fn cleanup():
+    call: this.root.stop()
+
+  @Test
+  fn writingMenuRoutesToRealIndependentECSScene():
+    call: this.check.assertEquals(1, this.menu.open_activities(0))
+    call: this.check.assertEquals(1, this.menu.choose(2))
+    call: this.check.assertEquals("writing", this.menu.screen())
+    call: this.check.assertEquals("text", this.writing.game.skill.mode())
+    call: this.check.assertEquals(6, this.root.app.service("scenes").active_entities())
+    call: this.check.assertEquals(0, this.writing.configure_writing())
+    call: this.check.assertEquals(1, this.menu.back())
+    call: this.check.assertEquals(0, this.root.app.service("scenes").active_entities())
+
+  @Test
+  fn sevenPagesIncludeAlphabetCheckDeleteAndBoundaries():
+    call: this.check.assertEquals("A", this.input.options()[0])
+    call: this.check.assertEquals("D", this.input.options()[3])
+    call: this.check.assertEquals(0, this.input.change_page(0 - 1))
+    call: this.check.assertEquals(1, this.input.change_page(5))
+    call: this.check.assertEquals("U", this.input.options()[0])
+    call: this.check.assertEquals("X", this.input.options()[3])
+    call: this.check.assertEquals(1, this.input.change_page(1))
+    call: this.check.assertEquals(6, this.input.page)
+    call: this.check.assertEquals("Y", this.input.options()[0])
+    call: this.check.assertEquals("Z", this.input.options()[1])
+    call: this.check.assertEquals("CHECK", this.input.options()[2])
+    call: this.check.assertEquals("DELETE", this.input.options()[3])
+    call: this.check.assertEquals(0, this.input.change_page(1))
+    call: this.check.assertEquals(0 - 1, this.input.select(2))
+    call: this.check.assertEquals("", this.input.text)
+
+  @Test
+  fn spellingInputAllowsEditingBoundedLettersAndSafeReset():
+    call: this.check.assertEquals(0, this.input.select(0))
+    call: this.check.assertEquals("A", this.input.text)
+    call: this.check.assertEquals(0, this.input.select(3))
+    call: this.check.assertEquals("AD", this.input.text)
+    call: this.check.assertEquals(1, this.input.change_page(6))
+    call: this.check.assertEquals(2, this.input.select(3))
+    call: this.check.assertEquals("A", this.input.text)
+    call: this.check.assertEquals(1, this.input.select(2))
+    call: this.check.assertEquals(0 - 1, this.input.select(4))
+    call: this.check.assertEquals(0 - 1, this.input.select(0 - 1))
+    call: this.check.assertEquals(1, this.input.reset())
+    call: this.check.assertEquals(0, this.input.page)
+    call: this.check.assertEquals("", this.input.text)
+    set step int: 0
+    while: step < 16
+      call: this.check.assertEquals(0, this.input.select(0))
+      set step: step + 1
+    call: this.check.assertEquals(0 - 1, this.input.select(0))
+    call: this.check.assertEquals(16, len(this.input.text))
+
+  @Test
+  fn wordCanBeComposedFromVirtualKeyboardAndSubmittedToOriginalGame():
+    set target: this.writing.game.problem.solution()
+    set i int: 0
+    set letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    while: i < len(target)
+      set position int: index_of(letters, char_at(target, i))
+      call: this.check.assertEquals(1, position >= 0)
+      set page int: 0
+      while: position >= 4
+        set page: page + 1
+        set position: position - 4
+      call: this.check.assertEquals(1, this.input.change_page(page - this.input.page) == 1)
+      call: this.check.assertEquals(0, this.input.select(position))
+      set i: i + 1
+    call: this.check.assertEquals(target, this.input.text)
+    call: this.check.assertEquals(1, this.input.change_page(6 - this.input.page))
+    call: this.check.assertEquals(1, this.input.select(2))
+    set mathHp int: this.math.game.mob.cur_hp()
+    set readingHp int: this.reading.game.mob.cur_hp()
+    set hp int: this.writing.game.mob.cur_hp()
+    call: this.check.assertEquals(1, this.writing.choose_text(this.input.text))
+    call: this.check.assertLessThan(this.writing.game.mob.cur_hp(), hp)
+    call: this.check.assertEquals(mathHp, this.math.game.mob.cur_hp())
+    call: this.check.assertEquals(readingHp, this.reading.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.writing.feedback_kind)
+    call: this.check.assertEquals(1, this.input.reset())
+    call: this.check.assertEquals("", this.input.text)
+
+  @Test
+  fn emptyAndIncorrectWordsCannotDamageOrMutateOtherGames():
+    set hp int: this.writing.game.mob.cur_hp()
+    call: this.check.assertEquals(0 - 1, this.writing.choose_text(""))
+    call: this.check.assertEquals(hp, this.writing.game.mob.cur_hp())
+    call: this.check.assertEquals(0 - 1, this.reading.choose_text("CAT"))
+    call: this.check.assertEquals(0, this.writing.choose_text("WRONG"))
+    call: this.check.assertEquals(hp, this.writing.game.mob.cur_hp())
+    call: this.check.assertEquals(2, this.writing.feedback_kind)
+    set screen: new BattleHudText()
+    call: this.check.assertEquals(4320, len(screen.writing_vertices(this.writing, this.input)))
+
+  @Test
+  fn wordPoolsUseExistingWritingSkillAndAllLongTiers():
+    set skill: new WritingSkill()
+    set easy: skill.generate(1)
+    call: this.check.assertEquals("text", skill.mode())
+    call: this.check.assertEquals(easy.ask(), easy.solution())
+    set high: skill.generate(7)
+    call: this.check.assertEquals(1, len(high.ask()) >= 8)
+    call: this.check.assertEquals(high.ask(), high.solution())

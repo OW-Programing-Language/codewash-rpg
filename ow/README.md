@@ -346,3 +346,13 @@ four stable choices, independent Math/Reading combat progression, and
 visible GPU hit/miss feedback. It is a **keyboard word-matching adaptation**,
 not the browser's microphone/speech-recognition mode. No original browser
 game or React/Electron behavior is replaced.
+
+## Phase 2 PR #8 — Native Writing (virtual keyboard)
+
+Open [native Writing](docs/GPU-BATTLE.md) through **Activities → Writing** to
+copy a source word using the original OW `WritingSkill`, OW Engine ECS and
+OW Graphics framebuffer HUD. Left/Right navigates seven character pages;
+W/A/S/D selects letters, Check submits and Delete edits. This is an explicit
+word-copy prototype: original item-image clues and general OS text input are
+not available in the pinned graphics runtime yet. Math, Reading and Writing
+remain independent; the browser and React/Electron games are unaffected.

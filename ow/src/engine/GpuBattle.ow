@@ -231,7 +231,13 @@ class GpuBattle:
               call: this.selection.pick(0)
               call: assert(this.refresh_active_hud() == 1, "writing page back")
             else:
-              call: this.selection.move(navigation)
+              if: navigation == "DOWN"
+                if: this.selection.selected < 3
+                  call: this.selection.pick(this.selection.selected + 1)
+              else:
+                if: navigation == "UP"
+                  if: this.selection.selected > 0
+                    call: this.selection.pick(this.selection.selected - 1)
         else:
           call: this.selection.move(navigation)
         set this.nav_held: navigation
