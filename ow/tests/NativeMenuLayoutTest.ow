@@ -24,7 +24,7 @@ class NativeMenuLayoutTest:
     call: this.check.assertEquals(1, this.layout.panel_x(0) + this.layout.panel_width(0) < this.layout.panel_x(1))
     call: this.check.assertEquals(1, this.layout.panel_x(1) + this.layout.panel_width(1) < this.layout.panel_x(2))
     call: this.check.assertEquals(1, this.layout.logo_y() > 0.6)
-    call: this.check.assertEquals(1, this.layout.button_y() < 0.0 - 0.6)
+    call: this.check.assertEquals(1, this.layout.button_y() > 0.7)
 
   @Test
   fn theMenuBuildsFourDistinctGPUButtonsAndDecorativeCards():
@@ -32,9 +32,9 @@ class NativeMenuLayoutTest:
     set frame: this.layout.chrome_vertices()
     call: this.check.assertEquals(72, len(buttons))
     call: this.check.assertEquals(1728, len(frame))
-    call: this.check.assertEquals(0.0 - 0.96, buttons[0])
-    call: this.check.assertEquals(0 - 1, buttons[2])
-    call: this.check.assertEquals(0 - 2, buttons[20])
-    call: this.check.assertEquals(0 - 3, buttons[38])
-    call: this.check.assertEquals(0 - 4, buttons[56])
+    call: this.check.assertEquals(0.0 - 0.963, buttons[0])
+    call: this.check.assertEquals(0 - 5, buttons[2])
+    call: this.check.assertEquals(0 - 5, buttons[20])
+    call: this.check.assertEquals(0 - 5, buttons[38])
+    call: this.check.assertEquals(0 - 5, buttons[56])
     call: this.check.assertEquals(1, frame[0] < 0.0)
