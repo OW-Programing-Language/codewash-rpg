@@ -48,33 +48,71 @@ class NativeMenuLayout:
   fn button_y():
     return: 0.0 - 0.83
 
+  # Quad writer for the native UI geometry. Z encodes themed GPU colors.
+  # The HUD's shader is shared with the original OW bitmap glyph renderer.
+  fn quad(buffer, at, x, y, w, h, z):
+    set buffer[at]: x
+    set buffer[at + 1]: y
+    set buffer[at + 2]: z
+    set buffer[at + 3]: x + w
+    set buffer[at + 4]: y
+    set buffer[at + 5]: z
+    set buffer[at + 6]: x + w
+    set buffer[at + 7]: y + h
+    set buffer[at + 8]: z
+    set buffer[at + 9]: x
+    set buffer[at + 10]: y
+    set buffer[at + 11]: z
+    set buffer[at + 12]: x + w
+    set buffer[at + 13]: y + h
+    set buffer[at + 14]: z
+    set buffer[at + 15]: x
+    set buffer[at + 16]: y + h
+    set buffer[at + 17]: z
+    return: at + 18
+
+  # 3 framed feature cards, 4 top-corner action ornaments, and a decorative
+  # 10-heart health strip. No false claim of active mouse controls.
+  fn chrome_vertices():
+    set buffer: array(1728, 0.0)
+    set at int: 0
+    set i int: 0
+    while: i < 3
+      set x float: this.panel_x(i)
+      set y float: this.panel_y(i)
+      set w float: this.panel_width(i)
+      set h float: this.panel_height(i)
+      if: i == 1
+        set at: this.quad(buffer, at, x - 0.014, y - 0.016, w + 0.028, h + 0.032, 0 - 7)
+        set at: this.quad(buffer, at, x, y, w, h, 0 - 6)
+      else:
+        set at: this.quad(buffer, at, x - 0.007, y - 0.008, w + 0.014, h + 0.016, 0 - 10)
+        set at: this.quad(buffer, at, x, y, w, h, 0 - 5)
+      set i: i + 1
+    set i: 0
+    while: i < 4
+      set x float: (0.0 - 0.96) + i * 0.14
+      if: i > 1
+        set x: 0.66 + (i - 2) * 0.14
+      set at: this.quad(buffer, at, x, 0.77, 0.115, 0.145, 0 - 9)
+      set i: i + 1
+    set i: 0
+    while: i < 10
+      set hx float: (0.0 - 0.42) + i * 0.087
+      set hy float: 0.0 - 0.97
+      set at: this.quad(buffer, at, hx, hy, 0.066, 0.072, 0 - 10)
+      set at: this.quad(buffer, at, hx + 0.007, hy + 0.042, 0.021, 0.025, 0 - 8)
+      set at: this.quad(buffer, at, hx + 0.038, hy + 0.042, 0.021, 0.025, 0 - 8)
+      set at: this.quad(buffer, at, hx + 0.009, hy + 0.023, 0.049, 0.029, 0 - 8)
+      set at: this.quad(buffer, at, hx + 0.020, hy + 0.010, 0.028, 0.020, 0 - 8)
+      set i: i + 1
+    return: buffer
+
   fn button_vertices():
     set buffer: array(72, 0.0)
+    set at int: 0
     set i int: 0
     while: i < 4
-      set x float: this.button_x(i)
-      set y float: this.button_y()
-      set w float: 0.43
-      set h float: 0.17
-      set z int: 0 - 1 - i
-      set at int: i * 18
-      set buffer[at]: x
-      set buffer[at + 1]: y
-      set buffer[at + 2]: z
-      set buffer[at + 3]: x + w
-      set buffer[at + 4]: y
-      set buffer[at + 5]: z
-      set buffer[at + 6]: x + w
-      set buffer[at + 7]: y + h
-      set buffer[at + 8]: z
-      set buffer[at + 9]: x
-      set buffer[at + 10]: y
-      set buffer[at + 11]: z
-      set buffer[at + 12]: x + w
-      set buffer[at + 13]: y + h
-      set buffer[at + 14]: z
-      set buffer[at + 15]: x
-      set buffer[at + 16]: y + h
-      set buffer[at + 17]: z
+      set at: this.quad(buffer, at, this.button_x(i), this.button_y(), 0.43, 0.17, 0 - 1 - i)
       set i: i + 1
     return: buffer

@@ -7,6 +7,9 @@ class NativeArtCatalog:
   fn menu_background_path():
     return: "assets/native/themes/minecraft.png"
 
+  fn menu_logo_path():
+    return: "assets/native/themes/minecraft_logo.png"
+
   fn icon_slot(skill):
     if: skill == "math"
       return: 0
