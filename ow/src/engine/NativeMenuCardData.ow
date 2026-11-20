@@ -34,6 +34,12 @@ class NativeMenuCardData:
       set ratio: 1.0
     return: ratio * 100.0
 
+  fn hp_text(index):
+    if: this.valid(index) != 1
+      return: "HP ?"
+    set mob: this.games[index].mob
+    return: "HP " + str(mob.cur_hp()) + "/" + str(mob.max_hp())
+
   fn mob_name(index):
     if: this.valid(index) != 1
       return: "?"
