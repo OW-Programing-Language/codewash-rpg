@@ -108,8 +108,9 @@ class NativeMenuRouterTest:
     set layout: new BattleHudText()
     set vertices: layout.menu_vertices(this.router)
     call: this.check.assertEquals(4320, len(vertices))
-    # The compact title starts with CODEWASH, not the old giant LEVEL UP.
-    call: this.check.assertEquals(16, vertices[2])
-    call: this.check.assertEquals(1, vertices[7] - vertices[1] < 0.040)
+    # The screenshot-inspired yellow LEVEL UP headline now replaces the tiny CODEWASH label.
+    call: this.check.assertEquals(4, mod(vertices[2], 8))
+    call: this.check.assertEquals(1, vertices[7] - vertices[1] > 0.090)
+    call: this.check.assertEquals(1, vertices[7] - vertices[1] < 0.110)
     call: this.check.assertEquals(1, this.router.open_activities(1))
     call: this.check.assertEquals(4320, len(layout.menu_vertices(this.router)))
