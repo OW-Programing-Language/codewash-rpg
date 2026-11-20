@@ -37,7 +37,7 @@ class NativeTypographyTest:
   @Test
   fn richCardGlyphsAreCompactAndFitSideCards():
     set vertices: this.font.rich_card_text_vertices(this.carousel, this.cards, this.layout)
-    call: this.check.assertEquals(4320, len(vertices))
+    call: this.check.assertEquals(7200, len(vertices))
     set firstHeight float: vertices[7] - vertices[1]
     call: this.check.assertEquals(1, firstHeight < 0.035)
     call: this.check.assertEquals(1, firstHeight > 0.020)
@@ -53,6 +53,6 @@ class NativeTypographyTest:
     while: i < 12
       call: this.carousel.tick()
       set vertices: this.font.rich_card_text_vertices(this.carousel, this.cards, this.layout)
-      call: this.check.assertEquals(4320, len(vertices))
+      call: this.check.assertEquals(7200, len(vertices))
       set i: i + 1
     call: this.check.assertEquals(0, this.carousel.active)
