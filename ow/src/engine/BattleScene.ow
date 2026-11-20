@@ -11,6 +11,11 @@ class BattleScene:
   field monster
   field health
   field ground
+  field hit_fx
+  field miss_fx
+  field battle_mesh
+  field feedback_kind
+  field feedback_frame
 
   fn new(app):
     set this.app: app
@@ -22,6 +27,11 @@ class BattleScene:
     set this.monster: 0
     set this.health: 0
     set this.ground: 0
+    set this.hit_fx: 0
+    set this.miss_fx: 0
+    set this.battle_mesh: 0
+    set this.feedback_kind: 0
+    set this.feedback_frame: 0
 
   fn start(mesh):
     if: mesh < 1
@@ -36,6 +46,8 @@ class BattleScene:
     set this.monster: this.scenes.spawn("monster")
     set this.health: this.scenes.spawn("monster-health")
     set this.ground: this.scenes.spawn("battle-floor")
+    set this.hit_fx: this.scenes.spawn("hit-spark")
+    set this.miss_fx: this.scenes.spawn("miss-spark")
     if: this.hero == 0
       return: 0
     if: this.monster == 0
@@ -44,10 +56,20 @@ class BattleScene:
       return: 0
     if: this.ground == 0
       return: 0
+    if: this.hit_fx == 0
+      return: 0
+    if: this.miss_fx == 0
+      return: 0
+    set this.battle_mesh: mesh
     call: this.ecs.set_transform(this.hero, 0.0 - 1.55, 0.0, 0.0)
     call: this.ecs.set_transform(this.monster, 1.55, 0.0, 0.0)
     call: this.ecs.set_transform(this.health, 1.55, 1.35, 0.0)
     call: this.ecs.set_transform(this.ground, 0.0, 0.0 - 1.32, 0.0 - 0.45)
+    # Dormant ECS effects do not draw until a correct or wrong answer.
+    call: this.ecs.set_transform(this.hit_fx, 1.55, 2.05, 0.0)
+    call: this.ecs.set_transform(this.miss_fx, 0.0 - 1.55, 2.05, 0.0)
+    call: this.ecs.get("transform", this.hit_fx).set_scale(0.48, 0.48, 0.48)
+    call: this.ecs.get("transform", this.miss_fx).set_scale(0.48, 0.48, 0.48)
     call: this.ecs.get("transform", this.hero).set_scale(0.72, 1.0, 0.56)
     call: this.ecs.get("transform", this.monster).set_scale(0.95, 1.15, 0.72)
     call: this.ecs.get("transform", this.ground).set_scale(5.2, 0.16, 1.8)
@@ -73,6 +95,55 @@ class BattleScene:
     # An almost-empty bar stays visible; a defeated foe is respawned by Game.
     return: this.ecs.get("transform", this.health).set_scale(1.20 * ratio + 0.03, 0.15, 0.18)
 
+  # Clear the effect and restore the original idle positions.
+  fn clear_feedback():
+    if: this.world.mesh_of(this.hit_fx) > 0
+      call: this.world.clear_mesh(this.hit_fx)
+    if: this.world.mesh_of(this.miss_fx) > 0
+      call: this.world.clear_mesh(this.miss_fx)
+    call: this.ecs.set_transform(this.hero, 0.0 - 1.55, 0.0, 0.0)
+    call: this.ecs.set_transform(this.monster, 1.55, 0.0, 0.0)
+    set this.feedback_kind: 0
+    set this.feedback_frame: 0
+    return: 1
+
+  # 1=hit, 2=miss; only the corresponding ECS mesh is made visible.
+  fn show_feedback(correct):
+    call: this.clear_feedback()
+    if: correct == 1
+      set this.feedback_kind: 1
+      return: this.world.set_mesh(this.hit_fx, this.battle_mesh)
+    set this.feedback_kind: 2
+    return: this.world.set_mesh(this.miss_fx, this.battle_mesh)
+
+  # This preview animates per rendered frame; not yet real-time-scaled.
+  fn advance_feedback():
+    if: this.feedback_kind == 0
+      return: 0
+    set this.feedback_frame: this.feedback_frame + 1
+    if: this.feedback_frame >= 12
+      call: this.clear_feedback()
+      return: 0
+    if: this.feedback_kind == 1
+      if: this.feedback_frame <= 4
+        call: this.ecs.set_transform(this.monster, 1.72, 0.0, 0.0)
+      else:
+        if: this.feedback_frame <= 8
+          call: this.ecs.set_transform(this.monster, 1.40, 0.0, 0.0)
+        else:
+          call: this.ecs.set_transform(this.monster, 1.55, 0.0, 0.0)
+      call: this.ecs.set_transform(this.hit_fx, 1.55, 2.05 + 0.015 * this.feedback_frame, 0.0)
+    else:
+      if: this.feedback_frame <= 4
+        call: this.ecs.set_transform(this.hero, 0.0 - 1.42, 0.0, 0.0)
+      else:
+        if: this.feedback_frame <= 8
+          call: this.ecs.set_transform(this.hero, 0.0 - 1.68, 0.0, 0.0)
+        else:
+          call: this.ecs.set_transform(this.hero, 0.0 - 1.55, 0.0, 0.0)
+      call: this.ecs.set_transform(this.miss_fx, 0.0 - 1.55, 2.05 + 0.015 * this.feedback_frame, 0.0)
+    return: 1
+
   fn options():
     return: this.game.skill.options(this.game.problem)
 
@@ -90,4 +161,5 @@ class BattleScene:
       set correct: 1
     call: this.game.answer(value)
     call: this.sync_health()
+    call: this.show_feedback(correct)
     return: correct

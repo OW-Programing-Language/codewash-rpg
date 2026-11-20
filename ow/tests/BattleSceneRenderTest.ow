@@ -24,10 +24,10 @@ class BattleSceneRenderTest:
     call: this.engine.stop()
 
   @Test
-  fn createsFourEngineEntitiesAndRendersViaGraphics():
+  fn createsFourRenderedMeshesAndTwoDormantFeedbackEntities():
     set app: this.engine.app
     call: this.checker.assertEquals("battle", app.service("scenes").active_name())
-    call: this.checker.assertEquals(4, app.service("scenes").active_entities())
+    call: this.checker.assertEquals(6, app.service("scenes").active_entities())
     call: this.checker.assertEquals(7, app.service("render_world").mesh_of(this.battle.monster))
     set shader GRAPHICS_SHADER: app.service("shader")
     set camera GRAPHICS_CAMERA: app.service("camera")
@@ -61,4 +61,4 @@ class BattleSceneRenderTest:
     call: this.checker.assertEquals(0 - 1, this.battle.choose(0 - 1))
     call: this.checker.assertEquals(0 - 1, this.battle.choose(4))
     call: this.checker.assertEquals(0, this.battle.start(7))
-    call: this.checker.assertEquals(4, this.engine.app.service("scenes").active_entities())
+    call: this.checker.assertEquals(6, this.engine.app.service("scenes").active_entities())

@@ -50,7 +50,7 @@ jobs:
             -d ow/target/probe-classes ow/tests/gpu/FramebufferProbe.java
           cp ow/tests/gpu/META-INF/services/dev.oreo.RuntimeExtension \
             ow/target/probe-classes/META-INF/services/dev.oreo.RuntimeExtension
-      - name: Render actual battle pixels and resolve a combat answer
+      - name: Render idle, hit and miss feedback and sample actual pixels
         working-directory: ow
         run: |
           xvfb-run -a -s "-screen 0 1024x768x24" env LIBGL_ALWAYS_SOFTWARE=1 \

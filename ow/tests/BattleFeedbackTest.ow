@@ -1,0 +1,82 @@
+# OWUnit ECS presentation tests use no GPU and do not modify combat rules.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+
+class BattleFeedbackTest:
+  field check
+  field root
+  field battle
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.root: new CodeWashEngine()
+    call: this.check.assertEquals(1, this.root.boot())
+    set this.battle: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.battle.start(7))
+
+  @AfterEach
+  fn cleanup():
+    call: this.root.stop()
+
+  @Test
+  fn idleHasNoFeedbackMesh():
+    set world: this.root.app.service("render_world")
+    call: this.check.assertEquals(6, this.root.app.service("scenes").active_entities())
+    call: this.check.assertEquals(0, world.mesh_of(this.battle.hit_fx))
+    call: this.check.assertEquals(0, world.mesh_of(this.battle.miss_fx))
+    call: this.check.assertEquals(0, this.battle.advance_feedback())
+
+  @Test
+  fn correctAnswerRecoilAndAutoExpiry():
+    set game: this.battle.game
+    set before int: game.mob.cur_hp()
+    call: this.check.assertEquals(1, this.battle.choose(2))
+    call: this.check.assertLessThan(game.mob.cur_hp(), before)
+    set world: this.root.app.service("render_world")
+    call: this.check.assertEquals(7, world.mesh_of(this.battle.hit_fx))
+    call: this.check.assertEquals(0, world.mesh_of(this.battle.miss_fx))
+    call: this.check.assertEquals(1, this.battle.advance_feedback())
+    set pose: this.root.app.service("components").get("transform", this.battle.monster)
+    call: this.check.assertEquals(1.72, pose.x)
+    set step int: 1
+    while: step < 12
+      call: this.battle.advance_feedback()
+      set step: step + 1
+    call: this.check.assertEquals(0, this.battle.feedback_kind)
+    call: this.check.assertEquals(0, world.mesh_of(this.battle.hit_fx))
+    call: this.check.assertEquals(1.55, pose.x)
+
+  @Test
+  fn wrongAnswerRecoilWithoutDamage():
+    set game: this.battle.game
+    set before int: game.mob.cur_hp()
+    call: this.check.assertEquals(0, this.battle.choose(0))
+    call: this.check.assertEquals(before, game.mob.cur_hp())
+    set world: this.root.app.service("render_world")
+    call: this.check.assertEquals(7, world.mesh_of(this.battle.miss_fx))
+    call: this.check.assertEquals(0, world.mesh_of(this.battle.hit_fx))
+    call: this.check.assertEquals(1, this.battle.advance_feedback())
+    set pose: this.root.app.service("components").get("transform", this.battle.hero)
+    call: this.check.assertEquals(0.0 - 1.42, pose.x)
+    set step int: 1
+    while: step < 12
+      call: this.battle.advance_feedback()
+      set step: step + 1
+    call: this.check.assertEquals(0, this.battle.feedback_kind)
+    call: this.check.assertEquals(0, world.mesh_of(this.battle.miss_fx))
+    call: this.check.assertEquals(0.0 - 1.55, pose.x)
+
+  @Test
+  fn laterAnswerOverridesStaleFeedbackAndRejectsInvalidIndex():
+    set world: this.root.app.service("render_world")
+    call: this.check.assertEquals(1, this.battle.choose(2))
+    call: this.check.assertEquals(7, world.mesh_of(this.battle.hit_fx))
+    call: this.check.assertEquals(0, this.battle.choose(0))
+    call: this.check.assertEquals(0, world.mesh_of(this.battle.hit_fx))
+    call: this.check.assertEquals(7, world.mesh_of(this.battle.miss_fx))
+    call: this.check.assertEquals(2, this.battle.feedback_kind)
+    call: this.check.assertEquals(0, this.battle.feedback_frame)
+    call: this.check.assertEquals(0 - 1, this.battle.choose(0 - 1))
+    call: this.check.assertEquals(2, this.battle.feedback_kind)
