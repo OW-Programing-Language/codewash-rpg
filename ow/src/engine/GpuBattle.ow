@@ -43,6 +43,7 @@ class GpuBattle:
   field world
   field runtime
   field battle
+  field reading
   field program
   field cube
   field held
@@ -125,8 +126,15 @@ class GpuBattle:
       return: 0
     if: scenes.add_scene("settings") != 1
       return: 0
+    if: scenes.add_scene("reading") != 1
+      return: 0
     set this.battle: new BattleScene(this.app)
     if: this.battle.start(this.cube) != 1
+      return: 0
+    set this.reading: new BattleScene(this.app)
+    if: this.reading.configure_reading() != 1
+      return: 0
+    if: this.reading.start(this.cube) != 1
       return: 0
     set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
     if: this.hud.start(this.battle) != 1
@@ -138,9 +146,22 @@ class GpuBattle:
       return: 0
     return: 1
 
+  fn active_battle():
+    if: this.menu.screen() == "reading"
+      return: this.reading
+    return: this.battle
+
+  fn playing():
+    if: this.menu.screen() == "battle"
+      return: 1
+    if: this.menu.screen() == "reading"
+      return: 1
+    return: 0
+
   fn show_question():
-    print: this.battle.game.prompt_line()
-    set answers: this.battle.options()
+    set active: this.active_battle()
+    print: active.game.prompt_line()
+    set answers: active.options()
     print: "W=" + str(answers[0]) + "  A=" + str(answers[1]) + "  S=" + str(answers[2]) + "  D=" + str(answers[3])
     print: "Choose with W/A/S/D in the game window; ESC exits."
 
@@ -208,7 +229,7 @@ class GpuBattle:
       return: 0
     set this.held: choice
     call: this.selection.pick(choice)
-    if: this.menu.screen() != "battle"
+    if: this.playing() == 0
       set handled int: this.menu.choose(choice)
       if: this.menu.quitting == 1
         call: this.window.request_close()
@@ -216,18 +237,19 @@ class GpuBattle:
       if: handled >= 0
         if: handled == 1
           call: this.selection.pick(0)
-        if: this.menu.screen() == "battle"
-          call: assert(this.hud.refresh(this.battle) == 1, "battle screen refresh")
+        if: this.playing() == 1
+          call: assert(this.hud.refresh(this.active_battle()) == 1, "activity screen refresh")
           call: this.show_question()
         else:
           call: assert(this.hud.refresh_menu(this.menu) == 1, "menu screen refresh")
       return: handled
-    set outcome int: this.battle.choose(choice)
+    set active: this.active_battle()
+    set outcome int: active.choose(choice)
     if: outcome == 1
-      print: "Correct! " + this.battle.game.message
+      print: "Correct! " + active.game.message
     else:
-      print: "Incorrect. " + this.battle.game.message
-    call: assert(this.hud.refresh(this.battle) == 1, "HUD refresh")
+      print: "Incorrect. " + active.game.message
+    call: assert(this.hud.refresh(active) == 1, "HUD refresh")
     call: this.show_question()
     return: outcome
 
@@ -235,8 +257,8 @@ class GpuBattle:
     return: 1 - this.window.should_close()
 
   fn render():
-    if: this.menu.screen() == "battle"
-      call: this.battle.advance_feedback()
+    if: this.playing() == 1
+      call: this.active_battle().advance_feedback()
     set view: this.camera.view_from_position(0.0, 0.0, 7.0)
     set projection: this.camera.perspective(1.0, 1.3333333333333, 0.1, 50.0)
     set drawn int: this.world.render_frame(this.program, view, projection, 12, 18, 29)

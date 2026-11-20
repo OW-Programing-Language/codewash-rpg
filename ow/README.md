@@ -337,3 +337,12 @@ these screens, preserves battle state and offers a two-page list of all six
 activities. Only **Math** is implemented; the others and settings are clearly
 marked unavailable. Use W/A/S/D or arrow keys plus Space; Escape returns to
 the menu. The original OW browser/React game is unchanged.
+
+## Phase 2 PR #7 — Native Reading activity
+
+Native [OW Graphics Reading mode](docs/GPU-BATTLE.md) is now selectable from
+**Activities → Reading**. It uses the original `ReadingSkill` word pools,
+four stable choices, independent Math/Reading combat progression, and
+visible GPU hit/miss feedback. It is a **keyboard word-matching adaptation**,
+not the browser's microphone/speech-recognition mode. No original browser
+game or React/Electron behavior is replaced.

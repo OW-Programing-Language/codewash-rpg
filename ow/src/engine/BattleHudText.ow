@@ -56,7 +56,7 @@ class BattleHudText:
     set buffer: array(4320, 0.0)
     set at int: 0
     set status: "LVL " + str(battle.game.hero.lvl()) + "  MOB " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
-    set question: "MATH " + upper(battle.game.problem.ask())
+    set question: upper(battle.skill_name) + " " + upper(battle.game.problem.ask())
     set answers: battle.options()
     set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
     set at: this.line(buffer, at, question, 0.0 - 0.93, 0.69, 45)

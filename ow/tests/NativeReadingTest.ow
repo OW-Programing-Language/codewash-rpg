@@ -1,0 +1,109 @@
+# Native Reading reuses the original ReadingSkill and Game combat loop.
+# Unlike the browser microphone activity, this native vertical slice is word
+# matching via four W/A/S/D answer cards (no fabricated speech recognition).
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/engine/NativeMenuRouter.ow"
+import "../src/modules/skills/api/ReadingSkill.ow"
+
+class NativeReadingTest:
+  field check
+  field root
+  field math
+  field reading
+  field router
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.root: new CodeWashEngine()
+    call: this.check.assertEquals(1, this.root.boot())
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, scenes.add_scene("activities"))
+    call: this.check.assertEquals(1, scenes.add_scene("settings"))
+    call: this.check.assertEquals(1, scenes.add_scene("reading"))
+    set this.math: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.math.start(7))
+    set this.reading: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.reading.configure_reading())
+    call: this.check.assertEquals(1, this.reading.start(7))
+    set this.router: new NativeMenuRouter(scenes)
+    call: this.check.assertEquals(1, this.router.open_menu())
+
+  @AfterEach
+  fn cleanup():
+    call: this.root.stop()
+
+  @Test
+  fn readingUsesRealSkillAndFrozenFourVisibleChoices():
+    call: this.check.assertEquals(1, this.router.open_activities(0))
+    call: this.check.assertEquals(1, this.router.choose(1))
+    call: this.check.assertEquals("reading", this.router.screen())
+    call: this.check.assertEquals("reading", this.reading.skill_name)
+    call: this.check.assertEquals("choice", this.reading.game.skill.mode())
+    set target: this.reading.game.problem.solution()
+    set choices: this.reading.options()
+    call: this.check.assertEquals(4, len(choices))
+    call: this.check.assertEquals(target, choices[1])
+    call: this.check.assertEquals(0, choices[0] == target)
+    call: this.check.assertEquals(0, choices[2] == target)
+    call: this.check.assertEquals(0, choices[3] == target)
+    set other: this.reading.options()
+    call: this.check.assertEquals(choices[0], other[0])
+    call: this.check.assertEquals(choices[2], other[2])
+    call: this.check.assertEquals(0, this.reading.configure_reading())
+
+  @Test
+  fn correctReadingWordDamagesOnlyReadingMonsterAndAwardsUsingGame():
+    call: this.check.assertEquals(1, this.router.start_reading())
+    set mathHp int: this.math.game.mob.cur_hp()
+    set before int: this.reading.game.mob.cur_hp()
+    call: this.check.assertEquals(1, this.reading.choose(1))
+    call: this.check.assertLessThan(this.reading.game.mob.cur_hp(), before)
+    call: this.check.assertEquals(mathHp, this.math.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.reading.feedback_kind)
+    call: this.check.assertEquals(this.reading.game.problem.solution(), this.reading.options()[1])
+
+  @Test
+  fn incorrectReadingWordDoesNotDamageAndBadIndexDoesNotChangeChoices():
+    call: this.check.assertEquals(1, this.router.start_reading())
+    set before int: this.reading.game.mob.cur_hp()
+    set original: this.reading.options()
+    call: this.check.assertEquals(0 - 1, this.reading.choose(0 - 1))
+    call: this.check.assertEquals(0 - 1, this.reading.choose(4))
+    call: this.check.assertEquals(original[0], this.reading.options()[0])
+    call: this.check.assertEquals(0, this.reading.choose(0))
+    call: this.check.assertEquals(before, this.reading.game.mob.cur_hp())
+    call: this.check.assertEquals(2, this.reading.feedback_kind)
+
+  @Test
+  fn engineSceneIsolationPreservesReadingAndMathProgress():
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, this.router.start_reading())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(7, this.root.app.service("render_world").mesh_of(this.reading.hero))
+    call: this.check.assertEquals(1, this.reading.choose(1))
+    set readingHp int: this.reading.game.mob.cur_hp()
+    call: this.check.assertEquals(1, this.router.open_menu())
+    call: this.check.assertEquals(0, scenes.active_entities())
+    call: this.check.assertEquals(1, this.router.start_math())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(1, this.math.choose(2))
+    call: this.check.assertEquals(readingHp, this.reading.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.router.start_reading())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(readingHp, this.reading.game.mob.cur_hp())
+
+  @Test
+  fn existingWordPoolsCoverBeginnerAndAdvancedDifficulties():
+    set skill: new ReadingSkill()
+    set easy: skill.generate(1)
+    call: this.check.assertEquals(3, len(easy.ask()))
+    call: this.check.assertEquals(easy.solution(), skill.options(easy)[1])
+    set hard: skill.generate(7)
+    call: this.check.assertEquals(1, len(hard.ask()) > 19)
+    call: this.check.assertEquals(hard.solution(), skill.options(hard)[1])
+    set vertices: new BattleHudText()
+    call: this.check.assertEquals(4320, len(vertices.vertices(this.reading)))
