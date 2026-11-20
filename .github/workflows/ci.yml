@@ -31,7 +31,7 @@ jobs:
         run: npm run lint
 
       - name: Validate GPU preview launcher commands (Node.js)
-        run: node --test ow/scripts/gpu-preview.test.mjs ow/scripts/stage-native-assets.test.mjs
+        run: node --test ow/scripts/gpu-preview.test.mjs ow/scripts/stage-native-assets.test.mjs ow/scripts/package-native.test.mjs ow/scripts/verify-native-image.test.mjs
 
       - name: Tests + coverage (Vitest, fails under thresholds)
         run: npm run coverage

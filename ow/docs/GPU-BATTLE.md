@@ -453,3 +453,9 @@ animation, timed Simon-Says, full sound playback or a complete art pipeline.
 The existing cubes are still procedural placeholders. Advanced 3D models,
 animation blending, audio, saves, accessible input and desktop packaging
 require further PRs.
+
+## Phase 3 PR #13 — Bundled native desktop distributions
+
+See [Native desktop packages](NATIVE-DESKTOP.md) for Windows EXE, Linux and
+macOS app-image downloads, the startup splash and the offline cached OW
+modules. The installed native app never builds OW or Graphics on launch.
