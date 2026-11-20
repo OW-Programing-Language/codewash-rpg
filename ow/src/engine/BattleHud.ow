@@ -14,6 +14,10 @@ class BattleHud:
   field menu_cards
   field menu_chrome
   field carousel_panels
+  field rich_panels
+  field rich_text
+  field card_data
+  field menu_show_cards
   field carousel
   field menu_mode
   field layout
@@ -31,6 +35,10 @@ class BattleHud:
     set this.menu_cards: 0
     set this.menu_chrome: 0
     set this.carousel_panels: 0
+    set this.rich_panels: 0
+    set this.rich_text: 0
+    set this.card_data: 0
+    set this.menu_show_cards: 1
     set this.carousel: 0
     set this.menu_mode: 0
     set this.layout: new NativeMenuLayout()
@@ -39,7 +47,7 @@ class BattleHud:
 
   fn start(battle):
     set vertex: "#version 330 core\nlayout(location=0) in vec3 aPos;\nflat out int vKind;\nflat out int vCode;\nout vec2 vUv;\nvoid main(){\n  gl_Position=vec4(aPos.xy,0.0,1.0);\n  if(aPos.z<0.0){vKind=1;vCode=int(-aPos.z)-1;vUv=vec2(0.0);}\n  else{\n    int encoded=int(aPos.z+0.5);\n    vKind=0;vCode=encoded/8;\n    int corner=encoded%8;\n    vUv=vec2((corner==1||corner==2)?1.0:0.0,(corner==2||corner==3)?1.0:0.0);\n  }\n}"
-    set fragment: "#version 330 core\nflat in int vKind;\nflat in int vCode;\nin vec2 vUv;\nout vec4 pixel;\nuniform int uSelected;\nuniform int uAnimTick;\nconst int fontRows[343]=int[343](14,17,17,31,17,17,17,30,17,17,30,17,17,30,15,16,16,16,16,16,15,30,17,17,17,17,17,30,31,16,16,30,16,16,31,31,16,16,30,16,16,16,15,16,16,23,17,17,15,17,17,17,31,17,17,17,31,4,4,4,4,4,31,7,2,2,2,18,18,12,17,18,20,24,20,18,17,16,16,16,16,16,16,31,17,27,21,21,17,17,17,17,25,21,19,17,17,17,14,17,17,17,17,17,14,30,17,17,30,16,16,16,14,17,17,17,21,18,13,30,17,17,30,20,18,17,15,16,16,14,1,1,30,31,4,4,4,4,4,4,17,17,17,17,17,17,14,17,17,17,17,17,10,4,17,17,17,21,21,21,10,17,17,10,4,10,17,17,17,17,10,4,4,4,4,31,1,2,4,8,16,31,14,19,21,21,25,17,14,4,12,4,4,4,4,14,14,17,1,2,4,8,31,30,1,1,14,1,1,30,2,6,10,18,31,2,2,31,16,16,30,1,1,30,15,16,16,30,17,17,14,31,1,2,4,8,8,8,14,17,17,14,17,17,14,14,17,17,15,1,1,30,0,4,4,31,4,4,0,0,0,0,31,0,0,0,0,21,14,31,14,21,0,1,1,2,4,8,16,16,2,4,8,8,8,4,2,8,4,2,2,2,4,8,0,31,0,31,0,0,0,14,17,1,2,4,0,4,0,0,0,0,0,0,0,0,4,4,0,4,4,0,0,0,0,0,0,4,4,4,4,4,4,4,0,4,25,26,4,8,22,6,0);\nvoid main(){\n  if(vKind==1){\n    float wave=float(uAnimTick%32)/32.0;\n    if(vCode==4){pixel=vec4(0.12,0.11,0.18,1.0);return;}\n    if(vCode==5){pixel=vec4(0.27,0.12,0.53,1.0);return;}\n    if(vCode==6){pixel=vec4(0.98,0.82+wave*0.12,0.09,1.0);return;}\n    if(vCode==7){pixel=vec4(0.96,0.08,0.18,1.0);return;}\n    if(vCode==8){pixel=vec4(0.07,0.07,0.12,1.0);return;}\n    if(vCode==9){pixel=vec4(0.03,0.02,0.05,1.0);return;}\n    pixel=(vCode==uSelected)?vec4(0.12,0.43+0.07*wave,0.55+0.05*wave,1.0):vec4(0.08,0.15,0.23,1.0);\n    return;\n  }\n  if(vCode<0||vCode>=49)discard;\n  int gx=int(floor(vUv.x*5.0));\n  int gy=int(floor((1.0-vUv.y)*7.0));\n  if(gx<0||gx>=5||gy<0||gy>=7)discard;\n  int bits=fontRows[vCode*7+gy];\n  if((bits&(1<<(4-gx)))==0)discard;\n  pixel=vec4(0.88,0.96,1.0,1.0);\n}"
+    set fragment: "#version 330 core\nflat in int vKind;\nflat in int vCode;\nin vec2 vUv;\nout vec4 pixel;\nuniform int uSelected;\nuniform int uAnimTick;\nconst int fontRows[343]=int[343](14,17,17,31,17,17,17,30,17,17,30,17,17,30,15,16,16,16,16,16,15,30,17,17,17,17,17,30,31,16,16,30,16,16,31,31,16,16,30,16,16,16,15,16,16,23,17,17,15,17,17,17,31,17,17,17,31,4,4,4,4,4,31,7,2,2,2,18,18,12,17,18,20,24,20,18,17,16,16,16,16,16,16,31,17,27,21,21,17,17,17,17,25,21,19,17,17,17,14,17,17,17,17,17,14,30,17,17,30,16,16,16,14,17,17,17,21,18,13,30,17,17,30,20,18,17,15,16,16,14,1,1,30,31,4,4,4,4,4,4,17,17,17,17,17,17,14,17,17,17,17,17,10,4,17,17,17,21,21,21,10,17,17,10,4,10,17,17,17,17,10,4,4,4,4,31,1,2,4,8,16,31,14,19,21,21,25,17,14,4,12,4,4,4,4,14,14,17,1,2,4,8,31,30,1,1,14,1,1,30,2,6,10,18,31,2,2,31,16,16,30,1,1,30,15,16,16,30,17,17,14,31,1,2,4,8,8,8,14,17,17,14,17,17,14,14,17,17,15,1,1,30,0,4,4,31,4,4,0,0,0,0,31,0,0,0,0,21,14,31,14,21,0,1,1,2,4,8,16,16,2,4,8,8,8,4,2,8,4,2,2,2,4,8,0,31,0,31,0,0,0,14,17,1,2,4,0,4,0,0,0,0,0,0,0,0,4,4,0,4,4,0,0,0,0,0,0,4,4,4,4,4,4,4,0,4,25,26,4,8,22,6,0);\nvoid main(){\n  if(vKind==1){\n    float wave=float(uAnimTick%32)/32.0;\n    if(vCode==4){pixel=vec4(0.12,0.11,0.18,1.0);return;}\n    if(vCode==5){pixel=vec4(0.27,0.12,0.53,1.0);return;}\n    if(vCode==6){pixel=vec4(0.98,0.82+wave*0.12,0.09,1.0);return;}\n    if(vCode==7){pixel=vec4(0.96,0.08,0.18,1.0);return;}\n    if(vCode==8){pixel=vec4(0.07,0.07,0.12,1.0);return;}\n    if(vCode==9){pixel=vec4(0.03,0.02,0.05,1.0);return;}\n    if(vCode==10){pixel=vec4(0.77,0.15,0.14,1.0);return;}\n    if(vCode==11){pixel=vec4(0.45,0.18,0.76,1.0);return;}\n    if(vCode==12){pixel=vec4(0.07,0.46,0.83,1.0);return;}\n    if(vCode==13){pixel=vec4(0.07,0.58,0.31,1.0);return;}\n    if(vCode==14){pixel=vec4(0.82,0.16,0.46,1.0);return;}\n    if(vCode==15){pixel=vec4(0.73,0.39,0.10,1.0);return;}\n    pixel=(vCode==uSelected)?vec4(0.12,0.43+0.07*wave,0.55+0.05*wave,1.0):vec4(0.08,0.15,0.23,1.0);\n    return;\n  }\n  if(vCode<0||vCode>=49)discard;\n  int gx=int(floor(vUv.x*5.0));\n  int gy=int(floor((1.0-vUv.y)*7.0));\n  if(gx<0||gx>=5||gy<0||gy>=7)discard;\n  int bits=fontRows[vCode*7+gy];\n  if((bits&(1<<(4-gx)))==0)discard;\n  pixel=vec4(0.88,0.96,1.0,1.0);\n}"
     set this.shader_program: this.shader.create(vertex, fragment)
     if: this.shader_program < 1
       return: 0
@@ -55,16 +63,39 @@ class BattleHud:
       return: 0
     return: this.refresh(battle)
 
-  # Bind the same OW carousel used by the portrait renderer and keyboard.
-  fn bind_carousel(carousel):
-    set this.carousel: carousel
-    set created int: this.meshes.create(this.layout.carousel_vertices(carousel))
-    if: created < 1
+  # Create the three rich card GPU layers atomically. Stable textures are
+  # cached by NativeBattleArt; only geometry/text buffers change when the
+  # focused card slides or a gameplay scene changes actual level/monster HP.
+  fn sync_rich_cards():
+    if: this.card_data == 0
+      return: 1
+    set frames int: this.meshes.create(this.layout.carousel_vertices(this.carousel))
+    if: frames < 1
+      return: 0
+    set fills int: this.meshes.create(this.layout.rich_card_vertices(this.carousel, this.card_data))
+    if: fills < 1
+      call: this.meshes.destroy(frames)
+      return: 0
+    set labels int: this.meshes.create(this.text_builder.rich_card_text_vertices(this.carousel, this.card_data, this.layout))
+    if: labels < 1
+      call: this.meshes.destroy(frames)
+      call: this.meshes.destroy(fills)
       return: 0
     if: this.carousel_panels > 0
       call: this.meshes.destroy(this.carousel_panels)
-    set this.carousel_panels: created
+    if: this.rich_panels > 0
+      call: this.meshes.destroy(this.rich_panels)
+    if: this.rich_text > 0
+      call: this.meshes.destroy(this.rich_text)
+    set this.carousel_panels: frames
+    set this.rich_panels: fills
+    set this.rich_text: labels
     return: 1
+
+  fn bind_carousel(carousel, cards):
+    set this.carousel: carousel
+    set this.card_data: cards
+    return: this.sync_rich_cards()
 
   fn refresh(battle):
     set this.menu_mode: 0
@@ -79,13 +110,16 @@ class BattleHud:
 
   fn refresh_menu(router):
     set this.menu_mode: 1
+    set this.menu_show_cards: 1
+    if: router.screen() == "settings"
+      set this.menu_show_cards: 0
     set updated int: this.meshes.create(this.text_builder.menu_vertices(router))
     if: updated < 1
       return: 0
     if: this.text_mesh > 0
       call: this.meshes.destroy(this.text_mesh)
     set this.text_mesh: updated
-    return: 1
+    return: this.sync_rich_cards()
 
   fn refresh_writing(battle, spelling):
     set this.menu_mode: 0
@@ -144,19 +178,17 @@ class BattleHud:
     if: this.menu_mode == 1
       if: this.carousel != 0
         if: this.carousel.tick() == 1
-          # Upload new geometry before freeing the old to avoid an empty
-          # frame at either end of a left/right animation.
-          set updated int: this.meshes.create(this.layout.carousel_vertices(this.carousel))
-          if: updated < 1
+          if: this.sync_rich_cards() != 1
             return: 0
-          if: this.carousel_panels > 0
-            call: this.meshes.destroy(this.carousel_panels)
-          set this.carousel_panels: updated
       if: this.renderer.draw_mesh(this.menu_chrome) != 1
         return: 0
-      if: this.carousel_panels > 0
-        if: this.renderer.draw_mesh(this.carousel_panels) != 1
-          return: 0
+      if: this.menu_show_cards == 1
+        if: this.carousel_panels > 0
+          if: this.renderer.draw_mesh(this.carousel_panels) != 1
+            return: 0
+        if: this.rich_panels > 0
+          if: this.renderer.draw_mesh(this.rich_panels) != 1
+            return: 0
       if: this.renderer.draw_mesh(this.menu_cards) != 1
         return: 0
     else:
@@ -164,6 +196,11 @@ class BattleHud:
         return: 0
     if: this.renderer.draw_mesh(this.text_mesh) != 1
       return: 0
+    if: this.menu_mode == 1
+      if: this.menu_show_cards == 1
+        if: this.rich_text > 0
+          if: this.renderer.draw_mesh(this.rich_text) != 1
+            return: 0
     if: this.renderer.depth_test(1) != 1
       return: 0
     return: 2
@@ -184,6 +221,12 @@ class BattleHud:
     if: this.carousel_panels > 0
       call: this.meshes.destroy(this.carousel_panels)
       set this.carousel_panels: 0
+    if: this.rich_panels > 0
+      call: this.meshes.destroy(this.rich_panels)
+      set this.rich_panels: 0
+    if: this.rich_text > 0
+      call: this.meshes.destroy(this.rich_text)
+      set this.rich_text: 0
     if: this.shader_program > 0
       call: this.shader.destroy(this.shader_program)
       set this.shader_program: 0
