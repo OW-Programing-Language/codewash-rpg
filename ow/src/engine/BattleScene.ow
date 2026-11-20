@@ -40,6 +40,15 @@ class BattleScene:
     set this.skill_name: "math"
     set this.cached_options: []
 
+  # Keep Cleaning tasks and progression independent of other activities.
+  fn configure_cleaning():
+    if: this.hero != 0
+      return: 0
+    set this.scene_name: "cleaning"
+    set this.skill_name: "cleaning"
+    set this.game: new Game()
+    return: 1
+
   # A separate Game and ECS scene isolate Writing progression.
   fn configure_writing():
     if: this.hero != 0
@@ -209,3 +218,18 @@ class BattleScene:
     call: this.sync_health()
     call: this.show_feedback(correct)
     return: correct
+
+  # Only the task-mode CleaningSkill may report DONE. The separate
+  # NativeCleaningActivity controller gates this behind explicit START.
+  fn complete_task():
+    if: this.skill_name != "cleaning"
+      return: 0 - 1
+    if: this.hero == 0
+      return: 0 - 1
+    if: this.game.skill.mode() != "task"
+      return: 0 - 1
+    call: this.game.answer(this.game.problem.solution())
+    set this.cached_options: this.game.skill.options(this.game.problem)
+    call: this.sync_health()
+    call: this.show_feedback(1)
+    return: 1

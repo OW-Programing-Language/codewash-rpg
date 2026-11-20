@@ -294,3 +294,32 @@ real virtual keyboard and sampled OpenGL framebuffer, submits an incorrect and
 a correctly composed word, and verifies combat visuals and scene isolation.
 The existing OW browser game and original React/Electron application are
 unmodified.
+
+## Phase 2 PR #9 — Native Cleaning (self-reported chore acknowledgement)
+
+**Activities → Next → Cleaning** now opens an independent OW Engine scene
+powered by the existing `CleaningSkill` task list and chest/container names.
+The same OW Graphics 5×7 bitmap HUD displays the task text, chest label,
+monster HP and four selectable buttons. Controls are W/A/S/D, arrow keys +
+Space, and Escape to return to the main menu.
+
+Cleaning is **not a quiz**. The interface requires pressing **Start Task**
+before **Mark Done** becomes available. Mark Done submits the original
+CleaningSkill answer `DONE` through the existing `Game.answer()` service,
+which applies damage/XP and advances the chore prompt. Cancel gives no credit;
+Help explicitly states that completion is self-reported, not parent verified.
+A second Mark Done cannot submit the same task without another Start. Math,
+Reading, Writing and Cleaning keep separate ECS scenes, combat state and
+progression.
+
+**Safety and parity limitation:** This native prototype does not sense
+physical cleaning, contact parents, provide a trusted adult confirmation, or
+offer an abuse-resistant reward system. It only records the player's own
+acknowledgement, and displays generic procedural 3D geometry rather than a
+migrated chest model. Never represent self-reporting as validated completion.
+
+`NativeCleaningTest.ow` covers actual CleaningSkill integration, Start/Done
+gating, cancellation, explicit Help text, independent Math state and inactive
+ECS scene isolation. The Mesa/Xvfb `cleaning_smoke.ow` verifies task HUD
+pixels, combat feedback and safe menu return, alongside all earlier GPU tests.
+The full browser version and React/Electron deliverable remain unchanged.

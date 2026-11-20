@@ -1,0 +1,111 @@
+# Cleaning is a self-reported task, not a quiz or verified physical chore.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+import "../src/engine/NativeCleaningActivity.ow"
+import "../src/engine/NativeMenuRouter.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/modules/skills/api/CleaningSkill.ow"
+
+class NativeCleaningTest:
+  field check
+  field root
+  field math
+  field cleaning
+  field activity
+  field menu
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.root: new CodeWashEngine()
+    call: this.check.assertEquals(1, this.root.boot())
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, scenes.add_scene("activities"))
+    call: this.check.assertEquals(1, scenes.add_scene("settings"))
+    call: this.check.assertEquals(1, scenes.add_scene("reading"))
+    call: this.check.assertEquals(1, scenes.add_scene("writing"))
+    call: this.check.assertEquals(1, scenes.add_scene("cleaning"))
+    set this.math: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.math.start(7))
+    set this.cleaning: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.cleaning.configure_cleaning())
+    call: this.check.assertEquals(1, this.cleaning.start(7))
+    set this.activity: new NativeCleaningActivity(this.cleaning)
+    set this.menu: new NativeMenuRouter(scenes)
+    call: this.check.assertEquals(1, this.menu.open_menu())
+
+  @AfterEach
+  fn cleanup():
+    call: this.root.stop()
+
+  @Test
+  fn cleaningUsesOriginalTaskCatalogAndRealEngineScene():
+    call: this.check.assertEquals(1, this.menu.open_activities(1))
+    call: this.check.assertEquals(1, this.menu.choose(0))
+    call: this.check.assertEquals("cleaning", this.menu.screen())
+    call: this.check.assertEquals("cleaning", this.cleaning.skill_name)
+    call: this.check.assertEquals("task", this.cleaning.game.skill.mode())
+    call: this.check.assertEquals("DONE", this.cleaning.game.problem.solution())
+    call: this.check.assertEquals(6, this.root.app.service("scenes").active_entities())
+    call: this.check.assertEquals(0, this.cleaning.configure_cleaning())
+    call: this.check.assertEquals(1, len(this.cleaning.game.problem.ask()) > 5)
+    call: this.check.assertEquals(1, len(this.cleaning.game.skill.chest_name()) > 2)
+
+  @Test
+  fn startIsRequiredAndDoubleMarkDoneDoesNotGrantTwice():
+    set hp int: this.cleaning.game.mob.cur_hp()
+    set mathHp int: this.math.game.mob.cur_hp()
+    call: this.check.assertEquals("START TASK", this.activity.options()[0])
+    call: this.check.assertEquals(2, this.activity.choose(1))
+    call: this.check.assertEquals(hp, this.cleaning.game.mob.cur_hp())
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(1, this.activity.started)
+    call: this.check.assertEquals("MARK DONE", this.activity.options()[0])
+    call: this.check.assertEquals(1, this.activity.choose(0))
+    call: this.check.assertEquals(0, this.activity.started)
+    call: this.check.assertEquals(1, this.activity.completed)
+    call: this.check.assertLessThan(this.cleaning.game.mob.cur_hp(), hp)
+    call: this.check.assertEquals(mathHp, this.math.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.cleaning.feedback_kind)
+    set hpAfter int: this.cleaning.game.mob.cur_hp()
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(hpAfter, this.cleaning.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.activity.completed)
+
+  @Test
+  fn cancelAndHelpNeverCreditTasks():
+    set hp int: this.cleaning.game.mob.cur_hp()
+    call: this.check.assertEquals(2, this.activity.choose(3))
+    call: this.check.assertEquals(0, this.activity.started)
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(0, this.activity.choose(1))
+    call: this.check.assertEquals(0, this.activity.started)
+    call: this.check.assertEquals(0, this.activity.completed)
+    call: this.check.assertEquals(hp, this.cleaning.game.mob.cur_hp())
+    call: this.check.assertEquals(3, this.activity.choose(2))
+    call: this.check.assertEquals(0, this.activity.choose(0 - 1) >= 0)
+    call: this.check.assertEquals(0, this.activity.choose(4) >= 0)
+
+  @Test
+  fn menuPausePreservesInProgressChoreAndDoesNotRenderBattle():
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, this.menu.start_cleaning())
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(1, this.menu.back())
+    call: this.check.assertEquals(0, scenes.active_entities())
+    call: this.check.assertEquals(1, this.activity.started)
+    call: this.check.assertEquals(1, this.menu.start_math())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(1, this.menu.start_cleaning())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(1, this.activity.started)
+
+  @Test
+  fn taskHudReusesBoundedOpenGlGlyphMesh():
+    set builder: new BattleHudText()
+    set mesh: builder.cleaning_vertices(this.cleaning, this.activity)
+    call: this.check.assertEquals(4320, len(mesh))
+    call: this.check.assertEquals(88, mesh[2])
+    call: this.check.assertEquals(2, this.activity.choose(0))
+    call: this.check.assertEquals(4320, len(builder.cleaning_vertices(this.cleaning, this.activity)))
