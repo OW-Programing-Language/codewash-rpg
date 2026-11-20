@@ -1,0 +1,56 @@
+# PR35: native OW bitmap text geometry stays readable and within card bounds.
+# Headless tests: pixel proportions at 1280x720 and long side-card labels.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/engine/NativeMenuLayout.ow"
+
+class NativeMenuTypographyTest:
+  field check
+  field font
+  field layout
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.font: new BattleHudText()
+    set this.layout: new NativeMenuLayout()
+
+  @Test
+  fn levelUpHeadingUsesProperPixelAspectRatio():
+    set buf: array(360, 0.0)
+    set used int: this.font.fit_center(buf, 0, "LEVEL UP!", 0.0 - 0.52, 0.52, 0.52, 10, 0.057, 0.104)
+    call: this.check.assertEquals(162, used)
+    set px_width float: (buf[3] - buf[0]) * 640.0
+    set px_height float: (buf[7] - buf[1]) * 360.0
+    set ratio float: px_width / px_height
+    call: this.check.assertEquals(1, ratio > 0.68)
+    call: this.check.assertEquals(1, ratio < 0.75)
+    call: this.check.assertEquals(1, buf[0] > 0.0 - 0.52)
+    call: this.check.assertEquals(1, buf[used - 15] < 0.52)
+
+  @Test
+  fn longCardTitleCannotRunIntoLevelBadge():
+    set rect: this.layout.card_rect(1.0)
+    set left float: rect[0] + 0.087
+    set right float: rect[0] + rect[2] - 0.145
+    set badge_left float: rect[0] + rect[2] - 0.130
+    set buf: array(360, 0.0)
+    set used int: this.font.fit_center(buf, 0, "MATCH N HATCH", left, right, 0.20, 17, 0.018, 0.046)
+    call: this.check.assertEquals(234, used)
+    call: this.check.assertEquals(1, buf[0] >= left)
+    call: this.check.assertEquals(1, buf[used - 15] <= right)
+    call: this.check.assertEquals(1, right < badge_left)
+
+  @Test
+  fn smallButtonBoundsFitLongLabelsWithoutClipping():
+    set buf: array(360, 0.0)
+    set used int: this.font.fit_center(buf, 0, "A ACTIVITIES", 0.0 - 0.46, 0.0 - 0.07, 0.0 - 0.785, 19, 0.028, 0.055)
+    call: this.check.assertEquals(216, used)
+    call: this.check.assertEquals(1, buf[0] >= 0.0 - 0.46)
+    call: this.check.assertEquals(1, buf[used - 15] <= 0.0 - 0.07)
+
+  @Test
+  fn lineFitterRejectsEmptyAndInvalidBounds():
+    set buf: array(18, 0.0)
+    call: this.check.assertEquals(0, this.font.fit_center(buf, 0, "", 0.0 - 0.5, 0.5, 0.0, 10, 0.02, 0.04))
+    call: this.check.assertEquals(0, this.font.fit_center(buf, 0, "A", 0.5, 0.0 - 0.5, 0.0, 10, 0.02, 0.04))
