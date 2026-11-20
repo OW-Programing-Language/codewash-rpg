@@ -148,8 +148,8 @@ An actual Windows 11 crash report identified
 `java.nio.file.InvalidPathException: Illegal char <*> at index 0: *`
 inside `NativeLauncher.launch`. The previous code invoked
 `appDir.resolve("lib").resolve("*")`, which Windows rejects before the
-OW runtime ever starts. The fixed launcher appends `*\` to a **string
-classpath**, without using `Path.resolve("*")`; the Windows packaged
+OW runtime ever starts. The fixed launcher appends the wildcard to a
+**string classpath**, without using `Path.resolve("*")`; the Windows packaged
 `--self-test` now builds and validates the same JVM classpath string.
 
 **Download the build from the new PR #30 workflow run**. Do not reuse an
