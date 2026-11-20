@@ -1,0 +1,171 @@
+# Real OpenGL 3.3 battle rendering through OW Engine's RenderWorld.
+# Geometry is intentionally procedural: characters are colored block proxies,
+# not migrated Minecraft assets or the final game UI.
+import "@flow/src/App.ow"
+import "@graphics/src/graphics/window/api/WindowApi.ow"
+import "@graphics/src/graphics/window/infra/GlfwWindow.ow"
+import "@graphics/src/graphics/input/api/InputApi.ow"
+import "@graphics/src/graphics/input/infra/GlfwInput.ow"
+import "@graphics/src/graphics/renderer/api/RendererApi.ow"
+import "@graphics/src/graphics/renderer/opengl/OpenGLRenderer.ow"
+import "@graphics/src/graphics/shader/api/ShaderApi.ow"
+import "@graphics/src/graphics/shader/opengl/OpenGLShader.ow"
+import "@graphics/src/graphics/mesh/api/MeshApi.ow"
+import "@graphics/src/graphics/mesh/opengl/OpenGLMesh.ow"
+import "@graphics/src/graphics/camera/api/CameraApi.ow"
+import "@graphics/src/graphics/camera/infra/Camera.ow"
+import "@graphics/src/graphics/math/api/TransformApi.ow"
+import "@graphics/src/graphics/math/infra/Transforms.ow"
+import "@graphics/src/graphics/geometry/api/GeometryApi.ow"
+import "@graphics/src/graphics/geometry/infra/CubeGeometry.ow"
+import "@graphics/src/graphics/scene/api/MultiSceneApi.ow"
+import "@graphics/src/graphics/scene/infra/MakeMultiScene.ow"
+import "@engine/src/engine/modules/EngineEntitiesModule.ow"
+import "@engine/src/engine/modules/EngineScenesModule.ow"
+import "@engine/src/engine/modules/EngineComponentsModule.ow"
+import "@engine/src/engine/modules/EngineRuntimeModule.ow"
+import "@engine/src/engine/modules/EngineRenderModule.ow"
+import "../modules/skills/infra/SkillsFunctor.ow"
+import "../modules/combat/infra/CombatFunctor.ow"
+import "BattleScene.ow"
+
+class GpuBattle:
+  field app
+  field window
+  field input
+  field renderer
+  field shader
+  field meshes
+  field camera
+  field world
+  field runtime
+  field battle
+  field program
+  field cube
+  field held
+
+  fn new():
+    set entities: new EngineEntitiesModule()
+    set scenes: new EngineScenesModule(entities.store())
+    set components: new EngineComponentsModule(entities.store())
+    set fixed_step: new EngineRuntimeModule(scenes.store(), 16)
+    set drawing GRAPHICS_MULTI_SCENE: MakeMultiScene(Graphics.OpenGLRenderer)
+    set render: new EngineRenderModule(scenes.store(), components.store(), Graphics.Transforms, drawing, Graphics.OpenGLShader)
+    set this.app: new App()
+    call: this.app.use(render)
+    call: this.app.use(fixed_step)
+    call: this.app.use_native_as(drawing, "GRAPHICS_MULTI_SCENE")
+    call: this.app.use_native_as(Graphics.CubeGeometry, "GRAPHICS_CUBE_GEOMETRY")
+    call: this.app.use_native_as(Graphics.Camera, "GRAPHICS_CAMERA")
+    call: this.app.use_native_as(Graphics.Transforms, "GRAPHICS_TRANSFORM")
+    call: this.app.use_native_as(Graphics.OpenGLMesh, "GRAPHICS_MESH")
+    call: this.app.use_native_as(Graphics.OpenGLShader, "GRAPHICS_SHADER")
+    call: this.app.use_native_as(Graphics.GlfwInput, "GRAPHICS_INPUT")
+    call: this.app.use_native_as(Graphics.OpenGLRenderer, "GRAPHICS_RENDERER")
+    call: this.app.use_native_as(Graphics.GlfwWindow, "GRAPHICS_WINDOW")
+    call: this.app.use(components)
+    call: this.app.use(scenes)
+    call: this.app.use(entities)
+    call: this.app.apply(new SkillsFunctor())
+    call: this.app.apply(new CombatFunctor())
+    set this.program: 0
+    set this.cube: 0
+    set this.held: 0 - 1
+
+  fn start():
+    if: this.app.boot() != 1
+      return: 0
+    set this.window: this.app.service("window")
+    set this.input: this.app.service("input")
+    set this.renderer: this.app.service("renderer")
+    set this.shader: this.app.service("shader")
+    set this.meshes: this.app.service("mesh")
+    set this.camera: this.app.service("camera")
+    set this.world: this.app.service("render_world")
+    set this.runtime: this.app.service("runtime")
+    if: this.window.open(640, 480, "CodeWash RPG / OW Graphics battle") != 1
+      return: 0
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    set geometry GRAPHICS_CUBE_GEOMETRY: this.app.service("geometry")
+    set this.cube: this.meshes.create_lit_indexed(geometry.positions(), geometry.uvs(), geometry.normals(), geometry.indices())
+    if: this.cube < 1
+      return: 0
+
+    # Color is selected from each ECS model matrix: player, monster, HP or floor.
+    # A future PR will load real sprites/models and per-entity materials.
+    set vertex: "#version 330 core\nlayout(location=0) in vec3 pos;\nlayout(location=1) in vec2 uv;\nlayout(location=2) in vec3 normal;\nout vec3 vNormal;\nflat out int vKind;\nuniform mat4 uModel;\nuniform mat4 uView;\nuniform mat4 uProjection;\nvoid main(){vNormal=mat3(uModel)*normal;float x=uModel[3].x;float y=uModel[3].y;vKind=(y>0.9)?2:((y < -1.0)?3:((x < 0.0)?0:1));gl_Position=uProjection*uView*uModel*vec4(pos,1.0);}"
+    set fragment: "#version 330 core\nin vec3 vNormal;\nflat in int vKind;\nout vec4 pixel;\nvoid main(){vec3 base=vec3(0.04,0.68,0.85);if(vKind==1)base=vec3(0.91,0.28,0.17);if(vKind==2)base=vec3(0.18,0.92,0.39);if(vKind==3)base=vec3(0.20,0.24,0.33);float d=max(dot(normalize(vNormal),normalize(vec3(0.25,0.65,1.0))),0.0);pixel=vec4(base*(0.45+0.55*d),1.0);}"
+    set this.program: this.shader.create(vertex, fragment)
+    if: this.program < 1
+      return: 0
+    set scenes: this.app.service("scenes")
+    if: scenes.attach_components(this.app.service("components")) != 1
+      return: 0
+    if: scenes.add_scene("menu") != 1
+      return: 0
+    if: scenes.add_scene("battle") != 1
+      return: 0
+    set this.battle: new BattleScene(this.app)
+    if: this.battle.start(this.cube) != 1
+      return: 0
+    return: 1
+
+  fn show_question():
+    print: this.battle.game.prompt_line()
+    set answers: this.battle.options()
+    print: "W=" + str(answers[0]) + "  A=" + str(answers[1]) + "  S=" + str(answers[2]) + "  D=" + str(answers[3])
+    print: "Choose with W/A/S/D in the game window; ESC exits."
+
+  fn poll():
+    call: this.window.poll()
+    if: this.input.key_down("ESCAPE") == 1
+      call: this.window.request_close()
+      return: 0
+    # Key edge detection prevents auto-answering every frame on long presses.
+    set choice int: 0 - 1
+    if: this.input.key_down("W") == 1
+      set choice: 0
+    else:
+      if: this.input.key_down("A") == 1
+        set choice: 1
+      else:
+        if: this.input.key_down("S") == 1
+          set choice: 2
+        else:
+          if: this.input.key_down("D") == 1
+            set choice: 3
+    if: choice < 0
+      set this.held: 0 - 1
+      return: 0
+    if: choice == this.held
+      return: 0
+    set this.held: choice
+    set outcome int: this.battle.choose(choice)
+    if: outcome == 1
+      print: "Correct! " + this.battle.game.message
+    else:
+      print: "Incorrect. " + this.battle.game.message
+    call: this.show_question()
+    return: outcome
+
+  fn running():
+    return: 1 - this.window.should_close()
+
+  fn render():
+    set view: this.camera.view_from_position(0.0, 0.0, 7.0)
+    set projection: this.camera.perspective(1.0, 1.3333333333333, 0.1, 50.0)
+    return: this.world.render_frame(this.program, view, projection, 12, 18, 29)
+
+  fn present():
+    return: this.window.present()
+
+  fn stop():
+    # GPU objects must be deleted while GLFW/OpenGL context is still open.
+    if: this.cube > 0
+      call: this.meshes.destroy(this.cube)
+      set this.cube: 0
+    if: this.program > 0
+      call: this.shader.destroy(this.program)
+      set this.program: 0
+    return: this.app.stop()

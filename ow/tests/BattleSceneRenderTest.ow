@@ -1,0 +1,64 @@
+# OWUnit regression tests for the same ECS battle layout the GPU preview uses.
+# Uses PR #1's headless root; no graphics drivers required.
+import "@owunit/src/OWAssert.ow"
+import "@graphics/src/graphics/shader/api/ShaderApi.ow"
+import "@graphics/src/graphics/camera/api/CameraApi.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+
+class BattleSceneRenderTest:
+  field checker
+  field engine
+  field battle
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.engine: new CodeWashEngine()
+    call: this.checker.assertEquals(1, this.engine.boot())
+    set this.battle: new BattleScene(this.engine.app)
+    call: this.checker.assertEquals(1, this.battle.start(7))
+
+  @AfterEach
+  fn cleanup():
+    call: this.engine.stop()
+
+  @Test
+  fn createsFourEngineEntitiesAndRendersViaGraphics():
+    set app: this.engine.app
+    call: this.checker.assertEquals("battle", app.service("scenes").active_name())
+    call: this.checker.assertEquals(4, app.service("scenes").active_entities())
+    call: this.checker.assertEquals(7, app.service("render_world").mesh_of(this.battle.monster))
+    set shader GRAPHICS_SHADER: app.service("shader")
+    set camera GRAPHICS_CAMERA: app.service("camera")
+    set program int: shader.create("test-vertex", "test-fragment")
+    set view: camera.view_from_position(0.0, 0.0, 7.0)
+    set projection: camera.perspective(1.0, 1.3333333333333, 0.1, 50.0)
+    call: this.checker.assertEquals(4, app.service("render_world").render_frame(program, view, projection, 12, 18, 29))
+    call: this.checker.assertEquals(4, app.service("render_world").last_draw_count())
+    call: this.checker.assertEquals(1, app.service("scenes").activate("menu"))
+    call: this.checker.assertEquals(0, app.service("render_world").render_frame(program, view, projection, 12, 18, 29))
+    call: this.checker.assertEquals(1, shader.destroy(program))
+
+  @Test
+  fn correctChoiceChangesExistingCombatHealth():
+    set game: this.battle.game
+    set before int: game.mob.cur_hp()
+    call: this.checker.assertEquals(1, this.battle.choose(2))
+    call: this.checker.assertLessThan(game.mob.cur_hp(), before)
+    set bar: this.engine.app.service("components").get("transform", this.battle.health)
+    call: this.checker.assertLessThan(bar.sx, 1.23)
+
+  @Test
+  fn wrongChoiceDoesNotDamageMonster():
+    set game: this.battle.game
+    set before int: game.mob.cur_hp()
+    call: this.checker.assertEquals(0, this.battle.choose(0))
+    call: this.checker.assertEquals(before, game.mob.cur_hp())
+
+  @Test
+  fn rejectsBadAnswerIndicesAndDuplicateStart():
+    call: this.checker.assertEquals(0 - 1, this.battle.choose(0 - 1))
+    call: this.checker.assertEquals(0 - 1, this.battle.choose(4))
+    call: this.checker.assertEquals(0, this.battle.start(7))
+    call: this.checker.assertEquals(4, this.engine.app.service("scenes").active_entities())

@@ -1,12 +1,21 @@
-# Experimental, opt-in headless composition root for the OW Engine migration.
-# The shipping React/Electron app and the existing OW browser entry point
-# (src/main_ui.ow) do not import this file.
+# Opt-in headless composition root. This also exercises ECS -> Graphics
+# world rendering, without changing the browser/Electron game entrypoints.
 import "@flow/src/App.ow"
 import "@graphics/src/graphics/renderer/api/RendererApi.ow"
 import "@graphics/src/graphics/renderer/headless/HeadlessRenderer.ow"
+import "@graphics/src/graphics/shader/api/ShaderApi.ow"
+import "@graphics/src/graphics/shader/headless/HeadlessShader.ow"
+import "@graphics/src/graphics/camera/api/CameraApi.ow"
+import "@graphics/src/graphics/camera/infra/Camera.ow"
+import "@graphics/src/graphics/math/api/TransformApi.ow"
+import "@graphics/src/graphics/math/infra/Transforms.ow"
+import "@graphics/src/graphics/scene/api/MultiSceneApi.ow"
+import "@graphics/src/graphics/scene/infra/MakeMultiScene.ow"
 import "@engine/src/engine/modules/EngineEntitiesModule.ow"
 import "@engine/src/engine/modules/EngineScenesModule.ow"
+import "@engine/src/engine/modules/EngineComponentsModule.ow"
 import "@engine/src/engine/modules/EngineRuntimeModule.ow"
+import "@engine/src/engine/modules/EngineRenderModule.ow"
 import "../modules/skills/infra/SkillsFunctor.ow"
 import "../modules/combat/infra/CombatFunctor.ow"
 
@@ -14,20 +23,30 @@ class CodeWashEngine:
   field app
   field entities_module
   field scenes_module
+  field component_module
   field runtime_module
+  field render_module
 
   fn new():
     set this.app: new App()
     set this.entities_module: new EngineEntitiesModule()
     set this.scenes_module: new EngineScenesModule(this.entities_module.store())
+    set this.component_module: new EngineComponentsModule(this.entities_module.store())
     set this.runtime_module: new EngineRuntimeModule(this.scenes_module.store(), 16)
-    # Deliberately register in reverse order; flOW resolves dependencies.
+    set drawing GRAPHICS_MULTI_SCENE: MakeMultiScene(Graphics.HeadlessRenderer)
+    set this.render_module: new EngineRenderModule(this.scenes_module.store(), this.component_module.store(), Graphics.Transforms, drawing, Graphics.HeadlessShader)
+    # Register in deliberately reversed order. flOW sorts typed service deps.
+    call: this.app.use(this.render_module)
     call: this.app.use(this.runtime_module)
+    call: this.app.use_native_as(drawing, "GRAPHICS_MULTI_SCENE")
+    call: this.app.use_native_as(Graphics.Camera, "GRAPHICS_CAMERA")
+    call: this.app.use_native_as(Graphics.Transforms, "GRAPHICS_TRANSFORM")
+    call: this.app.use_native_as(Graphics.HeadlessShader, "GRAPHICS_SHADER")
+    call: this.app.use_native_as(Graphics.HeadlessRenderer, "GRAPHICS_RENDERER")
+    call: this.app.use(this.component_module)
     call: this.app.use(this.scenes_module)
     call: this.app.use(this.entities_module)
-    # GPU-free renderer: real OpenGL rendering is a separate follow-up PR.
-    call: this.app.use_native_as(Graphics.HeadlessRenderer, "GRAPHICS_RENDERER")
-    # Existing CodeWash combat remains the source of gameplay rules.
+    # Preserve the original, tested MathSkill/CombatModule game rules.
     call: this.app.apply(new SkillsFunctor())
     call: this.app.apply(new CombatFunctor())
 
@@ -35,6 +54,8 @@ class CodeWashEngine:
     if: this.app.boot() != 1
       return: 0
     set scenes: this.app.service("scenes")
+    if: scenes.attach_components(this.app.service("components")) != 1
+      return: 0
     if: scenes.add_scene("menu") != 1
       return: 0
     if: scenes.add_scene("battle") != 1

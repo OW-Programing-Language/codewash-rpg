@@ -1,0 +1,58 @@
+name: OW Battle OpenGL Smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gpu-battle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CodeWash
+        uses: actions/checkout@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build OW compiler and install Maven artifacts
+        run: |
+          git clone --quiet https://github.com/OW-Programing-Language/ow-lang.git /tmp/ow-battle-lang
+          mvn -B -q -f /tmp/ow-battle-lang/pom.xml -DskipTests install
+      - name: Resolve pinned OW dependencies
+        working-directory: ow
+        run: |
+          java -jar /tmp/ow-battle-lang/target/OwIDE.jar deps install
+          git diff --exit-code -- dependencies.lock.yml
+      - name: Check OW GPU examples
+        working-directory: ow
+        run: |
+          java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/battle_gpu.ow
+          java -jar /tmp/ow-battle-lang/target/OwIDE.jar check src/engine/battle_smoke.ow
+      - name: Build pinned OW Graphics native extension
+        run: |
+          git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git /tmp/ow-battle-graphics
+          git -C /tmp/ow-battle-graphics checkout --quiet 4f00a5b4da076b3062269c9861878fcb34b590e8
+          mvn -B -q -f /tmp/ow-battle-graphics/native-bridge/pom.xml package dependency:copy-dependencies -DoutputDirectory=target/lib
+      - name: Install Mesa/Xvfb
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libgl1 libxcursor1 libxi6 libxrandr2 libxinerama1
+      - name: Compile CI-only framebuffer probe
+        run: |
+          mkdir -p ow/target/probe-classes/META-INF/services
+          javac -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*" \
+            -d ow/target/probe-classes ow/tests/gpu/FramebufferProbe.java
+          cp ow/tests/gpu/META-INF/services/dev.oreo.RuntimeExtension \
+            ow/target/probe-classes/META-INF/services/dev.oreo.RuntimeExtension
+      - name: Render actual battle pixels and resolve a combat answer
+        working-directory: ow
+        run: |
+          xvfb-run -a -s "-screen 0 1024x768x24" env LIBGL_ALWAYS_SOFTWARE=1 \
+            java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
+            dev.oreo.Main run src/engine/battle_smoke.ow
