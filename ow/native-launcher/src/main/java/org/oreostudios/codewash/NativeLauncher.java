@@ -149,7 +149,7 @@ public final class NativeLauncher {
 
     /**
      * Java's classpath wildcard is a STRING understood by the JVM, not a
-     * filename. On Windows Path.resolve("*") throws InvalidPathException:
+     * filename. On Windows Path.resolve with an asterisk throws InvalidPathException:
      * Illegal char <*> at index 0. Append the wildcard after converting the
      * existing lib directory into a valid platform filesystem path.
      */

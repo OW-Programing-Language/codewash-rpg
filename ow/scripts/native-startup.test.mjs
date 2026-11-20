@@ -37,9 +37,6 @@ test('Windows classpath wildcard is appended as a string, never parsed as a file
   assert.ok(launcher.includes('appDir.resolve("lib").toString()'));
   assert.ok(launcher.includes('java.io.File.separator + "*"'));
   assert.ok(launcher.includes('verifyClasspath(appDir);'));
-  // Exclude Javadoc/comments: they legitimately mention the old bad call.
-  const executableCode = launcher.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '')
-    .replace(/\\/\\/[^\\n]*/g, '');
-  assert.ok(!executableCode.includes('.resolve("*")'),
+  assert.ok(!launcher.includes('.resolve("*")'),
     'Path.resolve("*") crashes on Windows: InvalidPathException');
 });
