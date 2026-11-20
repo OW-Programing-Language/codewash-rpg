@@ -609,3 +609,38 @@ The rich cards are still *not* a complete recreation of Electron:
 no animated GIF rendering, physically correct mob 3D models, mouse-click
 controls, live audio, profile persistence or dynamic theme selection.
 The low-level 5×7 font is also still temporary (font upgrade follows).
+
+## PR #35 — UI typography, texture proportions and Enter key
+
+This release fixes two issues reported in Windows screenshots: oversized
+5×7 text overlapping the cards and visibly squeezed PNG monster artwork.
+
+- The original Minecraft PNG logo is the primary title; the duplicate
+  huge bitmap "LEVEL UP!" caption is removed. Headings, center-card level,
+  HP, descriptions, CTA and quick-action labels have smaller, controlled
+  glyph dimensions; neighboring cards show only headings and CTAs to
+  avoid overlapping the artwork.
+- All sprites now compute their **actual texture aspect ratio** in GLSL
+  using `textureSize(uImage,0)`. The 1280×720 canvas ratio is accounted
+  for explicitly. **CONTAIN** fits original mob portraits, skill icons
+  and the logo with transparent letterboxing; **COVER** fills the themed
+  background with centered cropping. Neither path stretches the image.
+- OW Graphics now supports `ENTER` and `KP_ENTER` (upstream PR #13).
+  Both keys share the rising-edge latch with Space; they select or
+  activate the focused carousel item, while W/A/S/D quick actions and
+  ESC remain unchanged. Both the OW module lockfile and the packaged
+  LWJGL bridge use the same pinned upstream commit.
+
+Tests:
+- `NativeTypographyTest.ow` asserts compact text geometry during
+  12-frame carousel transitions.
+- `menu_polish_smoke.ow` creates a known 4:1 magenta OpenGL texture
+  and checks actual frame pixels: contained imagery leaves letterbox
+  margins, while cover fills/crops the target rectangle.
+- OW Graphics' upstream native input GPU test checks ENTER and KP_ENTER
+  key names are accepted by the keyboard extension.
+
+Remaining limits: the font is still a 5×7 GPU bitmap, not a complete
+modern Unicode/TTF/SDF text engine; the original Electron UI has more
+complex gradient, shadow, responsive and animated behavior. The GLFW
+window remains fixed-size until a future native resize/fullscreen API.

@@ -458,3 +458,13 @@ carousel. Unsupported GIF-only monsters receive an honest neutral egg
 fallback. Full Electron parity (GIF/3D/sound/mouse/fullscreen/persistent
 profiles) is still separate work; see
 [the GPU guide](docs/GPU-BATTLE.md#pr-34--rich-native-ow-cards-with-live-monster-health).
+
+## PR #35 — Menu typography, image aspect and Enter support
+
+The native menu uses smaller glyphs and reduces side-card visual clutter.
+The GLSL sprite shader fits mixed-aspect PNGs without squeezing portraits
+or the Minecraft logo; the full-bleed background uses cover cropping.
+**Enter**, keypad Enter and Space activate the focused card using the
+new pinned OW Graphics input bridge, while W/A/S/D quick choices remain.
+The remaining 5×7 font is not yet a scalable modern typography system;
+see [GPU guide](docs/GPU-BATTLE.md#pr-35--ui-typography-texture-proportions-and-enter-key).

@@ -21,7 +21,7 @@ dependencies:
   - name: graphics
     repository: github
     path: OW-Programing-Language/OW-Graphics
-    version: 4f00a5b4da076b3062269c9861878fcb34b590e8
+    version: e0b6b3ad7d3e04fb47ec80a03eaf28e392ee30d6
   - name: engine
     repository: github
     path: OW-Programing-Language/OW-Engine

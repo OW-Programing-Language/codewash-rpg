@@ -187,3 +187,13 @@ Card levels and HP come from the running native Game, not from static
 preview literals. Portraits, colored headers, HP rails, descriptions and
 action labels are rendered through OW Graphics/OpenGL. No Electron
 resources, web downloads or build tools are used at launch.
+
+## PR #35 — v1.13.3 Polish and Enter fixes
+
+Download the new **v1.13.3** native Windows ZIP rather than an older
+archive. The package uses a newly pinned OW Graphics bridge that accepts
+`ENTER` and `KP_ENTER` alongside Space, includes a more compact GPU
+font layout and preserves actual source image proportions. Mob portraits,
+skill emblems and the logo use transparent **contain** fitting; the
+theme background uses centered **cover** cropping without stretching.
+None of this requires an Internet connection at launch.

@@ -373,7 +373,7 @@ class GpuBattle:
               call: this.selection.move(navigation)
         set this.nav_held: navigation
 
-    # W/A/S/D answers immediately; Space chooses the highlighted card.
+    # W/A/S/D quick actions; Space, Enter or numpad Enter confirms.
     set choice int: 0 - 1
     if: this.input.key_down("W") == 1
       set choice: 0
@@ -386,19 +386,26 @@ class GpuBattle:
         else:
           if: this.input.key_down("D") == 1
             set choice: 3
-    set space int: this.input.key_down("SPACE")
-    if: space == 0
+    # ENTER and keypad ENTER are supported by our SHA-pinned OW Graphics
+    # key bridge. Share a single rising-edge latch with Space, so holding
+    # either key cannot activate a card repeatedly or skip gameplay states.
+    set submit int: this.input.key_down("SPACE")
+    if: this.input.key_down("ENTER") == 1
+      set submit: 1
+    if: this.input.key_down("KP_ENTER") == 1
+      set submit: 1
+    if: submit == 0
       set this.submit_held: 0
     set carousel_play int: 0
     if: choice < 0
-      if: space == 1
+      if: submit == 1
         if: this.submit_held == 0
           if: this.playing() == 0
             if: this.menu.screen() != "settings"
               set carousel_play: 1
           if: carousel_play == 0
             set choice: this.selection.selected
-    if: space == 1
+    if: submit == 1
       set this.submit_held: 1
     if: carousel_play == 1
       set this.held: 0 - 1

@@ -83,7 +83,7 @@ class NativeMenuRouter:
       set this.status: "CARD " + name + "  LEFT RIGHT TO BROWSE"
       return: 1
     if: this.screen() == "activities"
-      set this.status: "CARD " + name + "  SPACE TO PLAY"
+      set this.status: "CARD " + name + "  ENTER TO PLAY"
       return: 1
     return: 0
 

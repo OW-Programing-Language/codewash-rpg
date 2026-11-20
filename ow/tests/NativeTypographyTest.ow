@@ -1,0 +1,58 @@
+# Geometry-based regression checks for PR #35 typography.
+# Tests render glyph vertices directly, not hard-coded screenshots.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/engine/NativeMenuCarousel.ow"
+import "../src/engine/NativeMenuLayout.ow"
+import "../src/engine/NativeMenuCardData.ow"
+import "../src/modules/combat/api/Game.ow"
+
+class PolishCardStub:
+  field game
+  fn new():
+    set this.game: new Game()
+    call: this.game.start(1)
+
+class NativeTypographyTest:
+  field check
+  field font
+  field carousel
+  field layout
+  field cards
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.font: new BattleHudText()
+    set this.carousel: new NativeMenuCarousel()
+    set this.layout: new NativeMenuLayout()
+    set a: new PolishCardStub()
+    set b: new PolishCardStub()
+    set c: new PolishCardStub()
+    set d: new PolishCardStub()
+    set e: new PolishCardStub()
+    set f: new PolishCardStub()
+    set this.cards: new NativeMenuCardData(a,b,c,d,e,f)
+
+  @Test
+  fn richCardGlyphsAreCompactAndFitSideCards():
+    set vertices: this.font.rich_card_text_vertices(this.carousel, this.cards, this.layout)
+    call: this.check.assertEquals(4320, len(vertices))
+    set firstHeight float: vertices[7] - vertices[1]
+    call: this.check.assertEquals(1, firstHeight < 0.035)
+    call: this.check.assertEquals(1, firstHeight > 0.020)
+    # The first visible card is the left neighbor; its text fits its header.
+    set left: this.layout.card_rect(this.carousel.relative(1))
+    call: this.check.assertEquals(1, vertices[0] > left[0])
+    call: this.check.assertEquals(1, vertices[0] < left[0] + left[2])
+
+  @Test
+  fn textRemainsBoundedDuringAnimatedCardTransitions():
+    call: this.check.assertEquals(1, this.carousel.move(1))
+    set i int: 0
+    while: i < 12
+      call: this.carousel.tick()
+      set vertices: this.font.rich_card_text_vertices(this.carousel, this.cards, this.layout)
+      call: this.check.assertEquals(4320, len(vertices))
+      set i: i + 1
+    call: this.check.assertEquals(0, this.carousel.active)

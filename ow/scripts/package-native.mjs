@@ -23,7 +23,7 @@ export function parseArgs(args) {
     compilerDir: resolve(repoRoot, '../ow-lang'),
     graphicsDir: resolve(repoRoot, '../OW-Graphics'),
     out: resolve(repoRoot, 'ow/native-dist'),
-    version: '1.13.2'
+    version: '1.13.3'
   };
   for (let i = 0; i < args.length; i++) {
     const key = args[i];

@@ -53,7 +53,10 @@ class NativeBattleArt:
     if: this.quad < 1
       return: 0
     set vs: "#version 330 core\nlayout(location=0) in vec3 aPos;\nlayout(location=1) in vec2 aUv;\nout vec2 vUv;\nuniform vec4 uRect;\nvoid main(){vUv=aUv;gl_Position=vec4(uRect.xy+aPos.xy*uRect.zw,0.0,1.0);}"
-    set fs: "#version 330 core\nin vec2 vUv;\nout vec4 pixel;\nuniform sampler2D uImage;\nuniform vec4 uTint;\nvoid main(){vec4 c=texture(uImage,vUv);if(c.a<0.20)discard;pixel=vec4(c.rgb*uTint.rgb,1.0);}"
+    # Calculate actual image dimensions in the GPU; no hardcoded guesses for
+    # mixed-aspect mob portraits, logo, skill badges or 16:9 backdrop.
+    # CONTAIN letterboxes transparently; COVER crops the theme background.
+    set fs: "#version 330 core\nin vec2 vUv;\nout vec4 pixel;\nuniform sampler2D uImage;\nuniform vec4 uTint;\nuniform vec4 uRect;\nuniform vec4 uCanvas;\nuniform int uFitMode;\nvoid main(){vec2 uv=vUv;ivec2 dims=textureSize(uImage,0);float imgAspect=float(dims.x)/float(max(1,dims.y));float boxAspect=(uRect.z/uRect.w)*uCanvas.x;if(uFitMode==1){if(boxAspect>imgAspect){uv.x=(vUv.x-0.5)*(boxAspect/imgAspect)+0.5;}else{uv.y=(vUv.y-0.5)*(imgAspect/boxAspect)+0.5;}if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0)discard;}else if(uFitMode==2){if(boxAspect>imgAspect){uv.y=(vUv.y-0.5)*(imgAspect/boxAspect)+0.5;}else{uv.x=(vUv.x-0.5)*(boxAspect/imgAspect)+0.5;}}vec4 c=texture(uImage,uv);if(c.a<0.20)discard;pixel=vec4(c.rgb*uTint.rgb,1.0);}"
     set this.program: this.shaders.create(vs, fs)
     if: this.program < 1
       return: 0
@@ -194,16 +197,28 @@ class NativeBattleArt:
 
   # Shared textured quad rendering. OW Graphics loads original PNG assets;
   # both menu backgrounds and activity cards use this same shader/mesh.
-  fn draw_sprite(texture, x, y, width, height, tint):
+  fn draw_sprite_mode(texture, x, y, width, height, tint, mode):
     if: texture < 1
       return: 0
+    if: width <= 0.0
+      return: 0
+    if: height <= 0.0
+      return: 0
     if: this.shaders.set_vec4(this.program, "uRect", x, y, width, height) != 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uCanvas", this.layout.aspect(), 0.0, 0.0, 0.0) != 1
+      return: 0
+    if: this.shaders.set_int(this.program, "uFitMode", mode) != 1
       return: 0
     if: this.shaders.set_vec4(this.program, "uTint", tint, tint, tint, 1.0) != 1
       return: 0
     if: this.textures.bind(texture, 0) != 1
       return: 0
     return: this.renderer.draw_mesh(this.quad)
+
+  # Cards and icons preserve the PNG aspect ratio instead of stretching it.
+  fn draw_sprite(texture, x, y, width, height, tint):
+    return: this.draw_sprite_mode(texture, x, y, width, height, tint, 1)
 
   # Draw before the text/cards. Background remains visible outside the
   # opaque buttons, while the title and option labels remain readable.
@@ -218,7 +233,7 @@ class NativeBattleArt:
       return: 0
     if: this.shaders.set_int(this.program, "uImage", 0) != 1
       return: 0
-    if: this.draw_sprite(this.menu_theme, 0.0 - 1.0, 0.0 - 1.0, 2.0, 2.0, shade) != 1
+    if: this.draw_sprite_mode(this.menu_theme, 0.0 - 1.0, 0.0 - 1.0, 2.0, 2.0, shade, 2) != 1
       return: 0
     if: this.renderer.depth_test(1) != 1
       return: 0
