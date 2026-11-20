@@ -5,7 +5,8 @@ main:
   set preview: new GpuBattle()
   call: assert(preview.start() == 1, "OW Engine + OpenGL battle boot")
   print: "CodeWash RPG / experimental GPU math battle"
-  print: "Correct=gold hit spark + monster recoil; wrong=pink miss spark + hero recoil"
+  print: "Questions and four answer cards now render inside the OpenGL window."
+  print: "W/A/S/D: answer directly. Arrows: highlight. Space: submit. Esc: exit."
   call: preview.show_question()
   while: preview.running() == 1
     call: preview.poll()
