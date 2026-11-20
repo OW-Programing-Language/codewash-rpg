@@ -43,7 +43,8 @@ class NativeMenuCardData:
   fn mob_name(index):
     if: this.valid(index) != 1
       return: "?"
-    return: upper(this.games[index].mob.label())
+    # Asset paths use the original case-sensitive mob label. Render text uppercase separately.
+    return: this.games[index].mob.label()
 
   fn title(index):
     if: index == 0
