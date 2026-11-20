@@ -7,7 +7,7 @@ import {pathsForOS, verifyContents} from './verify-native-image.mjs';
 
 test('native paths are correct for Windows, Linux and macOS jpackage images', () => {
   const root = '/package-root';
-  const normal = p => p.replaceAll('\\\\', '/');
+  const normal = p => p.split(String.fromCharCode(92)).join('/');
   assert.match(normal(pathsForOS(root, 'win32').binary), /CodeWashRPG\.exe$/);
   assert.match(normal(pathsForOS(root, 'linux').binary), /CodeWashRPG\/bin\/CodeWashRPG$/);
   assert.match(normal(pathsForOS(root, 'darwin').binary), /CodeWashRPG\.app\/Contents\/MacOS\/CodeWashRPG$/);
