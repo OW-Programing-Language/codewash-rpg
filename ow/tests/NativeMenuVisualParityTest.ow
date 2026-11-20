@@ -1,0 +1,67 @@
+# Pure OW visual composition regression: reference-inspired five-card focus.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/NativeMenuCarousel.ow"
+import "../src/engine/NativeMenuLayout.ow"
+import "../src/engine/BattleHudText.ow"
+
+class NativeVisualMenuStub:
+  fn screen():
+    return: "menu"
+
+class NativeMenuVisualParityTest:
+  field check
+  field carousel
+  field layout
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.carousel: new NativeMenuCarousel()
+    set this.layout: new NativeMenuLayout()
+
+  @Test
+  fn fiveCardsVisibleWithTallSelectedCardAndSmallerDimmedNeighbors():
+    set center: this.layout.card_rect(0.0)
+    set near: this.layout.card_rect(1.0)
+    set far: this.layout.card_rect(2.0)
+    set left: this.layout.card_rect(0.0 - 2.0)
+    call: this.check.assertEquals(1, center[2] > near[2])
+    call: this.check.assertEquals(1, near[2] > far[2])
+    call: this.check.assertEquals(1, center[3] > near[3])
+    call: this.check.assertEquals(1, near[3] > far[3])
+    call: this.check.assertEquals(1, far[2] > 0.0)
+    call: this.check.assertEquals(1, left[0] < 0.0 - 0.50)
+    call: this.check.assertEquals(1, far[0] > 0.50)
+    call: this.check.assertEquals(1, center[0] < 0.0)
+    call: this.check.assertEquals(1, center[0] + center[2] > 0.0)
+
+  @Test
+  fn incomingEdgeCardExistsDuringTransitionWithoutSelectionSnap():
+    call: this.check.assertEquals(0, this.carousel.visual_slot(3))
+    call: this.check.assertEquals(4, this.carousel.visual_slot(1))
+    call: this.check.assertEquals(5, this.carousel.visual_slot(2))
+    call: this.check.assertEquals(1, this.carousel.visual_slot(4))
+    call: this.check.assertEquals(2, this.carousel.visual_slot(5))
+    call: this.check.assertEquals(3.0, this.carousel.visual_relative(6))
+    call: this.check.assertEquals(1, this.carousel.move(1))
+    set i int: 0
+    while: i < 12
+      call: this.carousel.tick()
+      set i: i + 1
+    call: this.check.assertEquals(0, this.carousel.active)
+    call: this.check.assertEquals(1, this.carousel.visual_slot(3))
+    call: this.check.assertEquals(0.0, this.carousel.visual_relative(3))
+    call: this.check.assertEquals(2, this.carousel.visual_slot(4))
+
+  @Test
+  fn heroHeadlineUsesGoldNativeGlyphPaletteWithoutElectron():
+    set fonts: new BattleHudText()
+    set glyphs: fonts.menu_vertices(new NativeVisualMenuStub())
+    call: this.check.assertEquals(4320, len(glyphs))
+    call: this.check.assertEquals(4, mod(glyphs[2], 8))
+    call: this.check.assertEquals(5, mod(glyphs[5], 8))
+    set cards: this.layout.carousel_vertices(this.carousel)
+    call: this.check.assertEquals(1008, len(cards))
+    set buttons: this.layout.button_vertices()
+    call: this.check.assertEquals(72, len(buttons))
+    call: this.check.assertEquals(1, this.layout.button_y() > 0.7)
