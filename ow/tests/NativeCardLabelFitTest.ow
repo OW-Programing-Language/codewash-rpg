@@ -44,7 +44,7 @@ class NativeCardLabelFitTest:
         set buffer: array(720, 0.0)
         set at int: this.fonts.fitted_line(buffer, 0, this.cards.title(i), label_x, 0.0, available, 0.035, 22)
         call: this.check.assertEquals(len(this.cards.title(i)) * 18, at)
-        set last_right float: buffer[at - 16]
+        set last_right float: buffer[at - 15]
         call: this.check.assertEquals(1, last_right < badge_x)
         set ordinal: ordinal + 1
       set i: i + 1
