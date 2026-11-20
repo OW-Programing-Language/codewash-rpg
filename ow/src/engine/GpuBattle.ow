@@ -12,6 +12,8 @@ import "@graphics/src/graphics/shader/api/ShaderApi.ow"
 import "@graphics/src/graphics/shader/opengl/OpenGLShader.ow"
 import "@graphics/src/graphics/mesh/api/MeshApi.ow"
 import "@graphics/src/graphics/mesh/opengl/OpenGLMesh.ow"
+import "@graphics/src/graphics/texture/api/TextureApi.ow"
+import "@graphics/src/graphics/texture/opengl/OpenGLTexture.ow"
 import "@graphics/src/graphics/camera/api/CameraApi.ow"
 import "@graphics/src/graphics/camera/infra/Camera.ow"
 import "@graphics/src/graphics/math/api/TransformApi.ow"
@@ -35,6 +37,7 @@ import "NativeSpellingInput.ow"
 import "NativeCleaningActivity.ow"
 import "NativeMemoryActivity.ow"
 import "NativePatternsActivity.ow"
+import "NativeBattleArt.ow"
 
 class GpuBattle:
   field app
@@ -56,6 +59,7 @@ class GpuBattle:
   field memory_activity
   field patterns
   field patterns_activity
+  field art
   field program
   field cube
   field held
@@ -80,6 +84,7 @@ class GpuBattle:
     call: this.app.use_native_as(Graphics.CubeGeometry, "GRAPHICS_CUBE_GEOMETRY")
     call: this.app.use_native_as(Graphics.Camera, "GRAPHICS_CAMERA")
     call: this.app.use_native_as(Graphics.Transforms, "GRAPHICS_TRANSFORM")
+    call: this.app.use_native_as(Graphics.OpenGLTexture, "GRAPHICS_TEXTURE")
     call: this.app.use_native_as(Graphics.OpenGLMesh, "GRAPHICS_MESH")
     call: this.app.use_native_as(Graphics.OpenGLShader, "GRAPHICS_SHADER")
     call: this.app.use_native_as(Graphics.GlfwInput, "GRAPHICS_INPUT")
@@ -100,6 +105,7 @@ class GpuBattle:
     set this.menu: 0
     set this.escape_held: 0
     set this.spelling: new NativeSpellingInput()
+    set this.art: 0
 
   fn start():
     if: this.app.boot() != 1
@@ -109,6 +115,7 @@ class GpuBattle:
     set this.renderer: this.app.service("renderer")
     set this.shader: this.app.service("shader")
     set this.meshes: this.app.service("mesh")
+    set textures GRAPHICS_TEXTURE: this.app.service("texture")
     set this.camera: this.app.service("camera")
     set this.world: this.app.service("render_world")
     set this.runtime: this.app.service("runtime")
@@ -180,6 +187,9 @@ class GpuBattle:
     if: this.patterns.start(this.cube) != 1
       return: 0
     set this.patterns_activity: new NativePatternsActivity(this.patterns)
+    set this.art: new NativeBattleArt(this.meshes, this.shader, textures, this.renderer)
+    if: this.art.start() != 1
+      return: 0
     set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
     if: this.hud.start(this.battle) != 1
       return: 0
@@ -416,6 +426,10 @@ class GpuBattle:
     set drawn int: this.world.render_frame(this.program, view, projection, 12, 18, 29)
     if: drawn < 0
       return: drawn
+    if: this.playing() == 1
+      set active: this.active_battle()
+      if: this.art.frame(active.skill_name, active.game.mob.label(), active.feedback_kind, active.feedback_frame) != 2
+        return: 0 - 1
     if: this.hud.render() != 2
       return: 0 - 1
     return: drawn
@@ -424,6 +438,8 @@ class GpuBattle:
     return: this.window.present()
 
   fn stop():
+    if: this.art != 0
+      call: this.art.stop()
     if: this.hud != 0
       call: this.hud.stop()
     # GPU objects must be deleted while GLFW/OpenGL context is still open.
