@@ -23,7 +23,7 @@ export function parseArgs(args) {
     compilerDir: resolve(repoRoot, '../ow-lang'),
     graphicsDir: resolve(repoRoot, '../OW-Graphics'),
     out: resolve(repoRoot, 'ow/native-dist'),
-    version: '0.13.0'
+    version: '1.13.0'
   };
   for (let i = 0; i < args.length; i++) {
     const key = args[i];
@@ -162,6 +162,16 @@ export function buildNativeImage(options) {
   // jpackage is supplied by the full Java 17+ JDK on the BUILD machine.
   // It creates CodeWashRPG.exe (Windows), a launcher (Linux), or a .app (macOS),
   // and bundles a private Java runtime (via jlink). No extra Java install.
+  // Default jpackage jlink flags omit bin/java on Linux. Our bootstrap
+  // launches a second JVM with its own cwd, so ship an explicit JRE that
+  // preserves the java/javaw commands on every target operating system.
+  const runtime = join(stage, 'runtime');
+  rmSync(runtime, {recursive: true, force: true});
+  execute('jlink', ['--add-modules', 'java.se,jdk.unsupported,jdk.crypto.ec',
+    '--strip-debug', '--no-header-files', '--no-man-pages',
+    '--output', runtime]);
+  const javaBin = process.platform === 'win32' ? 'java.exe' : 'java';
+  assertFile(join(runtime, 'bin', javaBin), 'bundled jlink Java runtime');
   const dest = join(options.out, 'images');
   const imageName = process.platform === 'darwin' ? 'CodeWashRPG.app' : 'CodeWashRPG';
   rmSync(join(dest, imageName), {recursive: true, force: true});
@@ -171,7 +181,7 @@ export function buildNativeImage(options) {
     '--vendor', 'Oreo Studios', '--input', input,
     '--main-jar', 'native-launcher.jar',
     '--main-class', 'org.oreostudios.codewash.NativeLauncher',
-    '--dest', dest, '--add-modules', 'java.se,jdk.unsupported,jdk.crypto.ec',
+    '--dest', dest, '--runtime-image', runtime,
     '--java-options', '-Dfile.encoding=UTF-8']);
   return join(dest, imageName);
 }

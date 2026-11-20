@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync, existsSync, mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join, dirname, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {listNativeAssets, stageNativeAssets} from './stage-native-assets.mjs';
 
 test('native art catalogue references original files with safe sandbox-relative paths', () => {
-  const root = resolve(dirname(new URL(import.meta.url).pathname), '../..');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   const catalog = readFileSync(join(root, 'ow/src/engine/NativeArtCatalog.ow'), 'utf8');
   const names = listNativeAssets(catalog);
   assert.ok(names.length >= 20);

@@ -12,7 +12,7 @@ download and extract the complete per-platform artifact:
 |---|---|---|
 | Windows x64 | `CodeWashRPG-Windows-x64.zip` | `CodeWashRPG/CodeWashRPG.exe` |
 | Linux x64 | `CodeWashRPG-Linux-x64.tar.gz` | `CodeWashRPG/bin/CodeWashRPG` |
-| macOS x64 (Intel) | `CodeWashRPG-macOS-x64.tar.gz` | `CodeWashRPG.app` |
+| macOS ARM64 (Apple Silicon) | `CodeWashRPG-macOS-arm64.tar.gz` | `CodeWashRPG.app` |
 
 **Keep all files together.** The Windows .exe is not a single-file
 executable: it requires the sibling bundled runtime and app directories.
@@ -20,7 +20,7 @@ Unlike the separate `LevelUpRPG-Portable.exe` Electron distribution,
 the new app starts the OW Engine + OW Graphics prototype.
 
 On macOS these builds are unsigned and not notarized. Linux requires normal
-desktop GPU/OpenGL system libraries. ARM64 and native installers are future
+desktop GPU/OpenGL system libraries. Intel macOS (x64) and native installers are future
 improvements.
 
 ## Build once, run without development tools
@@ -74,7 +74,7 @@ node ow/scripts/package-native.mjs --compiler-dir /path/to/ow-lang --graphics-di
 ```
 
 Build on **each target OS**: native LWJGL binaries are OS-specific. The GitHub
-Actions workflow runs on Windows, Linux and Intel macOS, archives the complete
+Actions workflow runs on Windows, Linux and Apple Silicon macOS, archives the complete
 application directories and uploads the resulting bundles.
 
 ## Packaging verification

@@ -29,7 +29,7 @@ jobs:
           - os: windows-latest
             label: Windows-x64
           - os: macos-15
-            label: macOS-x64
+            label: macOS-arm64
     runs-on: ${{ matrix.os }}
     name: native-${{ matrix.label }}
     steps:
@@ -58,7 +58,11 @@ jobs:
         run: |
           git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git "$RUNNER_TEMP/ow-graphics"
           git -C "$RUNNER_TEMP/ow-graphics" checkout --quiet 4f00a5b4da076b3062269c9861878fcb34b590e8
-          mvn -B -q -f "$RUNNER_TEMP/ow-graphics/native-bridge/pom.xml" -DskipTests package dependency:copy-dependencies -DoutputDirectory=target/lib
+          native_args=()
+          if [ "$RUNNER_OS" = "macOS" ] && [ "$(uname -m)" = "arm64" ]; then
+            native_args+=("-Dlwjgl.natives=natives-macos-arm64")
+          fi
+          mvn -B -q -f "$RUNNER_TEMP/ow-graphics/native-bridge/pom.xml" -DskipTests "${native_args[@]}" package dependency:copy-dependencies -DoutputDirectory=target/lib
 
       - name: Install pinned OW imports once (no network in released app)
         working-directory: ow
@@ -105,7 +109,7 @@ jobs:
         run: |
           cd ow/native-dist/images
           if [ "$RUNNER_OS" = "macOS" ]; then
-            tar -czf "../CodeWashRPG-macOS-x64.tar.gz" CodeWashRPG.app
+            tar -czf "../CodeWashRPG-macOS-arm64.tar.gz" CodeWashRPG.app
           else
             tar -czf "../CodeWashRPG-Linux-x64.tar.gz" CodeWashRPG
           fi
