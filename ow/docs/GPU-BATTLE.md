@@ -323,3 +323,41 @@ gating, cancellation, explicit Help text, independent Math state and inactive
 ECS scene isolation. The Mesa/Xvfb `cleaning_smoke.ow` verifies task HUD
 pixels, combat feedback and safe menu return, alongside all earlier GPU tests.
 The full browser version and React/Electron deliverable remain unchanged.
+
+## Phase 2 PR #10 — Native Memory matching (eight cards / four pairs)
+
+**Activities → Next → Memory** now launches a fifth independent OW Engine
+activity. The gameplay calls the existing `MemorySkill` (real randomized
+shuffled eight-card deck, reveal, matches, pending mismatch, board cleared)
+rather than implementing an alternate memory algorithm.
+
+Due to the current four-card OW Graphics HUD, the **eight-card board appears
+in two pages of four**. Left/Right switches pages. W/A/S/D selects an
+individual card on the current page; arrows plus Space can also select a
+highlighted card. Only revealed or permanently matched faces display their
+word; unrevealed cards display `?`. A first flip reveals a word, a match
+keeps two faces up and awards one combat hit, and a mismatch temporarily
+reveals both until the next card flip. Completed matches cannot be scored
+again. After four pairs, a new shuffled board is dealt, and combat/XP
+progression persists in its own `Game` instance.
+
+Unlike choice-based Math/Reading, matching a pair invokes `Game.hit()`
+directly; **never call `Game.answer("")`** for Memory, because the memory
+placeholder problem has an empty solution and that would regenerate the deck
+after each hit. The board is intentionally renewed only after all four pairs
+have been matched. The existing golden hit/pink miss effects are shared.
+
+The renderer uses the existing OW 5×7 bitmap-glyph OpenGL shader; word faces,
+page labels, match counters and the enemy HUD are updated in-place with
+bounded geometry. No hidden card values are sent to visible HUD text.
+
+`NativeMemoryTest.ow` checks the original pool's four unique pairs, hidden
+cards, cross-page matching, duplicate-hit prevention, mismatch pending
+cleanup, full board completion and isolation from Math. The real Mesa/Xvfb
+`memory_smoke.ow` checks rendered HUD/card pixels, matching damage, hit
+feedback and menu return. Existing web/Electron gameplay is unaffected.
+
+This is still keyboard-based and shows **four cards at once**; migrating a
+responsive eight-card native grid, textures, mouse input and full accessibility
+remain subsequent improvements. **Patterns** is the only activity not yet
+ported to this native prototype.

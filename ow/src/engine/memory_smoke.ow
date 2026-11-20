@@ -1,0 +1,54 @@
+# Mesa native OpenGL proof: a hidden eight-card Memory deck, flip/match,
+# wrong flip behavior, board reset and independent OW Engine scenes.
+import "GpuBattle.ow"
+
+main:
+  set preview: new GpuBattle()
+  call: assert(preview.start() == 1, "Memory preview boots")
+  call: assert(preview.menu.open_activities(1) == 1, "second activity page")
+  call: assert(preview.menu.choose(1) == 1, "Memory playable from menu")
+  call: assert(preview.menu.screen() == "memory", "Memory scene active")
+  call: assert(preview.memory.game.skill.mode() == "memory", "original MemorySkill")
+  call: assert(preview.hud.refresh_memory(preview.memory, preview.memory_activity) == 1, "draw hidden cards")
+  call: assert(preview.render() == 4, "Memory has four ECS battle meshes")
+  set header: extension("codewash.test.pixel", 24, 447)
+  call: assert(header[0] > 150, "real OpenGL level header pixels")
+  set selected: extension("codewash.test.pixel", 160, 65)
+  set othercard: extension("codewash.test.pixel", 480, 65)
+  call: assert(selected[1] > othercard[1] + 30, "Memory selection card highlighted")
+  set skill: preview.memory.game.skill
+  call: assert(skill.count() == 8, "eight-card memory")
+  call: assert(preview.memory_activity.visible_cards()[0] == "?", "hidden first card")
+  set peer int: 1
+  while: skill.cards[peer] != skill.cards[0]
+    set peer: peer + 1
+  set health int: preview.memory.game.mob.cur_hp()
+  set mathHp int: preview.battle.game.mob.cur_hp()
+  call: assert(preview.memory_activity.select(0) == 1, "reveal first card")
+  call: assert(preview.memory_activity.visible_cards()[0] == skill.cards[0], "card face now visible")
+  call: assert(preview.hud.refresh_memory(preview.memory, preview.memory_activity) == 1, "upload revealed text mesh")
+  call: assert(preview.render() == 4, "flipping does not cause damage")
+  set page int: 0
+  set slot int: peer
+  if: slot > 3
+    set page: 1
+    set slot: slot - 4
+  call: assert(preview.memory_activity.change_page(page) == 1, "navigate matching card page")
+  call: assert(preview.memory_activity.select(slot) == 2, "correct pair detected")
+  call: assert(preview.memory.game.mob.cur_hp() < health, "pair deals combat hit")
+  call: assert(preview.battle.game.mob.cur_hp() == mathHp, "Math HP isolated")
+  call: assert(preview.hud.refresh_memory(preview.memory, preview.memory_activity) == 1, "draw matched text")
+  call: assert(preview.render() == 5, "gold pair-match feedback")
+  set hit: extension("codewash.test.pixel", 415, 370)
+  call: assert(hit[0] > 120, "gold hit red component")
+  call: assert(hit[1] > 95, "gold hit green component")
+  set after int: preview.memory.game.mob.cur_hp()
+  call: assert(preview.memory_activity.select(slot) == 0, "matched card cannot be scored again")
+  call: assert(preview.memory.game.mob.cur_hp() == after, "no duplicated damage")
+  call: assert(preview.menu.back() == 1, "return to main menu")
+  call: assert(preview.hud.refresh_menu(preview.menu) == 1, "menu HUD")
+  call: assert(preview.render() == 0, "inactive Memory ECS meshes hidden")
+  call: assert(preview.menu.start_memory() == 1, "resume Memory")
+  call: assert(preview.memory_activity.matches == 1, "Memory pair count persists")
+  call: assert(preview.stop() == 1, "GPU resources cleaned up")
+  print: "PASS: native Memory flip/pair, real pixels and scene isolation"

@@ -1,0 +1,169 @@
+# Native Memory delegates all shuffle/flip/match logic to MemorySkill.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/CodeWashEngine.ow"
+import "../src/engine/BattleScene.ow"
+import "../src/engine/NativeMemoryActivity.ow"
+import "../src/engine/NativeMenuRouter.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/modules/skills/api/MemorySkill.ow"
+
+class NativeMemoryTest:
+  field check
+  field root
+  field math
+  field memory
+  field activity
+  field menu
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.root: new CodeWashEngine()
+    call: this.check.assertEquals(1, this.root.boot())
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, scenes.add_scene("activities"))
+    call: this.check.assertEquals(1, scenes.add_scene("settings"))
+    call: this.check.assertEquals(1, scenes.add_scene("memory"))
+    set this.math: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.math.start(7))
+    set this.memory: new BattleScene(this.root.app)
+    call: this.check.assertEquals(1, this.memory.configure_memory())
+    call: this.check.assertEquals(1, this.memory.start(7))
+    set this.activity: new NativeMemoryActivity(this.memory)
+    set this.menu: new NativeMenuRouter(scenes)
+    call: this.check.assertEquals(1, this.menu.open_menu())
+
+  @AfterEach
+  fn cleanup():
+    call: this.root.stop()
+
+  fn pick_card(index):
+    set page int: 0
+    set pos int: index
+    if: pos >= 4
+      set page: 1
+      set pos: pos - 4
+    if: page != this.activity.page
+      call: this.activity.change_page(page - this.activity.page)
+    return: this.activity.select(pos)
+
+  @Test
+  fn originalSkillHasEightHiddenCardsAndFourPairs():
+    call: this.check.assertEquals(1, this.menu.open_activities(1))
+    call: this.check.assertEquals(1, this.menu.choose(1))
+    call: this.check.assertEquals("memory", this.menu.screen())
+    call: this.check.assertEquals("memory", this.memory.game.skill.mode())
+    call: this.check.assertEquals(8, this.memory.game.skill.count())
+    call: this.check.assertEquals(6, this.root.app.service("scenes").active_entities())
+    set skill: this.memory.game.skill
+    set i int: 0
+    while: i < 8
+      call: this.check.assertEquals("?", skill.face(i))
+      set matches int: 0
+      set j int: 0
+      while: j < 8
+        if: skill.cards[i] == skill.cards[j]
+          set matches: matches + 1
+        set j: j + 1
+      call: this.check.assertEquals(2, matches)
+      set i: i + 1
+    call: this.check.assertEquals(0, this.memory.configure_memory())
+    call: this.check.assertEquals(4, len(this.activity.visible_cards()))
+
+  @Test
+  fn matchingPairAwardsExactlyOneHitAndCannotDuplicate():
+    set skill: this.memory.game.skill
+    set peer int: 1
+    while: skill.cards[peer] != skill.cards[0]
+      set peer: peer + 1
+    set before int: this.memory.game.mob.cur_hp()
+    set mathHp int: this.math.game.mob.cur_hp()
+    call: this.check.assertEquals(1, this.pick_card(0))
+    call: this.check.assertEquals(skill.cards[0], skill.face(0))
+    call: this.check.assertEquals(2, this.pick_card(peer))
+    call: this.check.assertEquals(1, this.activity.matches)
+    call: this.check.assertEquals(1, this.activity.attempts)
+    call: this.check.assertLessThan(this.memory.game.mob.cur_hp(), before)
+    call: this.check.assertEquals(mathHp, this.math.game.mob.cur_hp())
+    set after int: this.memory.game.mob.cur_hp()
+    call: this.check.assertEquals(0, this.pick_card(0))
+    call: this.check.assertEquals(0, this.pick_card(peer))
+    call: this.check.assertEquals(after, this.memory.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.activity.matches)
+
+  @Test
+  fn mismatchFlipsBackOnNextChoiceAndDoesNotHit():
+    set skill: this.memory.game.skill
+    set other int: 1
+    while: skill.cards[other] == skill.cards[0]
+      set other: other + 1
+    set hp int: this.memory.game.mob.cur_hp()
+    call: this.check.assertEquals(1, this.pick_card(0))
+    call: this.check.assertEquals(3, this.pick_card(other))
+    call: this.check.assertEquals(1, skill.pending)
+    call: this.check.assertEquals(skill.cards[0], skill.face(0))
+    call: this.check.assertEquals(skill.cards[other], skill.face(other))
+    call: this.check.assertEquals(hp, this.memory.game.mob.cur_hp())
+    call: this.check.assertEquals(1, this.activity.attempts)
+    call: this.check.assertEquals(1, this.memory.feedback_kind == 2)
+    set third int: 0
+    while: third == 0
+      set third: third + 1
+    while: third == other
+      set third: third + 1
+    call: this.check.assertEquals(1, this.pick_card(third))
+    call: this.check.assertEquals("?", skill.face(0))
+    call: this.check.assertEquals("?", skill.face(other))
+    call: this.check.assertEquals(0, skill.pending)
+    call: this.check.assertEquals(hp, this.memory.game.mob.cur_hp())
+
+  @Test
+  fn clearingAllFourPairsDealsNewBoardAndRetainsProgress():
+    set skill: this.memory.game.skill
+    set before int: this.memory.game.mob.cur_hp()
+    set index int: 0
+    set cleared int: 0
+    while: index < 8
+      if: skill.matched[index] == 0
+        set peer int: index + 1
+        while: skill.cards[index] != skill.cards[peer]
+          set peer: peer + 1
+        call: this.check.assertEquals(1, this.pick_card(index))
+        set result int: this.pick_card(peer)
+        if: result == 4
+          set cleared: 1
+          return: 1
+        call: this.check.assertEquals(2, result)
+      set index: index + 1
+    call: this.check.assertEquals(1, cleared)
+
+  @Test
+  fn stateAndGpuHudRemainIsolatedThroughMenuAndMath():
+    set scenes: this.root.app.service("scenes")
+    call: this.check.assertEquals(1, this.menu.start_memory())
+    call: this.check.assertEquals(1, this.pick_card(0))
+    set first: this.memory.game.skill.cards[0]
+    call: this.check.assertEquals(1, this.menu.back())
+    call: this.check.assertEquals(0, scenes.active_entities())
+    call: this.check.assertEquals(1, this.menu.start_math())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(1, this.menu.start_memory())
+    call: this.check.assertEquals(6, scenes.active_entities())
+    call: this.check.assertEquals(first, this.memory.game.skill.face(0))
+    set layout: new BattleHudText()
+    call: this.check.assertEquals(4320, len(layout.memory_vertices(this.memory, this.activity)))
+    call: this.check.assertEquals(88, layout.memory_vertices(this.memory, this.activity)[2])
+
+  @Test
+  fn invalidIndicesAndPagesNeverFlipOrDamage():
+    set hp int: this.memory.game.mob.cur_hp()
+    call: this.check.assertEquals(0 - 1, this.activity.select(0 - 1))
+    call: this.check.assertEquals(0 - 1, this.activity.select(4))
+    call: this.check.assertEquals(0, this.activity.change_page(0 - 1))
+    call: this.check.assertEquals(1, this.activity.change_page(1))
+    call: this.check.assertEquals(0, this.activity.change_page(1))
+    call: this.check.assertEquals(1, this.activity.page)
+    call: this.check.assertEquals(0, this.activity.change_page(0 - 1))
+    call: this.check.assertEquals(0, this.activity.page)
+    call: this.check.assertEquals("?", this.memory.game.skill.face(0))
+    call: this.check.assertEquals(hp, this.memory.game.mob.cur_hp())
