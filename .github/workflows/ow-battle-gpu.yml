@@ -52,7 +52,7 @@ jobs:
       - name: Build pinned OW Graphics native extension
         run: |
           git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git /tmp/ow-battle-graphics
-          git -C /tmp/ow-battle-graphics checkout --quiet 4f00a5b4da076b3062269c9861878fcb34b590e8
+          git -C /tmp/ow-battle-graphics checkout --quiet e0b6b3ad7d3e04fb47ec80a03eaf28e392ee30d6
           mvn -B -q -f /tmp/ow-battle-graphics/native-bridge/pom.xml package dependency:copy-dependencies -DoutputDirectory=target/lib
       - name: Install Mesa/Xvfb
         run: |
