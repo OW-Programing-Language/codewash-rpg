@@ -183,69 +183,50 @@ class NativeBattleArt:
       return: 0
     return: 1
 
-  # Draw AFTER the HUD's opaque cards so activity icons aren't covered.
-  # Activity page 0 = Math/Reading/Writing, page 1 = Cleaning/Memory/Patterns.
-  # The first two main-menu options also get relevant artwork. Settings
-  # intentionally shows no fake settings icons before settings are functional.
+  # Showcase the original Minecraft title in a 16:9 header and three
+  # feature panels. This is a static centered-card *foundation*; PR #33
+  # adds real carousel transitions, pointer hit-testing and deep card UI.
   fn menu_icons(router, selected):
     set screen: router.screen()
-    if: screen == "settings"
-      return: 1
-    if: screen != "menu"
-      if: screen != "activities"
-        return: 1
-    set count int: 2
-    if: screen == "activities"
-      set count: 3
     if: this.renderer.depth_test(0) != 1
       return: 0
     if: this.shaders.bind(this.program) != 1
       return: 0
     if: this.shaders.set_int(this.program, "uImage", 0) != 1
       return: 0
-    set i int: 0
-    while: i < count
-      set slot int: i
-      if: screen == "activities"
-        if: router.activity_page == 1
-          set slot: slot + 3
-      # Positions match the existing four-card OW HUD layout.
-      set x float: 0.0 - 0.22
-      set y float: 0.0 - 0.78
-      if: i == 1
-        set x: 0.78
-      if: i == 2
-        set y: 0.0 - 0.96
-      set glow float: 0.83
-      if: i == selected
-        set y: y + this.menu_bob()
-        set glow: 1.0
-      if: this.draw_sprite(this.icons[slot], x, y, 0.13, 0.12, glow) != 1
-        return: 0
-      set i: i + 1
+    if: this.draw_sprite(this.menu_logo, this.layout.logo_x(), this.layout.logo_y(), 1.08, 0.29, 1.0) != 1
+      return: 0
 
-    # Larger gallery icons make the original theme/artwork visible in the
-    # free center space instead of just decorating tiny keyboard cards.
-    set showcase int: 6
-    if: screen == "activities"
-      set showcase: 3
-    set j int: 0
-    while: j < showcase
-      set slot int: j
-      set x float: (0.0 - 0.90) + j * 0.31
-      set y float: 0.0 - 0.30 + this.menu_bob()
-      set width float: 0.23
+    if: screen != "settings"
+      set base int: 0
       if: screen == "activities"
-        set slot: j
-        if: router.activity_page == 1
-          set slot: j + 3
-        set x: (0.0 - 0.78) + j * 0.64
-        set width: 0.30
-        if: j == selected
-          set y: y + 0.026
-      if: this.draw_sprite(this.icons[slot], x, y, width, 0.26, 0.90) != 1
-        return: 0
-      set j: j + 1
+        set base: router.activity_page * 3
+      set chosen int: selected
+      if: chosen > 2
+        set chosen: 0
+      set left int: mod(chosen + 2, 3)
+      set right int: mod(chosen + 1, 3)
+      set i int: 0
+      while: i < 3
+        set slot int: base + chosen
+        if: i == 0
+          set slot: base + left
+        if: i == 2
+          set slot: base + right
+        set x float: this.layout.panel_x(i) + 0.074
+        set y float: this.layout.panel_y(i) + 0.26
+        set w float: 0.25
+        set h float: 0.30
+        set tint float: 0.70
+        if: i == 1
+          set x: this.layout.panel_x(i) + 0.095
+          set y: this.layout.panel_y(i) + 0.21 + this.menu_bob()
+          set w: 0.35
+          set h: 0.43
+          set tint: 1.0
+        if: this.draw_sprite(this.icons[slot], x, y, w, h, tint) != 1
+          return: 0
+        set i: i + 1
 
     if: this.renderer.depth_test(1) != 1
       return: 0
