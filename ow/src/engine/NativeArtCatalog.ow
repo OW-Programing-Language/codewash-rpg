@@ -20,16 +20,16 @@ class NativeArtCatalog:
     if: index == 2
       return: "assets/native/themes/pokemon.jpg"
     if: index == 3
-      return: "assets/native/themes/spy.png"
+      return: "assets/native/themes/spy.jpg"
     if: index == 4
-      return: "assets/native/themes/Scifi.png"
+      return: "assets/native/themes/Scifi.jpg"
     if: index == 5
-      return: "assets/native/themes/fantasy.png"
+      return: "assets/native/themes/fantasy.jpg"
     return: ""
 
   fn theme_logo(index):
-    if: index == 1
-      return: "assets/native/themes/kpop_logo.png"
+    # The Electron K-Pop logo is WebP bytes disguised as .png; JVM ImageIO
+    # cannot decode it yet. Use existing Minecraft fallback until WebP lands.
     if: index == 2
       return: "assets/native/themes/pokemon_logo.png"
     return: "assets/native/themes/minecraft_logo.png"
