@@ -1,0 +1,54 @@
+# Experimental, opt-in headless composition root for the OW Engine migration.
+# The shipping React/Electron app and the existing OW browser entry point
+# (src/main_ui.ow) do not import this file.
+import "@flow/src/App.ow"
+import "@graphics/src/graphics/renderer/api/RendererApi.ow"
+import "@graphics/src/graphics/renderer/headless/HeadlessRenderer.ow"
+import "@engine/src/engine/modules/EngineEntitiesModule.ow"
+import "@engine/src/engine/modules/EngineScenesModule.ow"
+import "@engine/src/engine/modules/EngineRuntimeModule.ow"
+import "../modules/skills/infra/SkillsFunctor.ow"
+import "../modules/combat/infra/CombatFunctor.ow"
+
+class CodeWashEngine:
+  field app
+  field entities_module
+  field scenes_module
+  field runtime_module
+
+  fn new():
+    set this.app: new App()
+    set this.entities_module: new EngineEntitiesModule()
+    set this.scenes_module: new EngineScenesModule(this.entities_module.store())
+    set this.runtime_module: new EngineRuntimeModule(this.scenes_module.store(), 16)
+    # Deliberately register in reverse order; flOW resolves dependencies.
+    call: this.app.use(this.runtime_module)
+    call: this.app.use(this.scenes_module)
+    call: this.app.use(this.entities_module)
+    # GPU-free renderer: real OpenGL rendering is a separate follow-up PR.
+    call: this.app.use_native_as(Graphics.HeadlessRenderer, "GRAPHICS_RENDERER")
+    # Existing CodeWash combat remains the source of gameplay rules.
+    call: this.app.apply(new SkillsFunctor())
+    call: this.app.apply(new CombatFunctor())
+
+  fn boot():
+    if: this.app.boot() != 1
+      return: 0
+    set scenes: this.app.service("scenes")
+    if: scenes.add_scene("menu") != 1
+      return: 0
+    if: scenes.add_scene("battle") != 1
+      return: 0
+    return: 1
+
+  fn enter_battle():
+    return: this.app.service("scenes").activate("battle")
+
+  fn enter_menu():
+    return: this.app.service("scenes").activate("menu")
+
+  fn tick(elapsed_ms):
+    return: this.app.service("runtime").update(elapsed_ms)
+
+  fn stop():
+    return: this.app.stop()

@@ -1,0 +1,61 @@
+# No native GLFW/OpenGL required: proof of engine/graphics/gameplay compatibility.
+import "@owunit/src/OWAssert.ow"
+import "@graphics/src/graphics/renderer/api/RendererApi.ow"
+import "../src/engine/CodeWashEngine.ow"
+
+class CodeWashEngineIntegrationTest:
+  field checker
+  field bridge
+
+  @BeforeEach
+  fn setup():
+    set this.checker: new OWAssert()
+    set this.bridge: new CodeWashEngine()
+    call: this.checker.assertEquals(1, this.bridge.boot())
+
+  @AfterEach
+  fn cleanup():
+    call: this.bridge.stop()
+
+  @Test
+  fn bootsEngineAndExistingCodeWashServices():
+    set app: this.bridge.app
+    call: this.checker.assertEquals(1, app.has_service("entities"))
+    call: this.checker.assertEquals(1, app.has_service("scenes"))
+    call: this.checker.assertEquals(1, app.has_service("runtime"))
+    call: this.checker.assertEquals(1, app.has_service("renderer"))
+    call: this.checker.assertEquals(1, app.has_service("skills"))
+    call: this.checker.assertEquals(1, app.has_service("game"))
+    call: this.checker.assertEquals("menu", app.service("scenes").active_name())
+
+  @Test
+  fn advancesOnlyTheActiveScene():
+    set scenes: this.bridge.app.service("scenes")
+    set menu_hero int: scenes.spawn("menu-hero")
+    call: this.checker.assertLessThan(0, menu_hero)
+    call: this.checker.assertEquals(1, this.bridge.enter_battle())
+    set battle_monster int: scenes.spawn("battle-monster")
+    call: this.checker.assertLessThan(0, battle_monster)
+    call: this.checker.assertEquals(2, this.bridge.tick(32))
+    call: this.checker.assertEquals(2, scenes.ticks_in("battle"))
+    call: this.checker.assertEquals(0, scenes.ticks_in("menu"))
+    call: this.checker.assertEquals(1, this.bridge.enter_menu())
+    call: this.checker.assertEquals(1, this.bridge.tick(16))
+    call: this.checker.assertEquals(1, scenes.ticks_in("menu"))
+    call: this.checker.assertEquals(2, scenes.ticks_in("battle"))
+
+  @Test
+  fn keepsOriginalCombatRulesAvailable():
+    set game: this.bridge.app.service("game")
+    call: game.use_skill(this.bridge.app.service("skills").make("math"))
+    call: game.start(1)
+    set full int: game.mob.max_hp()
+    call: game.answer(game.problem.solution())
+    call: this.checker.assertLessThan(game.mob.cur_hp(), full)
+
+  @Test
+  fn supportsGraphicsWithoutAGpu():
+    set renderer GRAPHICS_RENDERER: this.bridge.app.service("renderer")
+    call: this.checker.assertEquals("headless", renderer.backend())
+    call: this.checker.assertEquals(1, renderer.clear(10, 20, 30))
+    call: this.checker.assertEquals(1, renderer.draw_triangle())

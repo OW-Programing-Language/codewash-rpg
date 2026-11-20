@@ -45,7 +45,8 @@ jobs:
           if-no-files-found: ignore
 
   # OW gate: build the OW compiler from upstream, resolve dependencies.yml
-  # (@flow / @math / @owunit) and run the OWUnit module test suites.
+  # (@flow / @math / @owunit / @engine / @graphics) and run the OWUnit suites,
+  # including the new headless engine + existing-game integration tests.
   ow-tests:
     runs-on: ubuntu-latest
 
