@@ -43,6 +43,21 @@ class NativeArtCatalog:
   # Resolve only verified original PNGs. If a mob only ships as GIF/WebP
   # use the neutral egg emblem; never display a different named mob.
   fn mob_path(label):
+    # GIF-only original mobs are converted to PNG at packaging time.
+    if: label == "Ghast"
+      return: "assets/native/mobs/hostile/ghast.png"
+    if: label == "Blaze"
+      return: "assets/native/mobs/hostile/blaze.png"
+    if: label == "Guardian"
+      return: "assets/native/mobs/hostile/guardian.png"
+    if: label == "Phantom"
+      return: "assets/native/mobs/hostile/phantom.png"
+    if: label == "Elder Guardian"
+      return: "assets/native/mobs/miniboss/elderguardian.png"
+    if: label == "Warden"
+      return: "assets/native/mobs/boss/warden.png"
+    if: label == "Ender Dragon"
+      return: "assets/native/mobs/boss/enderdragon.png"
     if: label == "Creeper"
       return: "assets/native/mobs/hostile/creeper.png"
     if: label == "Zombie"
