@@ -157,3 +157,13 @@ older `1.13.1` archive, which still contains the invalid wildcard path.
 A valid Java classpath does not by itself guarantee that OpenGL 3.3 is
 available on an individual's graphics driver; a separate JVM or GLFW error
 will now be captured in `latest.log`.
+
+## PR #32 wide-screen menu
+
+Packages now include the original `themes/minecraft_logo.png` and
+`themes/minecraft.png` PNGs and start the native OW game in a 1280×720
+window. A centered menu card region, side panels and decorative heart strip
+are drawn by OW Graphics directly. Packaged Windows/Linux/macOS builds
+validate the original assets and all six native activity screens. The pinned
+GLFW window adapter does not yet provide a fullscreen or resizable-window
+API; those require a later OW Graphics extension.

@@ -35,7 +35,9 @@ test('staging never includes Git internals and writes offline .ow-resolved marke
     for (const item of ['src/engine/battle_gpu.ow',
       'src/engine/battle_lifecycle_smoke.ow',
       'assets/native/skills/math_icon.png',
-      'assets/native/items/egg.png']) {
+      'assets/native/items/egg.png',
+      'assets/native/themes/minecraft.png',
+      'assets/native/themes/minecraft_logo.png']) {
       const p = join(ow, item);
       mkdirSync(dirname(p), {recursive: true});
       writeFileSync(p, 'test content');

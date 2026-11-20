@@ -33,6 +33,8 @@ export function verifyContents({root, binary, app}) {
     'ow-graphics-native.jar', 'payload/ow/dependencies.lock.yml',
     'payload/ow/src/engine/battle_gpu.ow',
     'payload/ow/assets/native/skills/math_icon.png',
+    'payload/ow/assets/native/themes/minecraft.png',
+    'payload/ow/assets/native/themes/minecraft_logo.png',
     'payload/ow/.ow/deps/graphics/.ow-resolved']) {
     if (!existsSync(join(app, name))) {
       throw new Error('Missing packaged resource: ' + name + ' in ' + root);

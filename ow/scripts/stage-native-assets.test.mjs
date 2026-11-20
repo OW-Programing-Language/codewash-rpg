@@ -14,6 +14,8 @@ test('native art catalogue references original files with safe sandbox-relative 
   assert.ok(names.includes('skills/math_icon.png'));
   assert.ok(names.includes('mobs/hostile/creeper.png'));
   assert.ok(names.includes('items/egg.png'));
+  assert.ok(names.includes('themes/minecraft.png'));
+  assert.ok(names.includes('themes/minecraft_logo.png'));
   assert.equal(new Set(names).size, names.length);
   for (const name of names) {
     assert.ok(existsSync(join(root, 'public/assets', name)), 'missing original asset: ' + name);
@@ -23,6 +25,7 @@ test('native art catalogue references original files with safe sandbox-relative 
 test('catalogue staging rejects traversal and unapproved file types', () => {
   assert.throws(() => listNativeAssets('return: "assets/native/../private.png"'), /outside approved catalogue/);
   assert.throws(() => listNativeAssets('return: "assets/native/items/sound.wav"'), /outside approved catalogue/);
+  assert.throws(() => listNativeAssets('return: "assets/native/themes/minecraft.webp"'), /outside approved catalogue/);
   assert.throws(() => listNativeAssets('return: ""'), /Missing native asset/);
 });
 

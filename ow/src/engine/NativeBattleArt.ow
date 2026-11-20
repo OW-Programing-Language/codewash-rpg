@@ -2,6 +2,7 @@
 # portraits, deterministic idle bob and hit/miss tint reactions.
 # This is a sprite overlay, not a finished 3D character importer.
 import "NativeArtCatalog.ow"
+import "NativeMenuLayout.ow"
 
 class NativeBattleArt:
   field meshes
@@ -13,7 +14,11 @@ class NativeBattleArt:
   field icons
   field enemy
   field enemy_path
+  field menu_theme
+  field menu_logo
+  field layout
   field ticks
+  field menu_ticks
   field catalog
 
   fn new(meshes, shaders, textures, renderer):
@@ -27,7 +32,11 @@ class NativeBattleArt:
     set this.icons: []
     set this.enemy: 0
     set this.enemy_path: ""
+    set this.menu_theme: 0
+    set this.menu_logo: 0
+    set this.layout: new NativeMenuLayout()
     set this.ticks: 0
+    set this.menu_ticks: 0
 
   fn start():
     # NDC billboard quad with bottom-up UVs, keeping shader-independent
@@ -52,6 +61,14 @@ class NativeBattleArt:
         return: 0
       set pool[i]: texture
       set i: i + 1
+    set this.menu_theme: this.textures.load_image(this.catalog.menu_background_path())
+    if: this.menu_theme < 1
+      call: this.stop()
+      return: 0
+    set this.menu_logo: this.textures.load_image(this.catalog.menu_logo_path())
+    if: this.menu_logo < 1
+      call: this.stop()
+      return: 0
     return: 1
 
   # Cache the current actual mob portrait. Replace only after successful
@@ -126,6 +143,95 @@ class NativeBattleArt:
       return: 0
     return: 2
 
+
+  # Distinct clocks: battle feedback animation stays frozen on menu pages.
+  fn menu_bob():
+    set frame int: mod(this.menu_ticks, 32)
+    if: frame < 16
+      return: (1.0 * frame) / 1200.0
+    return: (1.0 * (32 - frame)) / 1200.0
+
+  # Shared textured quad rendering. OW Graphics loads original PNG assets;
+  # both menu backgrounds and activity cards use this same shader/mesh.
+  fn draw_sprite(texture, x, y, width, height, tint):
+    if: texture < 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uRect", x, y, width, height) != 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uTint", tint, tint, tint, 1.0) != 1
+      return: 0
+    if: this.textures.bind(texture, 0) != 1
+      return: 0
+    return: this.renderer.draw_mesh(this.quad)
+
+  # Draw before the text/cards. Background remains visible outside the
+  # opaque buttons, while the title and option labels remain readable.
+  fn menu_background():
+    if: this.menu_theme < 1
+      return: 0
+    set this.menu_ticks: this.menu_ticks + 1
+    set shade float: 0.38 + this.menu_bob() * 0.9
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shaders.bind(this.program) != 1
+      return: 0
+    if: this.shaders.set_int(this.program, "uImage", 0) != 1
+      return: 0
+    if: this.draw_sprite(this.menu_theme, 0.0 - 1.0, 0.0 - 1.0, 2.0, 2.0, shade) != 1
+      return: 0
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    return: 1
+
+  # Showcase the original Minecraft title in a 16:9 header and three
+  # feature panels. This is a static centered-card *foundation*; PR #33
+  # adds real carousel transitions, pointer hit-testing and deep card UI.
+  fn menu_icons(router, selected):
+    set screen: router.screen()
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shaders.bind(this.program) != 1
+      return: 0
+    if: this.shaders.set_int(this.program, "uImage", 0) != 1
+      return: 0
+    if: this.draw_sprite(this.menu_logo, this.layout.logo_x(), this.layout.logo_y(), 1.08, 0.29, 1.0) != 1
+      return: 0
+
+    if: screen != "settings"
+      set base int: 0
+      if: screen == "activities"
+        set base: router.activity_page * 3
+      set chosen int: selected
+      if: chosen > 2
+        set chosen: 0
+      set left int: mod(chosen + 2, 3)
+      set right int: mod(chosen + 1, 3)
+      set i int: 0
+      while: i < 3
+        set slot int: base + chosen
+        if: i == 0
+          set slot: base + left
+        if: i == 2
+          set slot: base + right
+        set x float: this.layout.panel_x(i) + 0.074
+        set y float: this.layout.panel_y(i) + 0.26
+        set w float: 0.25
+        set h float: 0.30
+        set tint float: 0.70
+        if: i == 1
+          set x: this.layout.panel_x(i) + 0.095
+          set y: this.layout.panel_y(i) + 0.21 + this.menu_bob()
+          set w: 0.35
+          set h: 0.43
+          set tint: 1.0
+        if: this.draw_sprite(this.icons[slot], x, y, w, h, tint) != 1
+          return: 0
+        set i: i + 1
+
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    return: 1
+
   fn stop():
     set i int: 0
     while: i < len(this.icons)
@@ -136,6 +242,12 @@ class NativeBattleArt:
     if: this.enemy > 0
       call: this.textures.destroy(this.enemy)
       set this.enemy: 0
+    if: this.menu_theme > 0
+      call: this.textures.destroy(this.menu_theme)
+      set this.menu_theme: 0
+    if: this.menu_logo > 0
+      call: this.textures.destroy(this.menu_logo)
+      set this.menu_logo: 0
     set this.enemy_path: ""
     if: this.quad > 0
       call: this.meshes.destroy(this.quad)

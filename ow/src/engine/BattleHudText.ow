@@ -67,20 +67,72 @@ class BattleHudText:
     set at: this.line(buffer, at, "D  " + str(answers[3]), 0.09, 0.0 - 0.94, 20)
     return: buffer
 
+  # Menu text can be laid out independently from the battle bitmap font.
+  # A larger title and tighter button labels share exactly the same 5x7 glyph
+  # shader while retaining a bounded 240-glyph mesh.
+  fn glyph_scaled(buffer, at, code, x, y, w, h):
+    set encoded int: code * 8
+    set buffer[at]: x
+    set buffer[at + 1]: y
+    set buffer[at + 2]: encoded
+    set buffer[at + 3]: x + w
+    set buffer[at + 4]: y
+    set buffer[at + 5]: encoded + 1
+    set buffer[at + 6]: x + w
+    set buffer[at + 7]: y + h
+    set buffer[at + 8]: encoded + 2
+    set buffer[at + 9]: x
+    set buffer[at + 10]: y
+    set buffer[at + 11]: encoded
+    set buffer[at + 12]: x + w
+    set buffer[at + 13]: y + h
+    set buffer[at + 14]: encoded + 2
+    set buffer[at + 15]: x
+    set buffer[at + 16]: y + h
+    set buffer[at + 17]: encoded + 3
+    return: at + 18
+
+  fn menu_line(buffer, at, value, x, y, limit, width, height, step):
+    set count int: len(value)
+    if: count > limit
+      set count: limit
+    set i int: 0
+    while: i < count
+      if: at + 18 > len(buffer)
+        return: at
+      set char: char_at(value, i)
+      set at: this.glyph_scaled(buffer, at, this.code_for(char), x + step * i, y, width, height)
+      set i: i + 1
+    return: at
+
   # Reuse the very same OW bitmap-glyph mesh generator for every menu.
   # HUD shaders/cards stay alive across scene changes; no UI duplication.
   fn menu_vertices(router):
     set buffer: array(4320, 0.0)
     set at int: 0
-    set at: this.line(buffer, at, router.title(), 0.0 - 0.93, 0.86, 45)
-    set at: this.line(buffer, at, router.subtitle(), 0.0 - 0.93, 0.68, 45)
-    set at: this.line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.93, 0.42, 45)
-    set at: this.line(buffer, at, router.status, 0.0 - 0.93, 0.26, 45)
-    set options: router.options()
-    set at: this.line(buffer, at, "W  " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "A  " + options[1], 0.09, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
-    set at: this.line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
+    set screen: router.screen()
+    set at: this.menu_line(buffer, at, "LEVEL UP!", 0.0 - 0.45, 0.50, 10, 0.069, 0.10, 0.10)
+    set at: this.menu_line(buffer, at, router.title(), 0.0 - 0.29, 0.405, 27, 0.020, 0.052, 0.023)
+    set names: ["MATH", "READING", "WRITING"]
+    if: screen == "activities"
+      if: router.activity_page == 1
+        set names: ["CLEANING", "MEMORY", "PATTERNS"]
+    set at: this.menu_line(buffer, at, names[0], 0.0 - 0.79, 0.24, 16, 0.023, 0.055, 0.028)
+    set at: this.menu_line(buffer, at, names[1], 0.0 - 0.16, 0.24, 16, 0.023, 0.055, 0.028)
+    set at: this.menu_line(buffer, at, names[2], 0.60, 0.24, 16, 0.023, 0.055, 0.028)
+    set at: this.menu_line(buffer, at, router.subtitle(), 0.0 - 0.49, 0.0 - 0.60, 40, 0.019, 0.044, 0.024)
+    set at: this.menu_line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.41, 0.0 - 0.54, 31, 0.020, 0.044, 0.027)
+    set at: this.menu_line(buffer, at, router.status, 0.0 - 0.47, 0.0 - 0.64, 42, 0.018, 0.038, 0.023)
+    set opts: router.options()
+    set at: this.menu_line(buffer, at, "W " + opts[0], 0.0 - 0.92, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
+    set at: this.menu_line(buffer, at, "A " + opts[1], 0.0 - 0.44, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
+    set at: this.menu_line(buffer, at, "S " + opts[2], 0.04, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
+    set at: this.menu_line(buffer, at, "D " + opts[3], 0.52, 0.0 - 0.79, 17, 0.020, 0.063, 0.025)
+    if: screen == "menu"
+      set at: this.menu_line(buffer, at, "S", 0.0 - 0.915, 0.81, 1, 0.029, 0.06, 0.035)
+      set at: this.menu_line(buffer, at, "A", 0.0 - 0.775, 0.81, 1, 0.029, 0.06, 0.035)
+      set at: this.menu_line(buffer, at, "D", 0.715, 0.81, 1, 0.029, 0.06, 0.035)
+      set at: this.menu_line(buffer, at, "ESC", 0.842, 0.81, 3, 0.022, 0.06, 0.027)
     return: buffer
 
   # Draw an explicit word-copy prompt; original Writing image clues are
