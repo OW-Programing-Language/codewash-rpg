@@ -121,21 +121,28 @@ class NativeMemoryTest:
   fn clearingAllFourPairsDealsNewBoardAndRetainsProgress():
     set skill: this.memory.game.skill
     set before int: this.memory.game.mob.cur_hp()
+    set mathHp int: this.math.game.mob.cur_hp()
     set index int: 0
-    set cleared int: 0
     while: index < 8
-      if: skill.matched[index] == 0
-        set peer int: index + 1
-        while: skill.cards[index] != skill.cards[peer]
-          set peer: peer + 1
-        call: this.check.assertEquals(1, this.pick_card(index))
-        set result int: this.pick_card(peer)
-        if: result == 4
-          set cleared: 1
-          return: 1
-        call: this.check.assertEquals(2, result)
+      if: this.activity.boards == 0
+        if: skill.matched[index] == 0
+          set peer int: index + 1
+          while: skill.cards[index] != skill.cards[peer]
+            set peer: peer + 1
+          call: this.check.assertEquals(1, this.pick_card(index))
+          set result int: this.pick_card(peer)
+          if: this.activity.boards == 0
+            call: this.check.assertEquals(2, result)
+          else:
+            call: this.check.assertEquals(4, result)
       set index: index + 1
-    call: this.check.assertEquals(1, cleared)
+    call: this.check.assertEquals(1, this.activity.boards)
+    call: this.check.assertEquals(4, this.activity.attempts)
+    call: this.check.assertEquals(0, this.activity.matches)
+    call: this.check.assertEquals(0, skill.is_cleared())
+    call: this.check.assertEquals("?", skill.face(0))
+    call: this.check.assertLessThan(this.memory.game.mob.cur_hp(), before)
+    call: this.check.assertEquals(mathHp, this.math.game.mob.cur_hp())
 
   @Test
   fn stateAndGpuHudRemainIsolatedThroughMenuAndMath():
@@ -163,7 +170,7 @@ class NativeMemoryTest:
     call: this.check.assertEquals(1, this.activity.change_page(1))
     call: this.check.assertEquals(0, this.activity.change_page(1))
     call: this.check.assertEquals(1, this.activity.page)
-    call: this.check.assertEquals(0, this.activity.change_page(0 - 1))
+    call: this.check.assertEquals(1, this.activity.change_page(0 - 1))
     call: this.check.assertEquals(0, this.activity.page)
     call: this.check.assertEquals("?", this.memory.game.skill.face(0))
     call: this.check.assertEquals(hp, this.memory.game.mob.cur_hp())
