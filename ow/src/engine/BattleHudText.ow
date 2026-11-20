@@ -1,0 +1,68 @@
+# Pure OW bitmap text geometry for the experimental OpenGL battle.
+# ASCII indices match the glyph table compiled into BattleHud's shader.
+class BattleHudText:
+  field alphabet
+
+  fn new():
+    set this.alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/()=? :.!%"
+
+  fn code_for(char):
+    set code int: index_of(this.alphabet, upper(char))
+    if: code < 0
+      return: index_of(this.alphabet, "?")
+    return: code
+
+  # Encode each glyph as two triangles with character+corner in vertex Z.
+  fn glyph(buffer, at, code, x, y):
+    set width float: 0.034
+    set height float: 0.069
+    set encoded int: code * 8
+    set buffer[at]: x
+    set buffer[at + 1]: y
+    set buffer[at + 2]: encoded
+    set buffer[at + 3]: x + width
+    set buffer[at + 4]: y
+    set buffer[at + 5]: encoded + 1
+    set buffer[at + 6]: x + width
+    set buffer[at + 7]: y + height
+    set buffer[at + 8]: encoded + 2
+    set buffer[at + 9]: x
+    set buffer[at + 10]: y
+    set buffer[at + 11]: encoded
+    set buffer[at + 12]: x + width
+    set buffer[at + 13]: y + height
+    set buffer[at + 14]: encoded + 2
+    set buffer[at + 15]: x
+    set buffer[at + 16]: y + height
+    set buffer[at + 17]: encoded + 3
+    return: at + 18
+
+  fn line(buffer, at, text, x, y, limit):
+    set count int: len(text)
+    if: count > limit
+      set count: limit
+    set i int: 0
+    while: i < count
+      if: at + 18 > len(buffer)
+        return: at
+      set code int: this.code_for(char_at(text, i))
+      set at: this.glyph(buffer, at, code, x + i * 0.038, y)
+      set i: i + 1
+    return: at
+
+  fn vertices(battle):
+    # 240 glyph slots, 4320 floats: comfortably below Graphics' 300000 cap.
+    # Unused zero-coordinates are degenerate, zero-area triangles.
+    set buffer: array(4320, 0.0)
+    set at int: 0
+    set status: "LVL " + str(battle.game.hero.lvl()) + "  MOB " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
+    set question: "MATH " + upper(battle.game.problem.ask())
+    set answers: battle.options()
+    set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
+    set at: this.line(buffer, at, question, 0.0 - 0.93, 0.69, 45)
+    set at: this.line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.93, 0.55, 45)
+    set at: this.line(buffer, at, "W  " + str(answers[0]), 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.line(buffer, at, "A  " + str(answers[1]), 0.09, 0.0 - 0.75, 20)
+    set at: this.line(buffer, at, "S  " + str(answers[2]), 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.line(buffer, at, "D  " + str(answers[3]), 0.09, 0.0 - 0.94, 20)
+    return: buffer
