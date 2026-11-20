@@ -374,4 +374,16 @@ pair damage, mismatches that flip back on the next attempt, and automatic
 re-deal after all four pairs are found. The existing OW `MemorySkill` owns
 the shuffled card state and matching logic; OW Engine keeps progress in its
 own ECS scene, and OW Graphics renders cards with the existing native HUD.
-Only Patterns remains unported to native; the browser/React game is unchanged.
+Patterns is covered in the following native adapter; browser/React remains unchanged.
+
+## Phase 2 PR #11 — Native Patterns (sixth activity)
+
+**Activities → Next → Patterns** now has an independent OW Engine scene with
+text-based color sequence study/recall using the original `PatternsSkill`
+and `Game.answer()`. The existing OW Graphics GPU HUD shows the sequence
+during Study, hides it during Recall, then presents four candidate colors.
+W/A/S/D or arrows + Space answers; correct/wrong answers use the same
+gold/pink combat effects and separate HP/progression. This completes the
+**six native activity adapters**, but **does not yet replicate** the timed
+flashing/sound of React's Simon-Says, original artwork, input accessibility,
+persistent saves or distributable desktop packages.
