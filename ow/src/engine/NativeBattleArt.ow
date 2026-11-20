@@ -205,6 +205,30 @@ class NativeBattleArt:
       if: this.draw_sprite(this.icons[slot], x, y, 0.13, 0.12, glow) != 1
         return: 0
       set i: i + 1
+
+    # Larger gallery icons make the original theme/artwork visible in the
+    # free center space instead of just decorating tiny keyboard cards.
+    set showcase int: 6
+    if: screen == "activities"
+      set showcase: 3
+    set j int: 0
+    while: j < showcase
+      set slot int: j
+      set x float: (0.0 - 0.90) + j * 0.31
+      set y float: 0.0 - 0.30 + this.bob()
+      set width float: 0.23
+      if: screen == "activities"
+        set slot: j
+        if: router.activity_page == 1
+          set slot: j + 3
+        set x: (0.0 - 0.78) + j * 0.64
+        set width: 0.30
+        if: j == selected
+          set y: y + 0.026
+      if: this.draw_sprite(this.icons[slot], x, y, width, 0.26, 0.90) != 1
+        return: 0
+      set j: j + 1
+
     if: this.renderer.depth_test(1) != 1
       return: 0
     return: 1
