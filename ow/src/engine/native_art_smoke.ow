@@ -14,12 +14,32 @@ main:
   call: assert(preview.art.bob() == 0.0, "initial animation at rest")
   call: assert(preview.menu.start_math() == 1, "start native Math")
   call: assert(preview.hud.refresh(preview.battle) == 1, "Math HUD")
+  # MobPool chooses random enemies. Pin a known bright, supported PNG for
+  # framebuffer sampling, then separately test runtime portrait switching.
+  call: preview.battle.game.mob.init("Creeper", preview.battle.game.mob.max_hp())
   call: assert(preview.render() == 4, "four original ECS meshes plus art overlay")
   call: assert(preview.art.enemy > 0, "original enemy PNG or neutral fallback")
   set iconPixel: extension("codewash.test.pixel", 50, 288)
   call: assert(iconPixel[0] + iconPixel[1] + iconPixel[2] > 65, "original activity PNG appears in framebuffer")
-  set mobPixel: extension("codewash.test.pixel", 580, 290)
-  call: assert(mobPixel[0] + mobPixel[1] + mobPixel[2] > 65, "actual enemy artwork appears in framebuffer")
+  # Transparent sprite margins are expected: sample interior points instead
+  # of requiring one arbitrary PNG texel to be opaque.
+  set mob1: extension("codewash.test.pixel", 560, 275)
+  set mob2: extension("codewash.test.pixel", 575, 285)
+  set mob3: extension("codewash.test.pixel", 590, 295)
+  set mob4: extension("codewash.test.pixel", 565, 310)
+  set mob5: extension("codewash.test.pixel", 595, 320)
+  set nonBackground int: 0
+  if: mob1[0] + mob1[1] + mob1[2] > 65
+    set nonBackground: nonBackground + 1
+  if: mob2[0] + mob2[1] + mob2[2] > 65
+    set nonBackground: nonBackground + 1
+  if: mob3[0] + mob3[1] + mob3[2] > 65
+    set nonBackground: nonBackground + 1
+  if: mob4[0] + mob4[1] + mob4[2] > 65
+    set nonBackground: nonBackground + 1
+  if: mob5[0] + mob5[1] + mob5[2] > 65
+    set nonBackground: nonBackground + 1
+  call: assert(nonBackground > 0, "actual Creeper PNG pixels in framebuffer")
   set firstTick int: preview.art.ticks
   set firstBob float: preview.art.bob()
   call: assert(preview.render() == 4, "second idle art frame")
