@@ -86,3 +86,74 @@ CI runs self-test/check for all platforms and Mesa/Xvfb smoke for Linux.
 
 This does not yet implement original React audio/UI parity, fully native
 3D artwork, an autosave system or a code-signed installer.
+
+## Windows: splash closes without the game window
+
+Versions before 1.13.1 could hide all OW/OpenGL errors behind the loading
+screen. **Version 1.13.1 and newer** writes a diagnostic log before launching
+the JVM, shows a blocking startup-error dialog if the child process crashes
+or closes before presenting the first rendered frame, and displays an OpenGL
+3.3-specific hint if GLFW cannot create its window. The splash only closes
+automatically after the successful first OpenGL frame.
+
+**Where the log is saved:**
+
+```text
+%LOCALAPPDATA%\OreoStudios\CodeWashRPG\logs\latest.log
+```
+
+Press `Win + R`, paste that path, and open the file in Notepad. On
+subsequent launches the previous startup log is replaced. For bug reports,
+copy the entire text, particularly the final `GPU STARTUP:` marker and the
+first Java exception. Logs remain local and are never uploaded automatically.
+
+The GitHub Windows CI graphics diagnostic on November 20, 2026 confirmed
+that the bundled OW JVM and Windows LWJGL DLLs can load, but its Windows
+Server 2025 runner could not create a **GLFW OpenGL 3.3 window**. That
+virtualized CI machine may expose insufficient graphics support; this
+is not proof that every Windows desktop has the same driver limitation.
+The Windows GPU diagnostic remains nonblocking for this reason, and the
+Windows package is released after its EXE self-test and offline import check.
+The Linux package receives a mandatory real Mesa/Xvfb startup and rendering
+test.
+
+If your log includes:
+
+```text
+Unable to create a GLFW OpenGL 3.3 window
+```
+
+make sure you have current Intel/NVIDIA/AMD graphics drivers installed
+from the hardware vendor and are launching in a local graphical session
+rather than an incompatible Remote Desktop or virtual machine. Some older
+GPUs may not support OpenGL 3.3 at all. The launcher cannot upgrade your
+video driver; software-rendering fallback has not been implemented.
+
+If you are running an old package and it exits without a dialog, you can
+inspect the original Java exception through PowerShell using the packaged
+runtime (replace the path with your extracted `CodeWashRPG` folder):
+
+```powershell
+cd "C:\path\to\CodeWashRPG\app\payload\ow"
+& "..\..\..\runtime\bin\java.exe" -cp "..\..\OwIDE.jar;..\..\ow-graphics-native.jar;..\..\lib\*" dev.oreo.Main run src/engine/battle_gpu.ow
+```
+
+This uses the bundled Java installation and source dependencies; it does
+not require Maven, Git, a JDK, or Node. If a GLFW exception is raised, copy
+the stack trace instead of assuming a missing texture.
+
+## Windows startup classpath bug fix (v1.13.2)
+
+An actual Windows 11 crash report identified
+`java.nio.file.InvalidPathException: Illegal char <*> at index 0: *`
+inside `NativeLauncher.launch`. The previous code invoked
+`appDir.resolve("lib").resolve("*")`, which Windows rejects before the
+OW runtime ever starts. The fixed launcher appends the wildcard to a
+**string classpath**, without using `Path.resolve("*")`; the Windows packaged
+`--self-test` now builds and validates the same JVM classpath string.
+
+**Download the build from the new PR #30 workflow run**. Do not reuse an
+older `1.13.1` archive, which still contains the invalid wildcard path.
+A valid Java classpath does not by itself guarantee that OpenGL 3.3 is
+available on an individual's graphics driver; a separate JVM or GLFW error
+will now be captured in `latest.log`.

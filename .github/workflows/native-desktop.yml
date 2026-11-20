@@ -83,6 +83,15 @@ jobs:
         shell: bash
         run: node ow/scripts/verify-native-image.mjs
 
+      # GitHub-hosted Windows workers can expose the basic Microsoft 1.1
+      # OpenGL driver instead of a real GPU. Keep this probe diagnostic until
+      # a guaranteed 3.3-capable software driver is available in Windows CI.
+      - name: Diagnose actual Windows packaged OpenGL startup
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: bash
+        run: node ow/scripts/verify-native-image.mjs ow/native-dist --gpu-probe
+
       - name: Install Linux software-rendering requirements
         if: runner.os == 'Linux'
         shell: bash
