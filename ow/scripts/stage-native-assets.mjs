@@ -12,6 +12,15 @@ import {dirname, join, resolve, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+// Electron's browser sniffs these JPEG images despite their .png extension.
+// Native OW Graphics validates magic bytes, so stage the exact originals
+// using their correct .jpg file extension without modifying public/assets.
+export const mislabeledJpegSource = Object.freeze({
+  'themes/spy.jpg': 'themes/spy.png',
+  'themes/Scifi.jpg': 'themes/Scifi.png',
+  'themes/fantasy.jpg': 'themes/fantasy.png',
+});
+
 // Only allow these known original GIF-only mobs to become PNG stills.
 // Native ImageIO does not animate GIF/WebP; never substitute an unrelated egg.
 export const originalGifForPng = Object.freeze({
@@ -44,13 +53,20 @@ export function stageNativeAssets(repoRoot = root) {
   const source = join(repoRoot, 'public/assets');
   const target = join(repoRoot, 'ow/assets/native');
   for (const name of names) {
-    const origin = resolve(source, name);
+    const originalName = Object.hasOwn(mislabeledJpegSource, name) ? mislabeledJpegSource[name] : name;
+    const origin = resolve(source, originalName);
     const destination = resolve(target, name);
     if (!origin.startsWith(source + sep) || !destination.startsWith(target + sep)) {
       throw new Error('Asset escapes its designated root: ' + name);
     }
     mkdirSync(dirname(destination), {recursive: true});
     if (existsSync(origin) && statSync(origin).isFile()) {
+      if (Object.hasOwn(mislabeledJpegSource, name)) {
+        const magic = readFileSync(origin).subarray(0, 3);
+        if (magic[0] !== 0xff || magic[1] !== 0xd8 || magic[2] !== 0xff) {
+          throw new Error('Misnamed Electron asset is not a JPEG: ' + originalName);
+        }
+      }
       copyFileSync(origin, destination);
     } else if (Object.hasOwn(originalGifForPng, name)) {
       const gifSource = resolve(source, originalGifForPng[name]);
