@@ -73,7 +73,7 @@ class NativeMenuCardDataTest:
     call: this.check.assertEquals(0 - 11, shapes[164])
     set textBuilder: new BattleHudText()
     set glyphs: textBuilder.rich_card_text_vertices(this.carousel, this.cards, this.layout)
-    call: this.check.assertEquals(4320, len(glyphs))
+    call: this.check.assertEquals(8640, len(glyphs))
     call: this.check.assertEquals(1, this.carousel.move(1))
     set i int: 0
     while: i < 6
