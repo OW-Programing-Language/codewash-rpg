@@ -105,28 +105,53 @@ class BattleHudText:
       set i: i + 1
     return: at
 
-  # Reuse the very same OW bitmap-glyph mesh generator for every menu.
-  # HUD shaders/cards stay alive across scene changes; no UI duplication.
+  # The last bit of each glyph's encoded corner carries an optional tint.
+  # This enables a gold LEVEL UP banner while reusing the native bitmap shader.
+  fn menu_line_gold(buffer, at, value, x, y, limit, width, height, step):
+    set count int: len(value)
+    if: count > limit
+      set count: limit
+    set i int: 0
+    while: i < count
+      if: at + 18 > len(buffer)
+        return: at
+      set at: this.glyph_scaled(buffer, at, this.code_for(char_at(value, i)), x + step * i, y, width, height)
+      set j int: at - 18
+      while: j < at
+        set buffer[j + 2]: buffer[j + 2] + 4
+        set j: j + 3
+      set i: i + 1
+    return: at
+
+  # Electron-like hierarchy: logo, large yellow hero title, five artworks,
+  # unobtrusive corner actions, and a compact footer keyboard legend.
+  # No duplicate plain-text logo or text over the carousel portraits.
   fn menu_vertices(router):
     set buffer: array(4320, 0.0)
     set at int: 0
     set screen: router.screen()
-    # The original textured logo is the title. Avoid overlaying a huge
-    # duplicate 5x7 bitmap title on top of the card carousel.
-    set at: this.menu_line(buffer, at, router.title(), 0.0 - 0.25, 0.475, 27, 0.012, 0.032, 0.016)
-    set at: this.menu_line(buffer, at, "LEFT RIGHT BROWSE   ENTER PLAY", 0.0 - 0.32, 0.39, 31, 0.012, 0.031, 0.016)
-    set at: this.menu_line(buffer, at, router.subtitle(), 0.0 - 0.36, 0.0 - 0.57, 40, 0.011, 0.027, 0.014)
-    set at: this.menu_line(buffer, at, router.status, 0.0 - 0.39, 0.0 - 0.645, 42, 0.011, 0.027, 0.014)
-    set opts: router.options()
-    set at: this.menu_line(buffer, at, "W " + opts[0], 0.0 - 0.91, 0.0 - 0.78, 17, 0.013, 0.036, 0.018)
-    set at: this.menu_line(buffer, at, "A " + opts[1], 0.0 - 0.43, 0.0 - 0.78, 17, 0.013, 0.036, 0.018)
-    set at: this.menu_line(buffer, at, "S " + opts[2], 0.05, 0.0 - 0.78, 17, 0.013, 0.036, 0.018)
-    set at: this.menu_line(buffer, at, "D " + opts[3], 0.53, 0.0 - 0.78, 17, 0.013, 0.036, 0.018)
-    if: screen == "menu"
-      set at: this.menu_line(buffer, at, "S", 0.0 - 0.915, 0.81, 1, 0.018, 0.040, 0.022)
-      set at: this.menu_line(buffer, at, "A", 0.0 - 0.775, 0.81, 1, 0.018, 0.040, 0.022)
-      set at: this.menu_line(buffer, at, "D", 0.715, 0.81, 1, 0.018, 0.040, 0.022)
-      set at: this.menu_line(buffer, at, "ESC", 0.842, 0.81, 3, 0.015, 0.040, 0.020)
+    if: screen == "settings"
+      set at: this.menu_line_gold(buffer, at, "SETTINGS", 0.0 - 0.235, 0.45, 10, 0.050, 0.105, 0.067)
+      set at: this.menu_line(buffer, at, router.subtitle(), 0.0 - 0.40, 0.12, 42, 0.014, 0.040, 0.020)
+    else:
+      set at: this.menu_line_gold(buffer, at, "LEVEL UP!", 0.0 - 0.305, 0.49, 10, 0.052, 0.098, 0.068)
+    set keys: ["W", "A", "S", "D"]
+    set i int: 0
+    while: i < 4
+      set x float: 0.0
+      if: i == 0
+        set x: 0.0 - 0.931
+      else:
+        if: i == 1
+          set x: 0.0 - 0.790
+        else:
+          if: i == 2
+            set x: 0.747
+          else:
+            set x: 0.888
+      set at: this.menu_line(buffer, at, keys[i], x, 0.823, 1, 0.043, 0.060, 0.054)
+      set i: i + 1
+    set at: this.menu_line(buffer, at, "ARROWS BROWSE   ENTER PLAY", 0.0 - 0.265, 0.0 - 0.866, 28, 0.010, 0.027, 0.019)
     return: buffer
 
   # Dynamic OW bitmap labels are positioned from the same card_rect() as
@@ -138,11 +163,11 @@ class BattleHudText:
     set buffer: array(4320, 0.0)
     set at int: 0
     set i int: 0
-    while: i < 5
-      set rel float: carousel.relative(i)
+    while: i < 7
+      set rel float: carousel.visual_relative(i)
       set rect: layout.card_rect(rel)
       if: rect[2] > 0.0
-        set slot int: carousel.slot(i)
+        set slot int: carousel.visual_slot(i)
         set x float: rect[0]
         set y float: rect[1]
         set w float: rect[2]
