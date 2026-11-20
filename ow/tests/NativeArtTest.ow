@@ -36,8 +36,10 @@ class NativeArtTest:
     call: this.check.assertEquals("assets/native/mobs/hostile/zombie.png", this.catalog.mob_path("Zombie"))
     call: this.check.assertEquals("assets/native/mobs/miniboss/ravager.png", this.catalog.mob_path("Ravager"))
     call: this.check.assertEquals("assets/native/mobs/boss/Herobrine.png", this.catalog.mob_path("Herobrine"))
-    call: this.check.assertEquals("assets/native/items/egg.png", this.catalog.mob_path("Blaze"))
-    call: this.check.assertEquals("assets/native/items/egg.png", this.catalog.mob_path("Warden"))
+    call: this.check.assertEquals("assets/native/mobs/hostile/blaze.png", this.catalog.mob_path("Blaze"))
+    call: this.check.assertEquals("assets/native/mobs/boss/warden.png", this.catalog.mob_path("Warden"))
+    call: this.check.assertEquals("assets/native/mobs/hostile/ghast.png", this.catalog.mob_path("Ghast"))
+    call: this.check.assertEquals("assets/native/mobs/hostile/pillager.png", this.catalog.mob_path("Pillager"))
     call: this.check.assertEquals("assets/native/items/egg.png", this.catalog.mob_path("nonexistent"))
 
   @Test
