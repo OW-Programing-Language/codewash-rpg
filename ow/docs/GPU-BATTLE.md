@@ -256,3 +256,41 @@ The Mesa/Xvfb smoke checks the real word glyph pixels, 3D reading scene,
 selected cards and hit/miss graphics as well as switching to Math and back.
 The complete six-skill browser game, microphone support and profile save
 formats remain unchanged.
+
+## Phase 2 PR #8 — Native Writing and on-screen spelling keyboard
+
+The separate native OpenGL preview now offers **Activities → Writing**. It uses
+the existing `WritingSkill` word pools, a third independent `Game` instance,
+OW Engine scene isolation and the same `Game.answer()` combat rules.
+
+**This is a word-copying/typing exercise, not full original image-based
+spelling parity.** The source `WritingSkill` provides a word as both the prompt
+and expected answer; since the native preview has not loaded the original
+Minecraft item images, the HUD explicitly displays `COPY WORD <target>`.
+Players construct their answer letter by letter on a **seven-page onscreen
+virtual keyboard** using OW Graphics' existing supported input keys.
+
+- **Left/Right arrows** select a letter page (1–7). **W/A/S/D** directly
+  chooses one of four cells on the current page. Alternatively **Up/Down
+  arrows** move through the four highlighted cells and **Space** selects one.
+- Pages 1–6 offer **A–X**, and page 7 offers **Y**, **Z**, **CHECK** and
+  **DELETE**. CHECK submits a nonempty word; DELETE removes its last letter.
+  The input is bounded to 16 letters and never attempts an empty submission.
+- Esc returns to the main menu. Math, Reading and Writing preserve independent
+  monsters/health, questions and XP when switching. On Writing submission the
+  original combat service applies damage/rewards, with native gold/pink effects.
+
+The current SHA-pinned OW Graphics native bridge only accepts the named keys
+W/A/S/D, arrows, Space, Left Shift and Escape; it **does not support arbitrary
+A–Z physical keyboard events, Enter or Backspace**. This PR therefore does not
+pretend that a hardware text box or full text-input abstraction exists. A later
+graphics-runtime/API update can add Unicode character callbacks, IME, paste,
+keyboard layouts and real image-based spelling clues.
+
+`NativeWritingTest.ow` tests all seven pages, bounds, Delete/Check, text
+composition via the virtual keyboard, correct/wrong Game damage and
+Math/Reading state isolation. The Mesa/Xvfb `writing_smoke.ow` renders the
+real virtual keyboard and sampled OpenGL framebuffer, submits an incorrect and
+a correctly composed word, and verifies combat visuals and scene isolation.
+The existing OW browser game and original React/Electron application are
+unmodified.

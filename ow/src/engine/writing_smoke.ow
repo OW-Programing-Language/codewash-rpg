@@ -1,0 +1,69 @@
+# Mesa/Xvfb tests real GPU Writing HUD and the same virtual keyboard
+# controller the interactive GLFW loop uses, with no Java fake input bridge.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "native Writing preview boots")
+  call: assert(game.menu.open_activities(0) == 1, "open activities")
+  call: assert(game.menu.choose(2) == 1, "Writing choice is playable")
+  call: assert(game.menu.screen() == "writing", "real Writing ECS scene active")
+  call: assert(game.writing.skill_name == "writing", "uses original WritingSkill")
+  call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "GPU spelling HUD")
+  call: assert(game.render() == 4, "Writing renders four native scene meshes")
+  set hero: extension("codewash.test.pixel", 225, 240)
+  call: assert(hero[2] > hero[0] + 30, "Writing hero rendered in OpenGL")
+  set glyph: extension("codewash.test.pixel", 24, 447)
+  call: assert(glyph[0] > 150, "bitmap Writing HUD glyph visible")
+  set selected: extension("codewash.test.pixel", 160, 65)
+  set ordinary: extension("codewash.test.pixel", 480, 65)
+  call: assert(selected[1] > ordinary[1] + 30, "letter card highlight")
+
+  # Enter a deliberately wrong word using a real virtual letter page.
+  call: assert(game.spelling.select(0) == 0, "append A")
+  call: assert(game.spelling.select(0) == 0, "append second A")
+  call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "typed text refreshed")
+  set hp int: game.writing.game.mob.cur_hp()
+  call: assert(game.spelling.change_page(6) == 1, "final command page")
+  call: assert(game.spelling.select(2) == 1, "CHECK accepts nonempty word")
+  call: assert(game.writing.choose_text(game.spelling.text) == 0, "wrong typed word")
+  call: assert(game.writing.game.mob.cur_hp() == hp, "no wrong-word damage")
+  call: game.spelling.reset()
+  call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "next Writing prompt")
+  call: assert(game.render() == 5, "pink Writing miss feedback")
+  set miss: extension("codewash.test.pixel", 225, 370)
+  call: assert(miss[0] > miss[1] + 60, "pink GPU feedback pixel")
+
+  # Compose the exact current word letter-by-letter via 7-page input.
+  set target: game.writing.game.problem.solution()
+  set alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  set i int: 0
+  while: i < len(target)
+    set position int: index_of(alphabet, char_at(target, i))
+    call: assert(position >= 0, "Writing word contains supported glyph")
+    set page int: 0
+    while: position >= 4
+      set position: position - 4
+      set page: page + 1
+    if: page != game.spelling.page
+      call: assert(game.spelling.change_page(page - game.spelling.page) == 1, "navigate letter page")
+    call: assert(game.spelling.select(position) == 0, "append correct character")
+    set i: i + 1
+  call: assert(game.spelling.text == target, "full target typed through virtual keyboard")
+  call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "GPU text after typing")
+  call: assert(game.render() == 5, "Writing HUD renders with full text")
+  call: assert(game.spelling.change_page(6 - game.spelling.page) == 1, "open CHECK page")
+  call: assert(game.spelling.select(2) == 1, "submit target word")
+  call: assert(game.writing.choose_text(game.spelling.text) == 1, "Writing correct through Game.answer")
+  call: assert(game.writing.game.mob.cur_hp() < hp, "correct spelling damages writing enemy")
+  call: game.spelling.reset()
+  call: assert(game.hud.refresh_writing(game.writing, game.spelling) == 1, "refresh next question")
+  call: assert(game.render() == 5, "gold Writing hit feedback")
+  set hit: extension("codewash.test.pixel", 415, 370)
+  call: assert(hit[0] > 120, "gold hit GPU pixel")
+  call: assert(hit[1] > 95, "gold hit second channel")
+  call: assert(game.menu.back() == 1, "leave Writing")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "restore menu text")
+  call: assert(game.render() == 0, "Writing scene does not leak into menu")
+  call: assert(game.stop() == 1, "native GPU resources released")
+  print: "PASS: native Writing letter input, Check/Delete and real framebuffer"

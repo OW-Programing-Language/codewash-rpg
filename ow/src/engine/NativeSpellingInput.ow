@@ -1,0 +1,66 @@
+# Pure-OW virtual text input. Pinned OW Graphics only supports WASD,
+# arrows, Space, Shift and Escape: no A-Z, Enter or Backspace native events.
+# Seven four-option pages cover A-Z, Check and Delete.
+class NativeSpellingInput:
+  field text
+  field page
+  field max_chars
+
+  fn new():
+    set this.text: ""
+    set this.page: 0
+    set this.max_chars: 16
+
+  fn options():
+    if: this.page == 0
+      return: ["A", "B", "C", "D"]
+    if: this.page == 1
+      return: ["E", "F", "G", "H"]
+    if: this.page == 2
+      return: ["I", "J", "K", "L"]
+    if: this.page == 3
+      return: ["M", "N", "O", "P"]
+    if: this.page == 4
+      return: ["Q", "R", "S", "T"]
+    if: this.page == 5
+      return: ["U", "V", "W", "X"]
+    return: ["Y", "Z", "CHECK", "DELETE"]
+
+  fn change_page(delta):
+    set next int: this.page + delta
+    if: next < 0
+      return: 0
+    if: next > 6
+      return: 0
+    set this.page: next
+    return: 1
+
+  fn erase():
+    if: len(this.text) == 0
+      return: 0
+    set this.text: substr(this.text, 0, len(this.text) - 1)
+    return: 1
+
+  fn reset():
+    set this.text: ""
+    set this.page: 0
+    return: 1
+
+  # 0 appended, 1 request CHECK, 2 DELETE, -1 invalid.
+  fn select(index):
+    if: index < 0
+      return: 0 - 1
+    if: index > 3
+      return: 0 - 1
+    set entry: this.options()[index]
+    if: entry == "CHECK"
+      if: len(this.text) == 0
+        return: 0 - 1
+      return: 1
+    if: entry == "DELETE"
+      call: this.erase()
+      return: 2
+    if: len(this.text) >= this.max_chars
+      return: 0 - 1
+    set this.text: this.text + entry
+    return: 0

@@ -31,6 +31,7 @@ import "BattleScene.ow"
 import "BattleHud.ow"
 import "BattleHudSelection.ow"
 import "NativeMenuRouter.ow"
+import "NativeSpellingInput.ow"
 
 class GpuBattle:
   field app
@@ -44,6 +45,8 @@ class GpuBattle:
   field runtime
   field battle
   field reading
+  field writing
+  field spelling
   field program
   field cube
   field held
@@ -87,6 +90,7 @@ class GpuBattle:
     set this.hud: 0
     set this.menu: 0
     set this.escape_held: 0
+    set this.spelling: new NativeSpellingInput()
 
   fn start():
     if: this.app.boot() != 1
@@ -128,6 +132,8 @@ class GpuBattle:
       return: 0
     if: scenes.add_scene("reading") != 1
       return: 0
+    if: scenes.add_scene("writing") != 1
+      return: 0
     set this.battle: new BattleScene(this.app)
     if: this.battle.start(this.cube) != 1
       return: 0
@@ -135,6 +141,11 @@ class GpuBattle:
     if: this.reading.configure_reading() != 1
       return: 0
     if: this.reading.start(this.cube) != 1
+      return: 0
+    set this.writing: new BattleScene(this.app)
+    if: this.writing.configure_writing() != 1
+      return: 0
+    if: this.writing.start(this.cube) != 1
       return: 0
     set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
     if: this.hud.start(this.battle) != 1
@@ -147,6 +158,8 @@ class GpuBattle:
     return: 1
 
   fn active_battle():
+    if: this.menu.screen() == "writing"
+      return: this.writing
     if: this.menu.screen() == "reading"
       return: this.reading
     return: this.battle
@@ -156,9 +169,19 @@ class GpuBattle:
       return: 1
     if: this.menu.screen() == "reading"
       return: 1
+    if: this.menu.screen() == "writing"
+      return: 1
     return: 0
 
+  fn refresh_active_hud():
+    if: this.menu.screen() == "writing"
+      return: this.hud.refresh_writing(this.writing, this.spelling)
+    return: this.hud.refresh(this.active_battle())
+
   fn show_question():
+    if: this.menu.screen() == "writing"
+      print: "Writing: copy the word with seven virtual keyboard pages."
+      return: 1
     set active: this.active_battle()
     print: active.game.prompt_line()
     set answers: active.options()
@@ -197,7 +220,26 @@ class GpuBattle:
       set this.nav_held: ""
     else:
       if: navigation != this.nav_held
-        call: this.selection.move(navigation)
+        if: this.menu.screen() == "writing"
+          if: navigation == "RIGHT"
+            call: this.spelling.change_page(1)
+            call: this.selection.pick(0)
+            call: assert(this.refresh_active_hud() == 1, "writing page forward")
+          else:
+            if: navigation == "LEFT"
+              call: this.spelling.change_page(0 - 1)
+              call: this.selection.pick(0)
+              call: assert(this.refresh_active_hud() == 1, "writing page back")
+            else:
+              if: navigation == "DOWN"
+                if: this.selection.selected < 3
+                  call: this.selection.pick(this.selection.selected + 1)
+              else:
+                if: navigation == "UP"
+                  if: this.selection.selected > 0
+                    call: this.selection.pick(this.selection.selected - 1)
+        else:
+          call: this.selection.move(navigation)
         set this.nav_held: navigation
 
     # W/A/S/D answers immediately; Space chooses the highlighted card.
@@ -238,11 +280,22 @@ class GpuBattle:
         if: handled == 1
           call: this.selection.pick(0)
         if: this.playing() == 1
-          call: assert(this.hud.refresh(this.active_battle()) == 1, "activity screen refresh")
+          call: assert(this.refresh_active_hud() == 1, "activity screen refresh")
           call: this.show_question()
         else:
           call: assert(this.hud.refresh_menu(this.menu) == 1, "menu screen refresh")
       return: handled
+    if: this.menu.screen() == "writing"
+      set kind int: this.spelling.select(choice)
+      if: kind == 1
+        set outcome int: this.writing.choose_text(this.spelling.text)
+        call: this.spelling.reset()
+        call: this.selection.pick(0)
+        call: assert(this.refresh_active_hud() == 1, "writing next prompt")
+        return: outcome
+      if: kind >= 0
+        call: assert(this.refresh_active_hud() == 1, "writing text update")
+      return: kind
     set active: this.active_battle()
     set outcome int: active.choose(choice)
     if: outcome == 1

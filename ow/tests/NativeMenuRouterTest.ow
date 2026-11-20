@@ -19,6 +19,7 @@ class NativeMenuRouterTest:
     call: this.check.assertEquals(1, scenes.add_scene("activities"))
     call: this.check.assertEquals(1, scenes.add_scene("settings"))
     call: this.check.assertEquals(1, scenes.add_scene("reading"))
+    call: this.check.assertEquals(1, scenes.add_scene("writing"))
     set this.router: new NativeMenuRouter(scenes)
     call: this.check.assertEquals(1, this.router.open_menu())
 
@@ -41,7 +42,7 @@ class NativeMenuRouterTest:
     call: this.check.assertEquals("menu", this.router.screen())
 
   @Test
-  fn readingIsPlayableButOtherFourListedSkillsRemainUnavailable():
+  fn readingAndWritingPlayableButLastThreeActivitiesUnavailable():
     call: this.check.assertEquals(1, this.router.open_activities(0))
     set first: this.router.options()
     call: this.check.assertEquals("MATH", first[0])
@@ -51,8 +52,10 @@ class NativeMenuRouterTest:
     call: this.check.assertEquals("reading", this.router.screen())
     call: this.check.assertEquals(1, this.router.back())
     call: this.check.assertEquals(1, this.router.open_activities(0))
-    call: this.check.assertEquals(0, this.router.choose(2))
-    call: this.check.assertEquals("activities", this.router.screen())
+    call: this.check.assertEquals(1, this.router.choose(2))
+    call: this.check.assertEquals("writing", this.router.screen())
+    call: this.check.assertEquals(1, this.router.back())
+    call: this.check.assertEquals(1, this.router.open_activities(0))
     call: this.check.assertEquals(1, this.router.choose(3))
     call: this.check.assertEquals(1, this.router.activity_page)
     set second: this.router.options()

@@ -1,5 +1,5 @@
 # Pure OW menu controller: OW Engine owns the scenes; UI owns input/presentation.
-# Math and Reading are playable. Remaining activities are explicit previews
+# Math, Reading and Writing are playable. Remaining activities are previews
 # until their respective native activity-porting PRs.
 class NativeMenuRouter:
   field scenes
@@ -28,7 +28,7 @@ class NativeMenuRouter:
     if: this.scenes.activate("activities") != 1
       return: 0
     set this.activity_page: page
-    set this.status: "MATH AND READING READY  OTHERS SOON"
+    set this.status: "MATH READING WRITING READY  OTHERS SOON"
     return: 1
 
   fn open_settings():
@@ -49,6 +49,12 @@ class NativeMenuRouter:
     set this.status: ""
     return: 1
 
+  fn start_writing():
+    if: this.scenes.activate("writing") != 1
+      return: 0
+    set this.status: ""
+    return: 1
+
   fn back():
     if: this.screen() == "menu"
       set this.quitting: 1
@@ -60,6 +66,8 @@ class NativeMenuRouter:
       return: "MATH BATTLE"
     if: this.screen() == "reading"
       return: "READING BATTLE"
+    if: this.screen() == "writing"
+      return: "WRITING BATTLE"
     if: this.screen() == "activities"
       if: this.activity_page == 0
         return: "ACTIVITIES  PAGE 1 OF 2"
@@ -69,6 +77,8 @@ class NativeMenuRouter:
     return: "CODEWASH RPG"
 
   fn subtitle():
+    if: this.screen() == "writing"
+      return: "COPY THE WORD WITH LETTER PAGES"
     if: this.screen() == "reading"
       return: "MATCH THE WORD  FOUR CHOICES"
     if: this.screen() == "settings"
@@ -113,6 +123,8 @@ class NativeMenuRouter:
           return: this.start_math()
         if: index == 1
           return: this.start_reading()
+        if: index == 2
+          return: this.start_writing()
         if: index == 3
           return: this.open_activities(1)
       else:

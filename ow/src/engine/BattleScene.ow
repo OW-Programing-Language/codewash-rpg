@@ -40,6 +40,15 @@ class BattleScene:
     set this.skill_name: "math"
     set this.cached_options: []
 
+  # A separate Game and ECS scene isolate Writing progression.
+  fn configure_writing():
+    if: this.hero != 0
+      return: 0
+    set this.scene_name: "writing"
+    set this.skill_name: "writing"
+    set this.game: new Game()
+    return: 1
+
   # Independent native Reading run using the existing ReadingSkill/Game API.
   # Each activity owns its own Game; paused math progress is never overwritten.
   fn configure_reading():
@@ -180,6 +189,22 @@ class BattleScene:
     if: value == this.game.problem.solution()
       set correct: 1
     call: this.game.answer(value)
+    set this.cached_options: this.game.skill.options(this.game.problem)
+    call: this.sync_health()
+    call: this.show_feedback(correct)
+    return: correct
+
+  # Writing evaluates the entire typed word (not a four-choice answer).
+  # Damage/XP/respawn still delegate to the original Game.answer().
+  fn choose_text(word):
+    if: this.skill_name != "writing"
+      return: 0 - 1
+    if: len(word) == 0
+      return: 0 - 1
+    set correct int: 0
+    if: upper(word) == upper(this.game.problem.solution())
+      set correct: 1
+    call: this.game.answer(upper(word))
     set this.cached_options: this.game.skill.options(this.game.problem)
     call: this.sync_health()
     call: this.show_feedback(correct)
