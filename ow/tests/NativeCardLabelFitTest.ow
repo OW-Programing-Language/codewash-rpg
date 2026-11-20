@@ -1,0 +1,57 @@
+# Prevent the exact screenshot regression: skill labels colliding with LVL.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/BattleHudText.ow"
+import "../src/engine/NativeMenuLayout.ow"
+import "../src/engine/NativeMenuCardData.ow"
+import "../src/modules/combat/api/Game.ow"
+
+class NativeCardLabelScene:
+  field game
+  fn new():
+    set this.game: new Game()
+    call: this.game.start(1)
+
+class NativeCardLabelFitTest:
+  field check
+  field fonts
+  field layout
+  field cards
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.fonts: new BattleHudText()
+    set this.layout: new NativeMenuLayout()
+    set a: new NativeCardLabelScene()
+    set b: new NativeCardLabelScene()
+    set c: new NativeCardLabelScene()
+    set d: new NativeCardLabelScene()
+    set e: new NativeCardLabelScene()
+    set f: new NativeCardLabelScene()
+    set this.cards: new NativeMenuCardData(a, b, c, d, e, f)
+
+  @Test
+  fn everyElectronFantasyHeadingFitsItsReservedZoneOnAllFiveCards():
+    set i int: 0
+    while: i < 6
+      set ordinal int: 0
+      while: ordinal < 5
+        set relative float: ordinal - 2.0
+        set rect: this.layout.card_rect(relative)
+        set label_x float: rect[0] + 0.020
+        set available float: rect[2] - 0.146
+        set badge_x float: rect[0] + rect[2] - 0.112
+        set buffer: array(720, 0.0)
+        set at int: this.fonts.fitted_line(buffer, 0, this.cards.title(i), label_x, 0.0, available, 0.035, 22)
+        call: this.check.assertEquals(len(this.cards.title(i)) * 18, at)
+        set last_right float: buffer[at - 16]
+        call: this.check.assertEquals(1, last_right < badge_x)
+        set ordinal: ordinal + 1
+      set i: i + 1
+
+  @Test
+  fn originalNamesAreNoLongerAbbreviatedOrIntersectBadges():
+    call: this.check.assertEquals("ENCHANTING TABLE", this.cards.title(1))
+    call: this.check.assertEquals("CHEST MANAGEMENT", this.cards.title(3))
+    call: this.check.assertEquals("LOGIC BUILDING", this.cards.title(5))
+    call: this.check.assertEquals(0.0 - 0.112, this.layout.card_rect(0.0)[0] + this.layout.card_rect(0.0)[2] - 0.288)
