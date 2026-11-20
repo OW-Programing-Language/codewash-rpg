@@ -42,10 +42,22 @@ class NativeCardLabelFitTest:
         set available float: rect[2] - 0.146
         set badge_x float: rect[0] + rect[2] - 0.112
         set buffer: array(720, 0.0)
-        set at int: this.fonts.fitted_line(buffer, 0, this.cards.title(i), label_x, 0.0, available, 0.035, 22)
-        call: this.check.assertEquals(len(this.cards.title(i)) * 18, at)
-        set last_right float: buffer[at - 15]
-        call: this.check.assertEquals(1, last_right < badge_x)
+        set first: this.cards.title_first(i)
+        set second: this.cards.title_second(i)
+        set at int: this.fonts.fitted_line(buffer, 0, first, label_x, 0.0, available, 0.027, 22)
+        call: this.check.assertEquals(len(first) * 18, at)
+        set glyph int: 0
+        while: glyph < at
+          # Check the rightmost vertex of EVERY glyph, not just last.
+          call: this.check.assertEquals(1, buffer[glyph + 3] < badge_x)
+          set glyph: glyph + 18
+        if: second != ""
+          set at: this.fonts.fitted_line(buffer, 0, second, label_x, 0.0, available, 0.026, 22)
+          call: this.check.assertEquals(len(second) * 18, at)
+          set glyph: 0
+          while: glyph < at
+            call: this.check.assertEquals(1, buffer[glyph + 3] < badge_x)
+            set glyph: glyph + 18
         set ordinal: ordinal + 1
       set i: i + 1
 
