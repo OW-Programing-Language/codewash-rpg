@@ -167,3 +167,13 @@ are drawn by OW Graphics directly. Packaged Windows/Linux/macOS builds
 validate the original assets and all six native activity screens. The pinned
 GLFW window adapter does not yet provide a fullscreen or resizable-window
 API; those require a later OW Graphics extension.
+
+## PR #33 — Animated carousel
+
+Windows/Linux/macOS native app images include the OW-only six-card
+carousel. Use **Left/Right** to navigate the central featured card,
+**Space** to launch that skill, or W/A/S/D to use the existing quick menu.
+Original skill icons remain packaged locally and are never reloaded during
+the 12-frame smoothstep transition. GPU card geometry and artwork use
+matching eased clip-space coordinates. This is not full Electron
+monster-card parity and does not yet implement mouse or touch input.

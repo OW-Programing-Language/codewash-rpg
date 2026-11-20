@@ -437,3 +437,13 @@ See [native GPU guide](docs/GPU-BATTLE.md#pr-32--169-native-ui-foundation-from-t
 This is a foundational layout, not Electron UI parity: the card carousel,
 mouse/touch, responsive fullscreen settings, rich font and sound effects
 are still planned work.
+
+## PR #33 — Native activity carousel
+
+The main and Activities menus now provide a **six-skill, arrow-navigable
+animated carousel**. The selected activity stays centered, smaller
+neighbor cards slide past it with smoothstep easing, and Space launches
+the focused skill. W/A/S/D remain quick menu actions; all six existing
+OW Engine scenes are preserved. This is implemented entirely in OW and
+OW Graphics/GLFW, without React or Electron. See
+[GPU battle documentation](docs/GPU-BATTLE.md#pr-33--real-ow-graphics-six-card-carousel-with-easing).

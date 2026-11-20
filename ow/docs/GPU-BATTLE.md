@@ -525,3 +525,45 @@ resizing, DPI scale or true fullscreen controls, so this PR provides a
 fixed 16:9 initial size with NDC-based positions, not responsive window
 resizing. Top-corner glyphs are keyboard hints, **not clickable controls**,
 and hearts are decoration, **not a real player-health indicator**.
+
+## PR #33 — Real OW Graphics six-card carousel with easing
+
+The previous static three-panel feature showcase is now a **native animated
+carousel**. A pure OW `NativeMenuCarousel.ow` tracks six selectable skills,
+a 12-frame cubic smoothstep transition, source/target slot, direction,
+wrap-around and page-local focus. Left/Right arrow keys rotate the carousel
+on the main menu or Activities screen; **Space launches the centered skill**.
+The original W/A/S/D quick actions remain available, including the
+Activities next/back page options. Escape still returns to the main menu.
+Game scenes are routed through the existing OW Engine scene router, without
+JavaScript, HTML/CSS or an Electron/WebView fallback.
+
+Card-border GPU meshes are recomputed only on the 12 animated transition
+frames; the underlying themed background, six original PNG textures, title
+logo, top controls and hearts are cached. The border, card fill and artwork
+all use **one eased NDC position** defined by
+`NativeMenuLayout.card_rect(relative)`. The center card scales down and
+moves sideways while the incoming card scales up, with two smaller
+neighboring cards visible. The offscreen entering/leaving cards are culled,
+and the full carousel wraps from Patterns back to Math. The battle animation
+clock remains independent, and the GPU meshes are destroyed on shutdown.
+
+Opening an activity from an arrow-selected card works on **either** screen.
+When navigating between the third/fourth skills, the activity page shown
+by the existing four keyboard quick actions follows the focused card.
+Settings retains its previous keyboard-only behavior.
+
+`NativeMenuCarouselTest.ow` checks wrap-around, six unique slots, the
+monotonic smoothstep curve, transitions and resource geometry bounds.
+`menu_carousel_smoke.ow` tests 12 actual Mesa/OpenGL frames, gold selection
+border pixels, easing, reverse travel, page crossing, launching Cleaning
+and GPU cleanup. The original `menu_widescreen_smoke.ow` remains active.
+
+**Not yet identical to Electron:** native cards are still framed activity
+artwork rather than the original rich monster cards with HP bars,
+descriptions, animated 3D mobs and themed buttons (planned PR #34).
+The pinned OW Graphics adapter still lacks native mouse pointer position,
+clickable UI widgets, resizing/fullscreen, accessibility and audio parity.
+The transition is deterministic frame-based rather than time-based, so
+high/low FPS machines may see different durations until the render loop is
+time-stepped. All game window rendering remains OW + OpenGL.
