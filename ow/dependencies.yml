@@ -1,20 +1,28 @@
+# Pinned OW runtime libraries shared by the original OW game and the
+# experimental headless OW Engine integration. No browser runtime change.
 format: 1
 repositories:
   - id: github
     url: https://github.com
 dependencies:
-  # Math question generator (replaces the hand-rolled mathlib helpers).
   - name: math
     repository: github
     path: OW-Programing-Language/ow-math-questions
     version: c22d01cfee6be18d96d4c55b95b7e79892bca9f6
-  # flOW modular-monolith framework (App / Registry / Module / Functor).
   - name: flow
     repository: github
     path: OW-Programing-Language/flOW---OW-Modular-Framework
-    version: main
-  # OWUnit test framework (@Test / OWAssert) — used by ow/tests.
+    version: 6d91239698e88994ac6057ea46a176fe79394acb
   - name: owunit
     repository: github
     path: OW-Programing-Language/OWUnit
-    version: main
+    version: fde7cb6208305a4cda3bd623c9f520521f3137bf
+  # Match the exact OW Graphics revision used by this OW Engine commit.
+  - name: graphics
+    repository: github
+    path: OW-Programing-Language/OW-Graphics
+    version: 4f00a5b4da076b3062269c9861878fcb34b590e8
+  - name: engine
+    repository: github
+    path: OW-Programing-Language/OW-Engine
+    version: 67b4ff2bbb6f30d53472649c2e3a05ef134b4724
