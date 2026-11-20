@@ -1,0 +1,59 @@
+# OW Graphics/Mesa real-frame carousel coverage.
+# Verifies six pinned PNG cards slide with their GPU outlines (no Electron).
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "native OW carousel starts")
+  call: assert(game.carousel.selected == 0, "Math focused initially")
+  call: assert(game.hud.carousel_panels > 0, "animated GPU card frames cached")
+  call: assert(game.render() == 0, "first centered carousel frame")
+  set first_card: game.layout.card_rect(game.carousel.relative(2))
+  set original: extension("codewash.test.pixel", 461, 420)
+  call: assert(original[0] > 145, "gold selection outline visible")
+  call: assert(game.move_carousel(1) == 1, "right navigates to Reading")
+  call: assert(game.carousel.selected == 1, "new focus selected immediately")
+  call: assert(game.carousel.active == 1, "transition is animated")
+  call: assert(game.move_carousel(1) == 0, "repeated input does not skip animations")
+  set i int: 0
+  while: i < 6
+    call: assert(game.render() == 0, "transition draws every intermediate GPU frame")
+    set i: i + 1
+  set middle: game.layout.card_rect(game.carousel.relative(2))
+  call: assert(middle[0] < first_card[0], "center artwork slides left at midpoint")
+  call: assert(middle[2] < first_card[2], "outgoing center card scales down")
+  call: assert(game.carousel.progress() > 0.3, "smoothstep reaches midpoint")
+  call: assert(game.carousel.progress() < 0.7, "smoothstep is bounded")
+  while: i < 12
+    call: assert(game.render() == 0, "finish eased card slide")
+    set i: i + 1
+  call: assert(game.carousel.active == 0, "animation settles")
+  call: assert(game.carousel.slot(2) == 1, "Reading card is centered")
+  set focus: game.layout.card_rect(game.carousel.relative(2))
+  call: assert(focus[0] == first_card[0], "new card re-centers at same coordinates")
+  call: assert(game.move_carousel(0 - 1) == 1, "left moves focus back")
+  set n int: 0
+  while: n < 12
+    call: assert(game.render() == 0, "reverse transition draws")
+    set n: n + 1
+  call: assert(game.carousel.selected == 0, "left returns to Math")
+  call: assert(game.carousel.jump_to(2) == 1, "focus Writing directly")
+  call: assert(game.menu.open_activities(0) == 1, "activity chooser scene")
+  call: assert(game.move_carousel(1) == 1, "slide Writing to Cleaning")
+  call: assert(game.carousel.selected == 3, "cross-page focus goes to Cleaning")
+  call: assert(game.menu.activity_page == 1, "router page synchronized")
+  call: assert(game.menu.screen() == "activities", "still in menu")
+  set n: 0
+  while: n < 12
+    call: assert(game.render() == 0, "second activity page transition")
+    set n: n + 1
+  call: assert(game.carousel.launch(game.menu) == 1, "Space equivalent launches focused Cleaning")
+  call: assert(game.menu.screen() == "cleaning", "correct ECS scene selected")
+  call: assert(game.hud.refresh_cleaning(game.cleaning, game.cleaning_activity) == 1, "Cleaning HUD")
+  call: assert(game.render() == 4, "actual cleaning scene gameplay renders")
+  call: assert(game.menu.back() == 1, "leave gameplay safely")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "restore native menu graphics")
+  call: assert(game.render() == 0, "previous carousel selection is preserved")
+  call: assert(game.stop() == 1, "all OW graphics resources freed")
+  call: assert(game.hud.carousel_panels == 0, "animated GPU meshes freed")
+  print: "PASS: native OW six-card carousel animated in Mesa OpenGL"

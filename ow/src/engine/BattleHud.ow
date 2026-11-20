@@ -13,6 +13,8 @@ class BattleHud:
   field option_cards
   field menu_cards
   field menu_chrome
+  field carousel_panels
+  field carousel
   field menu_mode
   field layout
   field text_mesh
@@ -28,6 +30,8 @@ class BattleHud:
     set this.option_cards: 0
     set this.menu_cards: 0
     set this.menu_chrome: 0
+    set this.carousel_panels: 0
+    set this.carousel: 0
     set this.menu_mode: 0
     set this.layout: new NativeMenuLayout()
     set this.text_mesh: 0
@@ -50,6 +54,17 @@ class BattleHud:
     if: this.menu_chrome < 1
       return: 0
     return: this.refresh(battle)
+
+  # Bind the same OW carousel used by the portrait renderer and keyboard.
+  fn bind_carousel(carousel):
+    set this.carousel: carousel
+    set created int: this.meshes.create(this.layout.carousel_vertices(carousel))
+    if: created < 1
+      return: 0
+    if: this.carousel_panels > 0
+      call: this.meshes.destroy(this.carousel_panels)
+    set this.carousel_panels: created
+    return: 1
 
   fn refresh(battle):
     set this.menu_mode: 0
@@ -127,8 +142,21 @@ class BattleHud:
     if: this.shader.set_int(this.shader_program, "uAnimTick", this.anim_tick) != 1
       return: 0
     if: this.menu_mode == 1
+      if: this.carousel != 0
+        if: this.carousel.tick() == 1
+          # Upload new geometry before freeing the old to avoid an empty
+          # frame at either end of a left/right animation.
+          set updated int: this.meshes.create(this.layout.carousel_vertices(this.carousel))
+          if: updated < 1
+            return: 0
+          if: this.carousel_panels > 0
+            call: this.meshes.destroy(this.carousel_panels)
+          set this.carousel_panels: updated
       if: this.renderer.draw_mesh(this.menu_chrome) != 1
         return: 0
+      if: this.carousel_panels > 0
+        if: this.renderer.draw_mesh(this.carousel_panels) != 1
+          return: 0
       if: this.renderer.draw_mesh(this.menu_cards) != 1
         return: 0
     else:
@@ -153,6 +181,9 @@ class BattleHud:
     if: this.menu_chrome > 0
       call: this.meshes.destroy(this.menu_chrome)
       set this.menu_chrome: 0
+    if: this.carousel_panels > 0
+      call: this.meshes.destroy(this.carousel_panels)
+      set this.carousel_panels: 0
     if: this.shader_program > 0
       call: this.shader.destroy(this.shader_program)
       set this.shader_program: 0

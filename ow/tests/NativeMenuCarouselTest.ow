@@ -1,0 +1,84 @@
+# Native carousel state/easing tests use pure OW (no OpenGL).
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/NativeMenuCarousel.ow"
+import "../src/engine/NativeMenuLayout.ow"
+
+class NativeMenuCarouselTest:
+  field check
+  field carousel
+  field layout
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.carousel: new NativeMenuCarousel()
+    set this.layout: new NativeMenuLayout()
+
+  @Test
+  fn cyclesAllSixCardsInBothDirectionsWithoutLosingFocus():
+    call: this.check.assertEquals(0, this.carousel.selected)
+    call: this.check.assertEquals("MATH", this.carousel.focused())
+    call: this.check.assertEquals(1, this.carousel.move(0 - 1))
+    call: this.check.assertEquals(5, this.carousel.selected)
+    call: this.check.assertEquals("PATTERNS", this.carousel.focused())
+    call: this.check.assertEquals(1, this.carousel.page())
+    call: this.check.assertEquals(2, this.carousel.local_slot())
+    call: this.check.assertEquals(0, this.carousel.move(1))
+    set i int: 0
+    while: i < 12
+      call: this.carousel.tick()
+      set i: i + 1
+    call: this.check.assertEquals(0, this.carousel.active)
+    call: this.check.assertEquals(5, this.carousel.slot(2))
+    call: this.check.assertEquals(1, this.carousel.move(1))
+    call: this.check.assertEquals(0, this.carousel.selected)
+    call: this.check.assertEquals(0, this.carousel.page())
+
+  @Test
+  fn easeIsMonotonicAndSettlesExactlyOnNewCenter():
+    call: this.check.assertEquals(1, this.carousel.move(1))
+    call: this.check.assertEquals(0.0, this.carousel.progress())
+    set prev float: this.carousel.progress()
+    set i int: 0
+    while: i < 11
+      call: this.check.assertEquals(1, this.carousel.tick())
+      set eased float: this.carousel.progress()
+      call: this.check.assertEquals(1, eased > prev)
+      call: this.check.assertEquals(1, eased < 1.0)
+      set prev: eased
+      set i: i + 1
+    call: this.check.assertEquals(1, this.carousel.tick())
+    call: this.check.assertEquals(0, this.carousel.active)
+    call: this.check.assertEquals(1.0, this.carousel.progress())
+    call: this.check.assertEquals(1, this.carousel.slot(2))
+    call: this.check.assertEquals(0.0, this.carousel.relative(2))
+    call: this.check.assertEquals(0, this.carousel.tick())
+
+  @Test
+  fn animatedCardsMoveSmoothlyAndStayInsideClipSpace():
+    set before: this.layout.card_rect(this.carousel.relative(2))
+    call: this.check.assertEquals(0.0 - 0.27, before[0])
+    call: this.check.assertEquals(1, this.carousel.move(1))
+    set i int: 0
+    while: i < 6
+      call: this.carousel.tick()
+      set i: i + 1
+    set half: this.layout.card_rect(this.carousel.relative(2))
+    call: this.check.assertEquals(1, half[0] < before[0])
+    call: this.check.assertEquals(1, half[2] < before[2])
+    call: this.check.assertEquals(1, half[0] > 0.0 - 1.0)
+    call: this.check.assertEquals(1, half[0] + half[2] < 1.0)
+    call: this.check.assertEquals(180, len(this.layout.carousel_vertices(this.carousel)))
+
+  @Test
+  fn invalidAndRebasedSelectionsDoNotInterruptAnimation():
+    call: this.check.assertEquals(0 - 1, this.carousel.move(2))
+    call: this.check.assertEquals(0 - 1, this.carousel.jump_to(6))
+    call: this.check.assertEquals(1, this.carousel.jump_to(4))
+    call: this.check.assertEquals("MEMORY", this.carousel.focused())
+    call: this.check.assertEquals(1, this.carousel.local_slot())
+    call: this.check.assertEquals(1, this.carousel.move(0 - 1))
+    call: this.check.assertEquals(3, this.carousel.selected)
+    call: this.check.assertEquals(0, this.carousel.move(1))
+    call: this.check.assertEquals(1, this.carousel.jump_to(3))
+    call: this.check.assertEquals(0, this.carousel.active)

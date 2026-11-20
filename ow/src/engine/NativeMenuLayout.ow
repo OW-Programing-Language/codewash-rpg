@@ -76,19 +76,8 @@ class NativeMenuLayout:
   fn chrome_vertices():
     set buffer: array(1728, 0.0)
     set at int: 0
-    set i int: 0
-    while: i < 3
-      set x float: this.panel_x(i)
-      set y float: this.panel_y(i)
-      set w float: this.panel_width(i)
-      set h float: this.panel_height(i)
-      if: i == 1
-        set at: this.quad(buffer, at, x - 0.014, y - 0.016, w + 0.028, h + 0.032, 0 - 7)
-        set at: this.quad(buffer, at, x, y, w, h, 0 - 6)
-      else:
-        set at: this.quad(buffer, at, x - 0.007, y - 0.008, w + 0.014, h + 0.016, 0 - 10)
-        set at: this.quad(buffer, at, x, y, w, h, 0 - 5)
-      set i: i + 1
+    # The three floating card frames live in carousel_vertices(), not in
+    # this static mesh. Top keyboard ornaments and pixel hearts never move.
     set i: 0
     while: i < 4
       set x float: (0.0 - 0.96) + i * 0.14
@@ -105,6 +94,51 @@ class NativeMenuLayout:
       set at: this.quad(buffer, at, hx + 0.038, hy + 0.042, 0.021, 0.025, 0 - 8)
       set at: this.quad(buffer, at, hx + 0.009, hy + 0.023, 0.049, 0.029, 0 - 8)
       set at: this.quad(buffer, at, hx + 0.020, hy + 0.010, 0.028, 0.020, 0 - 8)
+      set i: i + 1
+    return: buffer
+
+
+  # The whole card travels with the same eased fraction as its portrait.
+  # Center width 0.54, side width 0.39; partially visible overflow cards
+  # clip naturally to the 16:9 OpenGL viewport.
+  fn card_rect(relative):
+    set distance float: relative
+    if: distance < 0.0
+      set distance: 0.0 - distance
+    if: distance > 1.85
+      return: [0.0, 0.0, 0.0, 0.0]
+    if: distance > 1.0
+      set distance: 1.0
+    set width float: 0.54 - 0.15 * distance
+    set height float: 0.88 - 0.08 * distance
+    set x float: 0.685 * relative - width / 2.0
+    set y float: (0.0 - 0.07) - height / 2.0
+    return: [x, y, width, height]
+
+  # GPU-generated moving card borders and dark/violet card fills.
+  # Exactly five candidates are considered to handle full wrap-around and
+  # allow the entering fourth card to slide in before the old one exits.
+  fn carousel_vertices(carousel):
+    set buffer: array(180, 0.0)
+    set at int: 0
+    set i int: 0
+    while: i < 5
+      set rel float: carousel.relative(i)
+      set rect: this.card_rect(rel)
+      if: rect[2] > 0.0
+        set distance float: rel
+        if: distance < 0.0
+          set distance: 0.0 - distance
+        set border int: 0 - 10
+        set body int: 0 - 5
+        if: distance < 0.55
+          set border: 0 - 7
+          set body: 0 - 6
+        set thick float: 0.008
+        if: distance < 0.55
+          set thick: 0.014
+        set at: this.quad(buffer, at, rect[0] - thick, rect[1] - thick, rect[2] + thick * 2, rect[3] + thick * 2, border)
+        set at: this.quad(buffer, at, rect[0], rect[1], rect[2], rect[3], body)
       set i: i + 1
     return: buffer
 

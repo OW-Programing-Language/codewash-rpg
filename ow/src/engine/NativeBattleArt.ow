@@ -186,7 +186,9 @@ class NativeBattleArt:
   # Showcase the original Minecraft title in a 16:9 header and three
   # feature panels. This is a static centered-card *foundation*; PR #33
   # adds real carousel transitions, pointer hit-testing and deep card UI.
-  fn menu_icons(router, selected):
+  # Use exactly the SAME eased clip-space positions as the GPU card
+  # borders. No reloading PNGs or allocating textures while sliding.
+  fn menu_icons(router, carousel):
     set screen: router.screen()
     if: this.renderer.depth_test(0) != 1
       return: 0
@@ -198,36 +200,27 @@ class NativeBattleArt:
       return: 0
 
     if: screen != "settings"
-      set base int: 0
-      if: screen == "activities"
-        set base: router.activity_page * 3
-      set chosen int: selected
-      if: chosen > 2
-        set chosen: 0
-      set left int: mod(chosen + 2, 3)
-      set right int: mod(chosen + 1, 3)
+      # Render the five potential carousel positions around the original
+      # focused card; off-screen candidates are culled by card_rect.
       set i int: 0
-      while: i < 3
-        set slot int: base + chosen
-        if: i == 0
-          set slot: base + left
-        if: i == 2
-          set slot: base + right
-        set x float: this.layout.panel_x(i) + 0.074
-        set y float: this.layout.panel_y(i) + 0.26
-        set w float: 0.25
-        set h float: 0.30
-        set tint float: 0.70
-        if: i == 1
-          set x: this.layout.panel_x(i) + 0.095
-          set y: this.layout.panel_y(i) + 0.21 + this.menu_bob()
-          set w: 0.35
-          set h: 0.43
-          set tint: 1.0
-        if: this.draw_sprite(this.icons[slot], x, y, w, h, tint) != 1
-          return: 0
+      while: i < 5
+        set relative float: carousel.relative(i)
+        set rect: this.layout.card_rect(relative)
+        if: rect[2] > 0.0
+          set slot int: carousel.slot(i)
+          set distance float: relative
+          if: distance < 0.0
+            set distance: 0.0 - distance
+          set w float: rect[2] * 0.69
+          set h float: rect[3] * 0.49
+          set x float: rect[0] + (rect[2] - w) / 2.0
+          set y float: rect[1] + 0.21 + this.menu_bob()
+          set tint float: 0.70
+          if: distance < 0.55
+            set tint: 1.0
+          if: this.draw_sprite(this.icons[slot], x, y, w, h, tint) != 1
+            return: 0
         set i: i + 1
-
     if: this.renderer.depth_test(1) != 1
       return: 0
     return: 1
