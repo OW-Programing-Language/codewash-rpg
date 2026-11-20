@@ -39,6 +39,7 @@ import "NativeMemoryActivity.ow"
 import "NativePatternsActivity.ow"
 import "NativeBattleArt.ow"
 import "NativeMenuLayout.ow"
+import "NativeMenuCardData.ow"
 import "NativeMenuCarousel.ow"
 
 class GpuBattle:
@@ -72,6 +73,7 @@ class GpuBattle:
   field menu
   field layout
   field carousel
+  field card_data
   field escape_held
 
   fn new():
@@ -112,6 +114,7 @@ class GpuBattle:
     set this.art: 0
     set this.layout: new NativeMenuLayout()
     set this.carousel: new NativeMenuCarousel()
+    set this.card_data: 0
 
   fn start():
     print: "GPU STARTUP: OW ENGINE BOOT"
@@ -196,9 +199,12 @@ class GpuBattle:
     if: this.patterns.start(this.cube) != 1
       return: 0
     set this.patterns_activity: new NativePatternsActivity(this.patterns)
+    set this.card_data: new NativeMenuCardData(this.battle, this.reading, this.writing, this.cleaning, this.memory, this.patterns)
     print: "GPU STARTUP: LOADING ORIGINAL ART"
     set this.art: new NativeBattleArt(this.meshes, this.shader, textures, this.renderer)
     if: this.art.start() != 1
+      return: 0
+    if: this.art.bind_cards(this.card_data) != 1
       return: 0
     print: "GPU STARTUP: HUD AND NATIVE MENU"
     set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
@@ -207,7 +213,7 @@ class GpuBattle:
     set this.menu: new NativeMenuRouter(scenes)
     if: this.menu.open_menu() != 1
       return: 0
-    if: this.hud.bind_carousel(this.carousel) != 1
+    if: this.hud.bind_carousel(this.carousel, this.card_data) != 1
       return: 0
     call: this.menu.focus_card(this.carousel.focused())
     if: this.hud.refresh_menu(this.menu) != 1
@@ -495,7 +501,7 @@ class GpuBattle:
     if: this.hud.render() != 2
       return: 0 - 1
     if: this.playing() == 0
-      if: this.art.menu_icons(this.menu, this.carousel) != 1
+      if: this.art.menu_icons(this.menu, this.carousel, this.card_data) != 1
         return: 0 - 1
     return: drawn
 
