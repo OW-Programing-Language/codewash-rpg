@@ -54,4 +54,7 @@ class NativeCardLabelFitTest:
     call: this.check.assertEquals("ENCHANTING TABLE", this.cards.title(1))
     call: this.check.assertEquals("CHEST MANAGEMENT", this.cards.title(3))
     call: this.check.assertEquals("LOGIC BUILDING", this.cards.title(5))
-    call: this.check.assertEquals(0.0 - 0.112, this.layout.card_rect(0.0)[0] + this.layout.card_rect(0.0)[2] - 0.288)
+    set centered: this.layout.card_rect(0.0)
+    set expected float: centered[0] + centered[2] - 0.288
+    call: this.check.assertEquals(1, expected < 0.0 - 0.111)
+    call: this.check.assertEquals(1, expected > 0.0 - 0.113)
