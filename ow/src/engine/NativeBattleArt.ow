@@ -285,7 +285,12 @@ class NativeBattleArt:
     if: this.draw_sprite(this.menu_logo, this.layout.logo_x(), this.layout.logo_y(), 1.08, 0.29, 1.0) != 1
       return: 0
 
+    set show_cards int: 0
     if: screen == "menu"
+      set show_cards: 1
+    if: screen == "activities"
+      set show_cards: 1
+    if: show_cards == 1
       set i int: 0
       while: i < 7
         set rel float: carousel.visual_relative(i)
