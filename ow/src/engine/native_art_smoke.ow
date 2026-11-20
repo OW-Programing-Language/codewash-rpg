@@ -52,8 +52,8 @@ main:
   call: assert(preview.art.enemy_path == "assets/native/mobs/hostile/creeper.png", "Creeper path matched name")
   call: assert(preview.art.use_enemy("Zombie") == 1, "swap to Zombie original PNG")
   call: assert(preview.art.enemy_path == "assets/native/mobs/hostile/zombie.png", "Zombie path matched name")
-  call: assert(preview.art.use_enemy("Blaze") == 1, "GIF-only mob uses neutral egg")
-  call: assert(preview.art.enemy_path == "assets/native/items/egg.png", "unavailable PNG fallback honest")
+  call: assert(preview.art.use_enemy("Blaze") == 1, "GIF-only mob uses staged first frame")
+  call: assert(preview.art.enemy_path == "assets/native/mobs/hostile/blaze.png", "original Blaze GIF decoded to PNG at build time")
   call: assert(preview.render() == 4, "mob texture restores current label")
 
   call: assert(preview.battle.choose(2) == 1, "Math correct answer")
