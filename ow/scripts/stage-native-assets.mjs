@@ -19,7 +19,7 @@ export function listNativeAssets(catalogSource) {
   const assets = new Set();
   for (const match of refs) {
     const name = match[1];
-    if (!/^(?:skills|items|badges|mobs\/(?:hostile|miniboss|boss))\/[A-Za-z0-9_-]+\.(?:png|jpg|jpeg)$/.test(name)) {
+    if (!/^(?:skills|items|badges|themes|mobs\/(?:hostile|miniboss|boss))\/[A-Za-z0-9_-]+\.(?:png|jpg|jpeg)$/.test(name)) {
       throw new Error('Native asset path outside approved catalogue: ' + name);
     }
     assets.add(name);

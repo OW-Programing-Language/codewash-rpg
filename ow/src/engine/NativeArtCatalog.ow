@@ -2,6 +2,11 @@
 # Reuse existing repository PNG artwork; no downloaded or generated placeholders.
 # OW Graphics' pinned ImageIO path decodes PNG/JPEG, not animated GIF/WebP.
 class NativeArtCatalog:
+  # Original Minecraft theme artwork already used by the React/Electron app.
+  # Staged under ow/assets/native/ so OW Graphics can load it safely.
+  fn menu_background_path():
+    return: "assets/native/themes/minecraft.png"
+
   fn icon_slot(skill):
     if: skill == "math"
       return: 0
