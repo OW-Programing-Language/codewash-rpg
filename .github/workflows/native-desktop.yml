@@ -1,0 +1,119 @@
+name: Native OW Desktop Packages
+
+# Standalone jpackage builds. This does not replace the existing Electron
+# Windows EXE. Package on each target OS (LWJGL/GLFW natives are platform-specific).
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'ow/native-launcher/**'
+      - 'ow/scripts/package-native*'
+      - 'ow/scripts/verify-native-image*'
+      - 'ow/src/engine/**'
+      - 'ow/dependencies*.yml'
+      - 'ow/scripts/stage-native-assets*'
+      - '.github/workflows/native-desktop.yml'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  native-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            label: Linux-x64
+          - os: windows-latest
+            label: Windows-x64
+          - os: macos-15
+            label: macOS-x64
+    runs-on: ${{ matrix.os }}
+    name: native-${{ matrix.label }}
+    steps:
+      - name: Checkout CodeWash
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17 JDK (compiler, jpackage and jlink)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Node.js 20 (build-time only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build OW compiler once on the build runner
+        shell: bash
+        run: |
+          git clone --quiet --depth 1 https://github.com/OW-Programing-Language/ow-lang.git "$RUNNER_TEMP/ow-lang"
+          mvn -B -q -f "$RUNNER_TEMP/ow-lang/pom.xml" -DskipTests install
+
+      - name: Build the SHA-pinned OS-specific OW Graphics native provider
+        shell: bash
+        run: |
+          git clone --quiet --no-checkout https://github.com/OW-Programing-Language/OW-Graphics.git "$RUNNER_TEMP/ow-graphics"
+          git -C "$RUNNER_TEMP/ow-graphics" checkout --quiet 4f00a5b4da076b3062269c9861878fcb34b590e8
+          mvn -B -q -f "$RUNNER_TEMP/ow-graphics/native-bridge/pom.xml" -DskipTests package dependency:copy-dependencies -DoutputDirectory=target/lib
+
+      - name: Install pinned OW imports once (no network in released app)
+        working-directory: ow
+        shell: bash
+        run: |
+          java -jar "$RUNNER_TEMP/ow-lang/target/OwIDE.jar" deps install
+          git diff --exit-code -- dependencies.lock.yml
+
+      - name: Native packager and staging tests
+        run: node --test ow/scripts/package-native.test.mjs ow/scripts/verify-native-image.test.mjs ow/scripts/stage-native-assets.test.mjs
+
+      - name: Create self-contained platform-native app-image
+        shell: bash
+        run: |
+          node ow/scripts/package-native.mjs --compiler-dir "$RUNNER_TEMP/ow-lang" --graphics-dir "$RUNNER_TEMP/ow-graphics"
+
+      - name: Verify double-click executable and offline OW imports
+        shell: bash
+        run: node ow/scripts/verify-native-image.mjs
+
+      - name: Install Linux software-rendering requirements
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libgl1 libxcursor1 libxi6 libxrandr2 libxinerama1
+
+      - name: Launch the PACKAGED application under Mesa/Xvfb
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          xvfb-run -a -s "-screen 0 1024x768x24" env LIBGL_ALWAYS_SOFTWARE=1 \
+            node ow/scripts/verify-native-image.mjs ow/native-dist --smoke
+
+      - name: Archive Windows full portable app folder
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "ow/native-dist/images/CodeWashRPG" -DestinationPath "ow/native-dist/CodeWashRPG-Windows-x64.zip"
+
+      - name: Archive macOS/Linux app-image preserving symlinks and executable bits
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd ow/native-dist/images
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            tar -czf "../CodeWashRPG-macOS-x64.tar.gz" CodeWashRPG.app
+          else
+            tar -czf "../CodeWashRPG-Linux-x64.tar.gz" CodeWashRPG
+          fi
+
+      - name: Upload portable OW native build (not Electron)
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodeWashRPG-OW-${{ matrix.label }}
+          path: ow/native-dist/CodeWashRPG-*
+          if-no-files-found: error
+          retention-days: 30
