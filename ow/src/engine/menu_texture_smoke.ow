@@ -1,0 +1,48 @@
+# Native OW menu textures: real original Minecraft theme PNG, menu icons,
+# animated selection and safe ECS navigation tested with actual Mesa framebuffer.
+import "GpuBattle.ow"
+
+main:
+  set preview: new GpuBattle()
+  call: assert(preview.start() == 1, "native OW menu boots")
+  call: assert(preview.menu.screen() == "menu", "main menu active")
+  call: assert(preview.art.menu_theme > 0, "original themed PNG loaded as OpenGL texture")
+  call: assert(len(preview.art.icons) == 6, "six real skill PNGs cached")
+  call: assert(preview.art.menu_ticks == 0, "animation begins at rest")
+  call: assert(preview.render() == 0, "themed main menu draws")
+  call: assert(preview.art.menu_ticks == 1, "menu animation advances")
+  set corner1: extension("codewash.test.pixel", 35, 280)
+  set corner2: extension("codewash.test.pixel", 450, 260)
+  set corner3: extension("codewash.test.pixel", 320, 200)
+  set changed int: 0
+  if: corner1[0] != 12
+    set changed: changed + 1
+  if: corner2[1] != 18
+    set changed: changed + 1
+  if: corner3[2] != 29
+    set changed: changed + 1
+  call: assert(changed > 0, "themed background replaces old flat clear color")
+  call: assert(preview.art.menu_icons(preview.menu, preview.selection.selected) == 1, "decorative menu icons draw")
+  call: assert(preview.render() == 0, "second animated main-menu frame")
+  call: assert(preview.art.menu_ticks == 2, "second animation frame")
+  call: assert(preview.menu.open_activities(0) == 1, "navigate to activities")
+  call: assert(preview.hud.refresh_menu(preview.menu) == 1, "activity labels refreshed")
+  call: assert(preview.render() == 0, "three themed first-page activity cards")
+  call: assert(preview.art.menu_icons(preview.menu, 1) == 1, "animate Reading icon")
+  call: assert(preview.menu.open_activities(1) == 1, "navigate to second page")
+  call: assert(preview.hud.refresh_menu(preview.menu) == 1, "second page labels refreshed")
+  call: assert(preview.render() == 0, "Cleaning Memory Patterns themed icons")
+  call: assert(preview.art.menu_icons(preview.menu, 2) == 1, "animate Patterns icon")
+  call: assert(preview.menu.open_settings() == 1, "settings still accessible")
+  call: assert(preview.hud.refresh_menu(preview.menu) == 1, "settings text refreshed")
+  call: assert(preview.render() == 0, "settings retains textured backdrop")
+  call: assert(preview.menu.start_math() == 1, "battle remains playable")
+  call: assert(preview.hud.refresh(preview.battle) == 1, "combat HUD restored")
+  call: assert(preview.render() == 4, "native battle with cached original sprites")
+  call: assert(preview.menu.back() == 1, "return to textured menu")
+  call: assert(preview.hud.refresh_menu(preview.menu) == 1, "menu HUD restored")
+  call: assert(preview.render() == 0, "themed menu restored without reallocating PNGs")
+  call: assert(preview.stop() == 1, "GPU teardown")
+  call: assert(preview.art.menu_theme == 0, "original background GPU texture destroyed")
+  call: assert(len(preview.art.icons) == 0, "all activity icons released")
+  print: "PASS: textured OW menus, animated icons, navigation, GPU lifetime"

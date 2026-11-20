@@ -13,7 +13,9 @@ class NativeBattleArt:
   field icons
   field enemy
   field enemy_path
+  field menu_theme
   field ticks
+  field menu_ticks
   field catalog
 
   fn new(meshes, shaders, textures, renderer):
@@ -27,7 +29,9 @@ class NativeBattleArt:
     set this.icons: []
     set this.enemy: 0
     set this.enemy_path: ""
+    set this.menu_theme: 0
     set this.ticks: 0
+    set this.menu_ticks: 0
 
   fn start():
     # NDC billboard quad with bottom-up UVs, keeping shader-independent
@@ -52,6 +56,10 @@ class NativeBattleArt:
         return: 0
       set pool[i]: texture
       set i: i + 1
+    set this.menu_theme: this.textures.load_image(this.catalog.menu_background_path())
+    if: this.menu_theme < 1
+      call: this.stop()
+      return: 0
     return: 1
 
   # Cache the current actual mob portrait. Replace only after successful
@@ -126,6 +134,114 @@ class NativeBattleArt:
       return: 0
     return: 2
 
+
+  # Distinct clocks: battle feedback animation stays frozen on menu pages.
+  fn menu_bob():
+    set frame int: mod(this.menu_ticks, 32)
+    if: frame < 16
+      return: (1.0 * frame) / 1200.0
+    return: (1.0 * (32 - frame)) / 1200.0
+
+  # Shared textured quad rendering. OW Graphics loads original PNG assets;
+  # both menu backgrounds and activity cards use this same shader/mesh.
+  fn draw_sprite(texture, x, y, width, height, tint):
+    if: texture < 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uRect", x, y, width, height) != 1
+      return: 0
+    if: this.shaders.set_vec4(this.program, "uTint", tint, tint, tint, 1.0) != 1
+      return: 0
+    if: this.textures.bind(texture, 0) != 1
+      return: 0
+    return: this.renderer.draw_mesh(this.quad)
+
+  # Draw before the text/cards. Background remains visible outside the
+  # opaque buttons, while the title and option labels remain readable.
+  fn menu_background():
+    if: this.menu_theme < 1
+      return: 0
+    set this.menu_ticks: this.menu_ticks + 1
+    set shade float: 0.38 + this.menu_bob() * 0.9
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shaders.bind(this.program) != 1
+      return: 0
+    if: this.shaders.set_int(this.program, "uImage", 0) != 1
+      return: 0
+    if: this.draw_sprite(this.menu_theme, 0.0 - 1.0, 0.0 - 1.0, 2.0, 2.0, shade) != 1
+      return: 0
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    return: 1
+
+  # Draw AFTER the HUD's opaque cards so activity icons aren't covered.
+  # Activity page 0 = Math/Reading/Writing, page 1 = Cleaning/Memory/Patterns.
+  # The first two main-menu options also get relevant artwork. Settings
+  # intentionally shows no fake settings icons before settings are functional.
+  fn menu_icons(router, selected):
+    set screen: router.screen()
+    if: screen == "settings"
+      return: 1
+    if: screen != "menu"
+      if: screen != "activities"
+        return: 1
+    set count int: 2
+    if: screen == "activities"
+      set count: 3
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shaders.bind(this.program) != 1
+      return: 0
+    if: this.shaders.set_int(this.program, "uImage", 0) != 1
+      return: 0
+    set i int: 0
+    while: i < count
+      set slot int: i
+      if: screen == "activities"
+        if: router.activity_page == 1
+          set slot: slot + 3
+      # Positions match the existing four-card OW HUD layout.
+      set x float: 0.0 - 0.22
+      set y float: 0.0 - 0.78
+      if: i == 1
+        set x: 0.78
+      if: i == 2
+        set y: 0.0 - 0.96
+      set glow float: 0.83
+      if: i == selected
+        set y: y + this.menu_bob()
+        set glow: 1.0
+      if: this.draw_sprite(this.icons[slot], x, y, 0.13, 0.12, glow) != 1
+        return: 0
+      set i: i + 1
+
+    # Larger gallery icons make the original theme/artwork visible in the
+    # free center space instead of just decorating tiny keyboard cards.
+    set showcase int: 6
+    if: screen == "activities"
+      set showcase: 3
+    set j int: 0
+    while: j < showcase
+      set slot int: j
+      set x float: (0.0 - 0.90) + j * 0.31
+      set y float: 0.0 - 0.30 + this.menu_bob()
+      set width float: 0.23
+      if: screen == "activities"
+        set slot: j
+        if: router.activity_page == 1
+          set slot: j + 3
+        set x: (0.0 - 0.78) + j * 0.64
+        set width: 0.30
+        if: j == selected
+          set y: y + 0.026
+      if: this.draw_sprite(this.icons[slot], x, y, width, 0.26, 0.90) != 1
+        return: 0
+      set j: j + 1
+
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    return: 1
+
   fn stop():
     set i int: 0
     while: i < len(this.icons)
@@ -136,6 +252,9 @@ class NativeBattleArt:
     if: this.enemy > 0
       call: this.textures.destroy(this.enemy)
       set this.enemy: 0
+    if: this.menu_theme > 0
+      call: this.textures.destroy(this.menu_theme)
+      set this.menu_theme: 0
     set this.enemy_path: ""
     if: this.quad > 0
       call: this.meshes.destroy(this.quad)
