@@ -142,6 +142,44 @@ class NativeMenuLayout:
       set i: i + 1
     return: buffer
 
+  # Cards from PR #33 keep their exact eased geometry. Rich data overlays
+  # follow the same card_rect() so colored title strips, HP bars and action
+  # buttons move and scale together with the already animated frame/portrait.
+  #
+  # Negative vertex Z = a material index in BattleHud's OpenGL shader:
+  # -11..-16 activity-specific accents; -8 red HP; -9 charcoal; -10 ink.
+  fn rich_card_vertices(carousel, cards):
+    set buffer: array(1080, 0.0)
+    set at int: 0
+    set i int: 0
+    while: i < 5
+      set rel float: carousel.relative(i)
+      set rect: this.card_rect(rel)
+      if: rect[2] > 0.0
+        set slot int: carousel.slot(i)
+        set x float: rect[0]
+        set y float: rect[1]
+        set w float: rect[2]
+        set h float: rect[3]
+        set accent int: (0 - 11) - slot
+        # Colored Minecraft-style header and dark level badge.
+        set at: this.quad(buffer, at, x, y + h - 0.115, w, 0.115, accent)
+        set at: this.quad(buffer, at, x + w - 0.132, y + h - 0.103, 0.122, 0.087, 0 - 10)
+        # Dark inset for the current real mob portrait.
+        set at: this.quad(buffer, at, x + 0.04, y + h * 0.45, w - 0.08, h * 0.36, 0 - 5)
+        # Current mob-name backing and black HP rail.
+        set at: this.quad(buffer, at, x + 0.021, y + 0.305, w - 0.042, 0.072, 0 - 9)
+        set at: this.quad(buffer, at, x + 0.025, y + 0.245, w - 0.050, 0.046, 0 - 9)
+        set hp float: cards.hp_percent(slot)
+        if: hp > 0.0
+          set at: this.quad(buffer, at, x + 0.030, y + 0.250, (w - 0.060) * hp / 100.0, 0.036, 0 - 8)
+        # Original-themed text panel and elevated colored CTA.
+        set at: this.quad(buffer, at, x + 0.019, y + 0.106, w - 0.038, 0.123, 0 - 9)
+        set at: this.quad(buffer, at, x + 0.025, y + 0.015, w - 0.050, 0.082, 0 - 10)
+        set at: this.quad(buffer, at, x + 0.025, y + 0.026, w - 0.050, 0.082, accent)
+      set i: i + 1
+    return: buffer
+
   fn button_vertices():
     set buffer: array(72, 0.0)
     set at int: 0

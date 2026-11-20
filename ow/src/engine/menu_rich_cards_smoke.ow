@@ -1,0 +1,53 @@
+# Real Mesa/Xvfb pixels from OW Graphics: colored per-skill CTA/header,
+# live monster HP and actual cached PNG, with all six native ECS scenes intact.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "OW native rich-card scene boots")
+  call: assert(game.card_data != 0, "live six-game card data initialized")
+  call: assert(game.hud.rich_panels > 0, "colored card geometry uploaded")
+  call: assert(game.hud.rich_text > 0, "rich text glyphs uploaded")
+  call: assert(len(game.art.card_portraits) == 6, "six original mob textures cached")
+  call: assert(game.card_data.level(0) >= 1, "level comes from native hero")
+  call: game.battle.game.mob.init("Creeper", 100)
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "refreshed card with real HP")
+  call: assert(game.render() == 0, "redstone rich card drawn")
+  set header: extension("codewash.test.pixel", 640, 467)
+  call: assert(header[0] > header[2] + 30, "math header uses red Minecraft theme")
+  set full: extension("codewash.test.pixel", 650, 273)
+  call: assert(full[0] > full[1] + 50, "100 percent HP bar is red")
+  call: game.battle.game.mob.hurt(75)
+  call: assert(game.card_data.hp_percent(0) == 25.0, "real mob HP decreased to 25 percent")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "HP bar redraw uses current mob")
+  call: assert(game.render() == 0, "damaged card drawn")
+  set depleted: extension("codewash.test.pixel", 650, 273)
+  call: assert(depleted[0] < full[0], "health bar visually shrank after damage")
+  call: assert(game.carousel.jump_to(1) == 1, "select Reading card")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "read new title HP and action")
+  call: assert(game.render() == 0, "reading card drawn")
+  set purple: extension("codewash.test.pixel", 640, 467)
+  call: assert(purple[2] > purple[0] + 35, "reading header uses violet theme")
+  call: assert(game.carousel.jump_to(2) == 1, "select Writing card")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "crafting description refreshed")
+  call: assert(game.render() == 0, "crafting card drawn")
+  set blue: extension("codewash.test.pixel", 640, 467)
+  call: assert(blue[2] > blue[0] + 70, "writing header uses blue theme")
+  call: assert(game.move_carousel(1) == 1, "animate Writing to Cleaning")
+  set i int: 0
+  while: i < 12
+    call: assert(game.render() == 0, "moving rich cards and mob art")
+    set i: i + 1
+  call: assert(game.carousel.selected == 3, "Cleaning focused")
+  call: assert(game.menu.activity_page == 0, "main menu unaffected by page quick actions")
+  call: assert(game.carousel.launch(game.menu) == 1, "focused Cleaning still launches")
+  call: assert(game.hud.refresh_cleaning(game.cleaning, game.cleaning_activity) == 1, "Cleaning gameplay HUD")
+  call: assert(game.render() == 4, "Cleaning ECS game still renders")
+  call: assert(game.menu.back() == 1, "return to menu")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "rebuild live card state on return")
+  call: assert(game.render() == 0, "return to colorful carousel")
+  call: assert(game.stop() == 1, "stop native OpenGL resources")
+  call: assert(game.hud.rich_panels == 0, "colored GPU meshes released")
+  call: assert(game.hud.rich_text == 0, "dynamic card text mesh released")
+  call: assert(game.art.card_portraits[0] == 0, "mob portrait texture released")
+  print: "PASS: native OW rich cards, live HP and themed OpenGL artwork"

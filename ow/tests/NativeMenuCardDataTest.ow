@@ -1,0 +1,84 @@
+# Validate real OW combat metadata feeding the carousel cards. No GL context.
+import "@owunit/src/OWAssert.ow"
+import "../src/modules/combat/api/Game.ow"
+import "../src/engine/NativeMenuCardData.ow"
+import "../src/engine/NativeMenuCarousel.ow"
+import "../src/engine/NativeMenuLayout.ow"
+import "../src/engine/BattleHudText.ow"
+
+class NativeCardSceneStub:
+  field game
+
+  fn new():
+    set this.game: new Game()
+    call: this.game.start(1)
+
+class NativeMenuCardDataTest:
+  field check
+  field first
+  field cards
+  field carousel
+  field layout
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.first: new NativeCardSceneStub()
+    set a: new NativeCardSceneStub()
+    set b: new NativeCardSceneStub()
+    set c: new NativeCardSceneStub()
+    set d: new NativeCardSceneStub()
+    set e: new NativeCardSceneStub()
+    set this.cards: new NativeMenuCardData(this.first, a, b, c, d, e)
+    set this.carousel: new NativeMenuCarousel()
+    set this.layout: new NativeMenuLayout()
+
+  @Test
+  fn originalCardLabelsAndActionsRemainPerSkill():
+    call: this.check.assertEquals("REDSTONE", this.cards.title(0))
+    call: this.check.assertEquals("ENCHANTING", this.cards.title(1))
+    call: this.check.assertEquals("CRAFTING", this.cards.title(2))
+    call: this.check.assertEquals("CHEST MGMT", this.cards.title(3))
+    call: this.check.assertEquals("MATCH N HATCH", this.cards.title(4))
+    call: this.check.assertEquals("LOGIC BUILD", this.cards.title(5))
+    call: this.check.assertEquals("CALCULATE!", this.cards.action(0))
+    call: this.check.assertEquals("ENCHANT!", this.cards.action(1))
+    call: this.check.assertEquals("CRAFT!", this.cards.action(2))
+    call: this.check.assertEquals("ORGANIZE!", this.cards.action(3))
+    call: this.check.assertEquals("MATCH!", this.cards.action(4))
+    call: this.check.assertEquals("SOLVE!", this.cards.action(5))
+    call: this.check.assertEquals("?", this.cards.title(6))
+    call: this.check.assertEquals(0, this.cards.valid(6))
+
+  @Test
+  fn cardHpAndLevelReadTheActualGameNotFakePreviewNumbers():
+    call: this.first.game.mob.init("Creeper", 80)
+    call: this.check.assertEquals(1, this.cards.level(0))
+    call: this.check.assertEquals(100.0, this.cards.hp_percent(0))
+    call: this.check.assertEquals("HP 80/80", this.cards.hp_text(0))
+    call: this.check.assertEquals("CREEPER", this.cards.mob_name(0))
+    call: this.first.game.mob.hurt(20)
+    call: this.check.assertEquals(75.0, this.cards.hp_percent(0))
+    call: this.check.assertEquals("HP 60/80", this.cards.hp_text(0))
+    call: this.first.game.mob.hurt(100)
+    call: this.check.assertEquals(0.0, this.cards.hp_percent(0))
+    call: this.check.assertEquals("HP 0/80", this.cards.hp_text(0))
+    call: this.check.assertEquals(0, this.cards.level(9))
+    call: this.check.assertEquals(0, this.cards.hp_percent(9))
+
+  @Test
+  fn richGeometryAndMovingBitmapTextAreBounded():
+    set shapes: this.layout.rich_card_vertices(this.carousel, this.cards)
+    call: this.check.assertEquals(1080, len(shapes))
+    call: this.check.assertEquals(0 - 11, shapes[164])
+    set textBuilder: new BattleHudText()
+    set glyphs: textBuilder.rich_card_text_vertices(this.carousel, this.cards, this.layout)
+    call: this.check.assertEquals(4320, len(glyphs))
+    call: this.check.assertEquals(1, this.carousel.move(1))
+    set i int: 0
+    while: i < 6
+      call: this.carousel.tick()
+      set i: i + 1
+    set moved: this.layout.rich_card_vertices(this.carousel, this.cards)
+    call: this.check.assertEquals(1080, len(moved))
+    call: this.check.assertEquals(1, moved[0] != shapes[0])

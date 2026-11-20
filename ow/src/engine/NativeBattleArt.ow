@@ -12,6 +12,9 @@ class NativeBattleArt:
   field quad
   field program
   field icons
+  field card_portraits
+  field card_paths
+  field cards
   field enemy
   field enemy_path
   field menu_theme
@@ -30,6 +33,9 @@ class NativeBattleArt:
     set this.quad: 0
     set this.program: 0
     set this.icons: []
+    set this.card_portraits: array(6, 0)
+    set this.card_paths: array(6, "")
+    set this.cards: 0
     set this.enemy: 0
     set this.enemy_path: ""
     set this.menu_theme: 0
@@ -69,6 +75,41 @@ class NativeBattleArt:
     if: this.menu_logo < 1
       call: this.stop()
       return: 0
+    return: 1
+
+  # Keep six native mob portraits cached by their *actual* current enemy
+  # labels. Missing or GIF-only originals resolve to the neutral egg asset.
+  # Reuse texture IDs on every render and update only when Game changes mobs.
+  fn use_card_portrait(slot, label):
+    if: slot < 0
+      return: 0
+    if: slot > 5
+      return: 0
+    set path: this.catalog.mob_path(label)
+    if: path == this.card_paths[slot]
+      if: this.card_portraits[slot] > 0
+        return: 1
+    set fresh int: this.textures.load_image(path)
+    if: fresh < 1
+      return: 0
+    set old int: this.card_portraits[slot]
+    if: old > 0
+      call: this.textures.destroy(old)
+    set pictures: this.card_portraits
+    set filepaths: this.card_paths
+    set pictures[slot]: fresh
+    set filepaths[slot]: path
+    set this.card_portraits: pictures
+    set this.card_paths: filepaths
+    return: 1
+
+  fn bind_cards(cards):
+    set this.cards: cards
+    set i int: 0
+    while: i < 6
+      if: this.use_card_portrait(i, cards.mob_name(i)) != 1
+        return: 0
+      set i: i + 1
     return: 1
 
   # Cache the current actual mob portrait. Replace only after successful
@@ -183,12 +224,10 @@ class NativeBattleArt:
       return: 0
     return: 1
 
-  # Showcase the original Minecraft title in a 16:9 header and three
-  # feature panels. This is a static centered-card *foundation*; PR #33
-  # adds real carousel transitions, pointer hit-testing and deep card UI.
-  # Use exactly the SAME eased clip-space positions as the GPU card
-  # borders. No reloading PNGs or allocating textures while sliding.
-  fn menu_icons(router, carousel):
+  # Reuse the exact easing/geometry from NativeMenuLayout: original
+  # enemy portraits are cached PNGs and match the current native Game mob,
+  # not arbitrary themed placeholders. Tiny icon indicates the skill.
+  fn menu_icons(router, carousel, cards):
     set screen: router.screen()
     if: this.renderer.depth_test(0) != 1
       return: 0
@@ -200,25 +239,28 @@ class NativeBattleArt:
       return: 0
 
     if: screen != "settings"
-      # Render the five potential carousel positions around the original
-      # focused card; off-screen candidates are culled by card_rect.
       set i int: 0
       while: i < 5
-        set relative float: carousel.relative(i)
-        set rect: this.layout.card_rect(relative)
+        set rel float: carousel.relative(i)
+        set rect: this.layout.card_rect(rel)
         if: rect[2] > 0.0
           set slot int: carousel.slot(i)
-          set distance float: relative
+          if: this.use_card_portrait(slot, cards.mob_name(slot)) != 1
+            return: 0
+          set distance float: rel
           if: distance < 0.0
             set distance: 0.0 - distance
-          set w float: rect[2] * 0.69
-          set h float: rect[3] * 0.49
-          set x float: rect[0] + (rect[2] - w) / 2.0
-          set y float: rect[1] + 0.21 + this.menu_bob()
-          set tint float: 0.70
+          set tint float: 0.74
           if: distance < 0.55
             set tint: 1.0
-          if: this.draw_sprite(this.icons[slot], x, y, w, h, tint) != 1
+          set width float: rect[2] * 0.65
+          set height float: rect[3] * 0.32
+          set x float: rect[0] + (rect[2] - width) / 2.0
+          set y float: rect[1] + rect[3] * 0.46 + this.menu_bob()
+          if: this.draw_sprite(this.card_portraits[slot], x, y, width, height, tint) != 1
+            return: 0
+          # Genuine skill emblem in the upper-left edge of each card.
+          if: this.draw_sprite(this.icons[slot], rect[0] + 0.014, rect[1] + rect[3] - 0.105, 0.065, 0.077, 1.0) != 1
             return: 0
         set i: i + 1
     if: this.renderer.depth_test(1) != 1
@@ -226,6 +268,13 @@ class NativeBattleArt:
     return: 1
 
   fn stop():
+    set n int: 0
+    while: n < len(this.card_portraits)
+      if: this.card_portraits[n] > 0
+        call: this.textures.destroy(this.card_portraits[n])
+      set n: n + 1
+    set this.card_portraits: array(6, 0)
+    set this.card_paths: array(6, "")
     set i int: 0
     while: i < len(this.icons)
       if: this.icons[i] > 0

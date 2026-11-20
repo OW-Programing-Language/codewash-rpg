@@ -447,3 +447,14 @@ the focused skill. W/A/S/D remain quick menu actions; all six existing
 OW Engine scenes are preserved. This is implemented entirely in OW and
 OW Graphics/GLFW, without React or Electron. See
 [GPU battle documentation](docs/GPU-BATTLE.md#pr-33--real-ow-graphics-six-card-carousel-with-easing).
+
+## PR #34 — Rich Minecraft-style activity cards in OW
+
+The native OW Graphics menu now contains six animated feature cards with
+per-skill colored headers and buttons, the original monster PNG artwork,
+actual OW Game level/HP, enemy names and shortened original descriptions.
+The native GPU renderer animates geometry/text together with the existing
+carousel. Unsupported GIF-only monsters receive an honest neutral egg
+fallback. Full Electron parity (GIF/3D/sound/mouse/fullscreen/persistent
+profiles) is still separate work; see
+[the GPU guide](docs/GPU-BATTLE.md#pr-34--rich-native-ow-cards-with-live-monster-health).

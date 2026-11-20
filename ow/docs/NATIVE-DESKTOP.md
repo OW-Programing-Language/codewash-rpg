@@ -177,3 +177,13 @@ Original skill icons remain packaged locally and are never reloaded during
 the 12-frame smoothstep transition. GPU card geometry and artwork use
 matching eased clip-space coordinates. This is not full Electron
 monster-card parity and does not yet implement mouse or touch input.
+
+## PR #34 native card UI
+
+The native Windows/Linux/macOS app-images automatically include all
+allowlisted PNG resources needed by the six rich Minecraft-style cards,
+including existing monster portraits and their neutral egg fallback.
+Card levels and HP come from the running native Game, not from static
+preview literals. Portraits, colored headers, HP rails, descriptions and
+action labels are rendered through OW Graphics/OpenGL. No Electron
+resources, web downloads or build tools are used at launch.

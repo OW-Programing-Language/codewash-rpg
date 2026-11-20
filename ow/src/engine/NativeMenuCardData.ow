@@ -1,0 +1,121 @@
+# Live native card metadata. Read the same six independent OW Game instances
+# used by OW Engine: levels and HP never come from hard-coded preview values.
+# Activity headings, CTAs and descriptions follow the original SkillCard
+# content from src/constants/gameData.jsx, condensed for OW's bitmap font.
+class NativeMenuCardData:
+  field games
+
+  fn new(math, reading, writing, cleaning, memory, patterns):
+    set this.games: [math.game, reading.game, writing.game, cleaning.game, memory.game, patterns.game]
+
+  fn valid(index):
+    if: index < 0
+      return: 0
+    if: index >= len(this.games)
+      return: 0
+    return: 1
+
+  fn level(index):
+    if: this.valid(index) != 1
+      return: 0
+    return: this.games[index].hero.lvl()
+
+  fn hp_percent(index):
+    if: this.valid(index) != 1
+      return: 0
+    set mob: this.games[index].mob
+    set maximum float: 1.0 * mob.max_hp()
+    if: maximum <= 0.0
+      return: 0
+    set ratio float: (1.0 * mob.cur_hp()) / maximum
+    if: ratio < 0.0
+      set ratio: 0.0
+    if: ratio > 1.0
+      set ratio: 1.0
+    return: ratio * 100.0
+
+  fn hp_text(index):
+    if: this.valid(index) != 1
+      return: "HP ?"
+    set mob: this.games[index].mob
+    return: "HP " + str(mob.cur_hp()) + "/" + str(mob.max_hp())
+
+  fn mob_name(index):
+    if: this.valid(index) != 1
+      return: "?"
+    return: upper(this.games[index].mob.label())
+
+  fn title(index):
+    if: index == 0
+      return: "REDSTONE"
+    if: index == 1
+      return: "ENCHANTING"
+    if: index == 2
+      return: "CRAFTING"
+    if: index == 3
+      return: "CHEST MGMT"
+    if: index == 4
+      return: "MATCH N HATCH"
+    if: index == 5
+      return: "LOGIC BUILD"
+    return: "?"
+
+  fn category(index):
+    if: index == 0
+      return: "MATH"
+    if: index == 1
+      return: "READING"
+    if: index == 2
+      return: "WRITING"
+    if: index == 3
+      return: "CLEANING"
+    if: index == 4
+      return: "MEMORY"
+    if: index == 5
+      return: "PATTERNS"
+    return: "?"
+
+  fn action(index):
+    if: index == 0
+      return: "CALCULATE!"
+    if: index == 1
+      return: "ENCHANT!"
+    if: index == 2
+      return: "CRAFT!"
+    if: index == 3
+      return: "ORGANIZE!"
+    if: index == 4
+      return: "MATCH!"
+    if: index == 5
+      return: "SOLVE!"
+    return: "PLAY!"
+
+  fn description_a(index):
+    if: index == 0
+      return: "POWER YOUR REDSTONE"
+    if: index == 1
+      return: "SPEAK ANCIENT WORDS"
+    if: index == 2
+      return: "SPELL THE RECIPE"
+    if: index == 3
+      return: "SORT YOUR LOOT"
+    if: index == 4
+      return: "FIND MATCHING PAIRS"
+    if: index == 5
+      return: "DECODE THE PATTERN"
+    return: ""
+
+  fn description_b(index):
+    if: index == 0
+      return: "AND OUTSMART MOBS"
+    if: index == 1
+      return: "AND ENCHANT!"
+    if: index == 2
+      return: "AND CRAFT GEAR!"
+    if: index == 3
+      return: "PREPARE YOUR CHEST"
+    if: index == 4
+      return: "AND HATCH MOBS!"
+    if: index == 5
+      return: "TO SOLVE THE PUZZLE"
+    return: ""
