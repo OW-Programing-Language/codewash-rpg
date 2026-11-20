@@ -62,6 +62,9 @@ public final class NativeLauncher {
         log("Java: " + System.getProperty("java.version") + " on "
                 + System.getProperty("os.name") + " / " + System.getProperty("os.arch"));
         validate(appDir, root);
+        // Exercise JVM wildcard classpath construction in the Windows EXE's
+        // self-test as well as in normal GUI mode, so CI catches regressions.
+        verifyClasspath(appDir);
         if ("--self-test".equals(mode)) {
             log("PASS: packaged native OW runtime, dependencies and assets");
             return;
@@ -87,9 +90,7 @@ public final class NativeLauncher {
             throw new IllegalStateException("Bundled Java executable missing: " + java);
         }
 
-        String cp = appDir.resolve("OwIDE.jar")
-                + System.getProperty("path.separator") + appDir.resolve("ow-graphics-native.jar")
-                + System.getProperty("path.separator") + appDir.resolve("lib").resolve("*");
+        String cp = runtimeClasspath(appDir);
         List<String> command = new ArrayList<>();
         command.add(java.toString());
         if (isMac()) command.add("-XstartOnFirstThread");
@@ -143,6 +144,29 @@ public final class NativeLauncher {
                     : "The game exited before displaying its first frame";
             showError(problem);
             System.exit(code == 0 ? 1 : code);
+        }
+    }
+
+    /**
+     * Java's classpath wildcard is a STRING understood by the JVM, not a
+     * filename. On Windows Path.resolve("*") throws InvalidPathException:
+     * Illegal char <*> at index 0. Append the wildcard after converting the
+     * existing lib directory into a valid platform filesystem path.
+     */
+    static String runtimeClasspath(Path appDir) {
+        String separator = System.getProperty("path.separator");
+        String jars = appDir.resolve("lib").toString()
+                + java.io.File.separator + "*";
+        return appDir.resolve("OwIDE.jar") + separator
+                + appDir.resolve("ow-graphics-native.jar") + separator + jars;
+    }
+
+    private static void verifyClasspath(Path appDir) {
+        String cp = runtimeClasspath(appDir);
+        if (!cp.endsWith(java.io.File.separator + "*")
+                || !cp.contains("OwIDE.jar")
+                || !cp.contains("ow-graphics-native.jar")) {
+            throw new IllegalStateException("Invalid packaged JVM classpath");
         }
     }
 
