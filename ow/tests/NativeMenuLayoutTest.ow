@@ -27,10 +27,10 @@ class NativeMenuLayoutTest:
     call: this.check.assertEquals(1, this.layout.button_y() > 0.7)
 
   @Test
-  fn theMenuBuildsFourDistinctGPUButtonsAndDecorativeCards():
+  fn theMenuBuildsFiveRealIconControlsAndDecorativeCards():
     set buttons: this.layout.button_vertices()
     set frame: this.layout.chrome_vertices()
-    call: this.check.assertEquals(72, len(buttons))
+    call: this.check.assertEquals(90, len(buttons))
     call: this.check.assertEquals(1728, len(frame))
     call: this.check.assertEquals(0.0 - 0.963, buttons[0])
     call: this.check.assertEquals(0 - 5, buttons[2])
@@ -38,3 +38,7 @@ class NativeMenuLayoutTest:
     call: this.check.assertEquals(0 - 5, buttons[38])
     call: this.check.assertEquals(0 - 5, buttons[56])
     call: this.check.assertEquals(1, frame[0] < 0.0)
+    call: this.check.assertEquals(1, len(this.layout.toolbar_icon_vertices()) >= 500)
+    call: this.check.assertEquals(0.85, this.layout.toolbar_x(4))
+    call: this.check.assertEquals(1, this.layout.toolbar_y(4) < 0.0 - 0.8)
+    call: this.check.assertEquals(180, len(this.layout.panel_vertices()))

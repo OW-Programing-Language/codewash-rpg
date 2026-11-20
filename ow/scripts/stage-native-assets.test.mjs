@@ -4,7 +4,7 @@ import {readFileSync, existsSync, copyFileSync, mkdtempSync, writeFileSync, mkdi
 import {tmpdir} from 'node:os';
 import {join, dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {listNativeAssets, stageNativeAssets, originalGifForPng} from './stage-native-assets.mjs';
+import {listNativeAssets, stageNativeAssets, originalGifForPng, mislabeledJpegSource} from './stage-native-assets.mjs';
 
 test('native art catalogue references original files with safe sandbox-relative paths', () => {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -18,7 +18,7 @@ test('native art catalogue references original files with safe sandbox-relative 
   assert.ok(names.includes('themes/minecraft_logo.png'));
   assert.equal(new Set(names).size, names.length);
   for (const name of names) {
-    const source = originalGifForPng[name] ?? name;
+    const source = originalGifForPng[name] ?? mislabeledJpegSource[name] ?? name;
     assert.ok(existsSync(join(root, 'public/assets', source)), 'missing original asset: ' + source);
   }
 });
@@ -80,6 +80,26 @@ test('GIF transcode allowlist cannot be extended by an arbitrary catalogue path'
     mkdirSync(dirname(cat), {recursive: true});
     writeFileSync(cat, 'return: "assets/native/mobs/hostile/unknown.png"\\n');
     assert.throws(() => stageNativeAssets(tmp), /Original artwork is missing/);
+  } finally {
+    rmSync(tmp, {recursive: true, force: true});
+  }
+});
+
+test('original browser-sniffed JPEG backgrounds are staged with honest extensions', () => {
+  const realRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+  const tmp = mkdtempSync(join(tmpdir(), 'codewash-jpeg-art-'));
+  try {
+    const catalog = join(tmp, 'ow/src/engine/NativeArtCatalog.ow');
+    mkdirSync(dirname(catalog), {recursive: true});
+    writeFileSync(catalog, 'return: "assets/native/themes/spy.jpg"\\n');
+    const original = join(realRoot, 'public/assets/themes/spy.png');
+    const into = join(tmp, 'public/assets/themes/spy.png');
+    mkdirSync(dirname(into), {recursive: true});
+    copyFileSync(original, into);
+    const staged = stageNativeAssets(tmp);
+    assert.deepEqual(staged, ['themes/spy.jpg']);
+    const jpg = readFileSync(join(tmp, 'ow/assets/native/themes/spy.jpg'));
+    assert.deepEqual([...jpg.subarray(0, 3)], [255, 216, 255]);
   } finally {
     rmSync(tmp, {recursive: true, force: true});
   }

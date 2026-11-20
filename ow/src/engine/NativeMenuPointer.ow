@@ -38,16 +38,27 @@ class NativeMenuPointer:
     if: screen != "menu"
       if: screen != "activities"
         if: screen != "settings"
-          return: 0 - 1
+          if: screen != "cosmetics"
+            if: screen != "bugreport"
+              if: screen != "menu_panel"
+                return: 0 - 1
 
-    # Footer action buttons are usable on all native menu pages.
+    # Icons are actual settings, themes, fullscreen, menu and bug buttons.
+    # All five remain clickable on native menu/drawer pages, but NEVER
+    # reuse their input regions for W/A/S/D quick-play commands.
     set i int: 0
-    while: i < 4
-      if: this.inside(x, y, layout.button_x(i), layout.button_y(), layout.button_width(), layout.button_height()) == 1
+    while: i < 5
+      if: this.inside(x, y, layout.toolbar_x(i), layout.toolbar_y(i), layout.button_width(), layout.button_height()) == 1
         return: 10 + i
       set i: i + 1
-    if: screen == "settings"
-      return: 0 - 1
+    if: screen != "menu"
+      if: screen != "activities"
+        set i: 0
+        while: i < 4
+          if: this.inside(x, y, layout.panel_option_x(), layout.panel_option_y(i), layout.panel_option_width(), layout.panel_option_height()) == 1
+            return: 20 + i
+          set i: i + 1
+        return: 0 - 1
     # Reject clicks mid-transition, matching keyboard navigation lock.
     if: carousel.active == 1
       return: 0 - 1

@@ -123,44 +123,48 @@ class BattleHudText:
       set i: i + 1
     return: at
 
-  # Electron-like hierarchy: logo, large yellow hero title, five artworks,
-  # unobtrusive corner actions, and a compact footer keyboard legend.
-  # No duplicate plain-text logo or text over the carousel portraits.
+  # Fit the actual Electron card category/title into a dedicated rectangle.
+  # Never extend text into the level badge's reserved right-hand zone.
+  fn fitted_line(buffer, at, value, x, y, available, height, cap):
+    set count int: len(value)
+    if: count > cap
+      set count: cap
+    if: count < 1
+      return: at
+    set step float: available / count
+    set glyph_w float: step * 0.81
+    if: glyph_w > 0.014
+      set glyph_w: 0.014
+    return: this.menu_line(buffer, at, value, x, y, count, glyph_w, height, step)
+
+  # On card screens only the real logo and gold LEVEL UP headline show.
+  # Drawer screens use exact functional labels, not W/A/S/D placeholders.
   fn menu_vertices(router):
-    set buffer: array(4320, 0.0)
+    set buffer: array(5400, 0.0)
     set at int: 0
     set screen: router.screen()
-    if: screen == "settings"
-      set at: this.menu_line_gold(buffer, at, "SETTINGS", 0.0 - 0.235, 0.45, 10, 0.050, 0.105, 0.067)
-      set at: this.menu_line(buffer, at, router.subtitle(), 0.0 - 0.40, 0.12, 42, 0.014, 0.040, 0.020)
-    else:
+    if: screen == "menu"
       set at: this.menu_line_gold(buffer, at, "LEVEL UP!", 0.0 - 0.305, 0.49, 10, 0.052, 0.098, 0.068)
-    set keys: ["W", "A", "S", "D"]
+      return: buffer
+    if: screen == "activities"
+      set at: this.menu_line_gold(buffer, at, "LEVEL UP!", 0.0 - 0.305, 0.49, 10, 0.052, 0.098, 0.068)
+      return: buffer
+    set at: this.fitted_line(buffer, at, router.title(), 0.0 - 0.31, 0.50, 0.62, 0.078, 24)
+    set at: this.fitted_line(buffer, at, router.subtitle(), 0.0 - 0.38, 0.21, 0.76, 0.040, 50)
+    set at: this.fitted_line(buffer, at, router.status, 0.0 - 0.38, 0.08, 0.76, 0.038, 48)
+    set opts: router.options()
+    set prefixes: ["W ", "A ", "S ", "D "]
     set i int: 0
     while: i < 4
-      set x float: 0.0
-      if: i == 0
-        set x: 0.0 - 0.931
-      else:
-        if: i == 1
-          set x: 0.0 - 0.790
-        else:
-          if: i == 2
-            set x: 0.747
-          else:
-            set x: 0.888
-      set at: this.menu_line(buffer, at, keys[i], x, 0.823, 1, 0.043, 0.060, 0.054)
+      set at: this.fitted_line(buffer, at, prefixes[i] + opts[i], 0.0 - 0.345, (0.0 - 0.12) - i * 0.15, 0.69, 0.038, 42)
       set i: i + 1
-    set at: this.menu_line(buffer, at, "ARROWS BROWSE   ENTER PLAY", 0.0 - 0.265, 0.0 - 0.866, 28, 0.010, 0.027, 0.019)
     return: buffer
 
-  # Dynamic OW bitmap labels are positioned from the same card_rect() as
-  # the GPU panels and loaded monster textures. A separate mesh is rebuilt
-  # only on selection transitions or when returning from gameplay.
-  # Side cards: small title and CTA only. Center card: compact metadata,
-  # descriptions and real HP. This avoids the five-card text pileup in PR34.
+  # Every visible card has TWO reserved text rows: skill category and
+  # fantasy title. The level badge is separate. Even the full 17-character
+  # CHEST MANAGEMENT name fits without colliding with LVL 1.
   fn rich_card_text_vertices(carousel, cards, layout):
-    set buffer: array(4320, 0.0)
+    set buffer: array(7200, 0.0)
     set at int: 0
     set i int: 0
     while: i < 7
@@ -175,17 +179,17 @@ class BattleHudText:
         set dist float: rel
         if: dist < 0.0
           set dist: 0.0 - dist
+        set at: this.fitted_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.055, w - 0.146, 0.021, 15)
+        set at: this.fitted_line(buffer, at, cards.title(slot), x + 0.020, y + h - 0.111, w - 0.146, 0.035, 22)
+        set at: this.fitted_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.106, y + h - 0.074, 0.091, 0.032, 9)
         if: dist < 0.53
-          set at: this.menu_line(buffer, at, cards.title(slot), x + 0.086, y + h - 0.074, 11, 0.011, 0.030, 0.014)
-          set at: this.menu_line(buffer, at, "LVL " + str(cards.level(slot)), x + w - 0.111, y + h - 0.073, 7, 0.009, 0.028, 0.012)
-          set at: this.menu_line(buffer, at, upper(cards.mob_name(slot)), x + 0.042, y + 0.332, 17, 0.011, 0.029, 0.015)
-          set at: this.menu_line(buffer, at, cards.hp_text(slot), x + 0.040, y + 0.293, 18, 0.009, 0.022, 0.013)
-          set at: this.menu_line(buffer, at, cards.description_a(slot), x + 0.036, y + 0.176, 21, 0.010, 0.027, 0.014)
-          set at: this.menu_line(buffer, at, cards.description_b(slot), x + 0.036, y + 0.124, 21, 0.010, 0.027, 0.014)
-          set at: this.menu_line(buffer, at, cards.action(slot), x + 0.046, y + 0.057, 14, 0.013, 0.035, 0.018)
+          set at: this.fitted_line(buffer, at, upper(cards.mob_name(slot)), x + 0.035, y + 0.331, w - 0.07, 0.028, 24)
+          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.039, y + 0.293, w - 0.078, 0.022, 20)
+          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.033, y + 0.177, w - 0.066, 0.026, 25)
+          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.033, y + 0.124, w - 0.066, 0.026, 25)
+          set at: this.fitted_line(buffer, at, cards.action(slot), x + 0.046, y + 0.057, w - 0.092, 0.034, 15)
         else:
-          set at: this.menu_line(buffer, at, cards.title(slot), x + 0.079, y + h - 0.076, 11, 0.009, 0.026, 0.012)
-          set at: this.menu_line(buffer, at, cards.action(slot), x + 0.044, y + 0.058, 14, 0.011, 0.030, 0.015)
+          set at: this.fitted_line(buffer, at, cards.action(slot), x + 0.044, y + 0.058, w - 0.088, 0.029, 15)
       set i: i + 1
     return: buffer
 

@@ -18,7 +18,7 @@ class NativeMenuPointerTest:
     set this.layout: new NativeMenuLayout()
 
   @Test
-  fn centerSideCardsArrowsAndFooterUseRealNdcLayout():
+  fn centerSideCardsArrowsAndFiveRealToolbarIconsUseNdcLayout():
     call: this.check.assertEquals(1, this.pointer.hit(0.0, 0.0, "menu", this.carousel, this.layout))
     call: this.check.assertEquals(2, this.pointer.hit(0.0 - 0.70, 0.0, "menu", this.carousel, this.layout))
     call: this.check.assertEquals(3, this.pointer.hit(0.70, 0.0, "menu", this.carousel, this.layout))
@@ -28,6 +28,9 @@ class NativeMenuPointerTest:
     call: this.check.assertEquals(11, this.pointer.hit(0.0 - 0.77, 0.85, "menu", this.carousel, this.layout))
     call: this.check.assertEquals(12, this.pointer.hit(0.77, 0.85, "menu", this.carousel, this.layout))
     call: this.check.assertEquals(13, this.pointer.hit(0.91, 0.85, "settings", this.carousel, this.layout))
+    call: this.check.assertEquals(14, this.pointer.hit(0.91, 0.0 - 0.87, "menu", this.carousel, this.layout))
+    call: this.check.assertEquals(20, this.pointer.hit(0.0, 0.0 - 0.10, "cosmetics", this.carousel, this.layout))
+    call: this.check.assertEquals(23, this.pointer.hit(0.0, 0.0 - 0.57, "bugreport", this.carousel, this.layout))
 
   @Test
   fn offWindowAndGameplayClicksCannotLaunchMenu():

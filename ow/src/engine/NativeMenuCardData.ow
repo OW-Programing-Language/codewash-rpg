@@ -50,15 +50,15 @@ class NativeMenuCardData:
     if: index == 0
       return: "REDSTONE"
     if: index == 1
-      return: "ENCHANTING"
+      return: "ENCHANTING TABLE"
     if: index == 2
-      return: "CRAFTING"
+      return: "CRAFTING TABLE"
     if: index == 3
-      return: "CHEST MGMT"
+      return: "CHEST MANAGEMENT"
     if: index == 4
       return: "MATCH N HATCH"
     if: index == 5
-      return: "LOGIC BUILD"
+      return: "LOGIC BUILDING"
     return: "?"
 
   fn category(index):

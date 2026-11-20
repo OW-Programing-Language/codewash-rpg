@@ -262,3 +262,40 @@ remains a gate; Windows physical-device inspection remains **unchecked**.
 gradient effects, animated GIF playback (the conversion is a still frame),
 fullscreen/DPI-resize support, rounded vector UI, and full Electron art/UI
 parity. No unsupported completeness claim.
+
+## Native Electron parity: restored toolbar and safe card headings (v1.13.6)
+
+The original React/Electron source is the contract:
+`src/App.jsx` defines Settings + Cosmetics on the upper-left, Fullscreen
++ Menu on the upper-right, and Bug Report at the bottom-right.
+`src/components/skills/SkillCard.jsx` places a two-line
+`skill name / fantasy title` block opposite a distinct level badge.
+
+The native OW GPU UI now **renders all five controls using native geometry**
+instead of four misleading W/A/S/D placeholder boxes. Mouse hitboxes are
+shared with the actual GPU layout and never launch the wrong activity.
+Settings opens a native drawer, Cosmetics opens a native theme selector
+that switches among six real `THEME_CONFIG` background assets (and uses
+dedicated logos where the Electron theme has them), Menu opens an
+activities/help panel, and Bug Report opens a report/instructions panel.
+Press Escape or the on-screen BACK action to return. Keyboard shortcuts
+remain usable for the native game.
+
+The fantasy title now occupies a dedicated fitted line *below* the skill
+category; a separate reserved badge column always contains `LVL N`.
+`NativeCardLabelFitTest` checks the entire unabridged Electron title
+catalogue at all five card scales against the actual badge boundary.
+
+**Honest parity status:** the original Electron Settings drawer includes
+sound, profile, parental controls and other functionality that is not yet
+ported. Native Bug Report currently provides GitHub reporting guidance,
+not the original submission form. Fullscreen is visible but its action
+opens a truthful explanatory Settings panel until the OW Graphics
+GLFW window contract supports fullscreen. The alternative themes swap
+the authentic backgrounds/logos but do not yet fully reskin mob artwork.
+Rounded corners, gradients, fonts, dynamic scaling and screenshot-level
+visual parity remain outstanding. No false 1:1-complete claim.
+
+The native build still packages offline without Maven/Git at launch,
+and runs `menu_toolbar_smoke.ow` under Mesa as well as OWUnit
+and Windows/Linux/macOS portable packaging checks.

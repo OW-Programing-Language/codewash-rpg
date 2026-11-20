@@ -57,11 +57,11 @@ class NativeMenuVisualParityTest:
   fn heroHeadlineUsesGoldNativeGlyphPaletteWithoutElectron():
     set fonts: new BattleHudText()
     set glyphs: fonts.menu_vertices(new NativeVisualMenuStub())
-    call: this.check.assertEquals(4320, len(glyphs))
+    call: this.check.assertEquals(5400, len(glyphs))
     call: this.check.assertEquals(4, mod(glyphs[2], 8))
     call: this.check.assertEquals(5, mod(glyphs[5], 8))
     set cards: this.layout.carousel_vertices(this.carousel)
     call: this.check.assertEquals(1008, len(cards))
     set buttons: this.layout.button_vertices()
-    call: this.check.assertEquals(72, len(buttons))
+    call: this.check.assertEquals(90, len(buttons))
     call: this.check.assertEquals(1, this.layout.button_y() > 0.7)

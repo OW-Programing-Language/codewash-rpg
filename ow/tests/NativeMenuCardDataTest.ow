@@ -36,11 +36,11 @@ class NativeMenuCardDataTest:
   @Test
   fn originalCardLabelsAndActionsRemainPerSkill():
     call: this.check.assertEquals("REDSTONE", this.cards.title(0))
-    call: this.check.assertEquals("ENCHANTING", this.cards.title(1))
-    call: this.check.assertEquals("CRAFTING", this.cards.title(2))
-    call: this.check.assertEquals("CHEST MGMT", this.cards.title(3))
+    call: this.check.assertEquals("ENCHANTING TABLE", this.cards.title(1))
+    call: this.check.assertEquals("CRAFTING TABLE", this.cards.title(2))
+    call: this.check.assertEquals("CHEST MANAGEMENT", this.cards.title(3))
     call: this.check.assertEquals("MATCH N HATCH", this.cards.title(4))
-    call: this.check.assertEquals("LOGIC BUILD", this.cards.title(5))
+    call: this.check.assertEquals("LOGIC BUILDING", this.cards.title(5))
     call: this.check.assertEquals("CALCULATE!", this.cards.action(0))
     call: this.check.assertEquals("ENCHANT!", this.cards.action(1))
     call: this.check.assertEquals("CRAFT!", this.cards.action(2))
@@ -73,7 +73,7 @@ class NativeMenuCardDataTest:
     call: this.check.assertEquals(1, shapes[0] != 0.0)
     set textBuilder: new BattleHudText()
     set glyphs: textBuilder.rich_card_text_vertices(this.carousel, this.cards, this.layout)
-    call: this.check.assertEquals(4320, len(glyphs))
+    call: this.check.assertEquals(7200, len(glyphs))
     call: this.check.assertEquals(1, this.carousel.move(1))
     set i int: 0
     while: i < 6

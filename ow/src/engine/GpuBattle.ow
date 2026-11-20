@@ -161,6 +161,12 @@ class GpuBattle:
       return: 0
     if: scenes.add_scene("settings") != 1
       return: 0
+    if: scenes.add_scene("cosmetics") != 1
+      return: 0
+    if: scenes.add_scene("bugreport") != 1
+      return: 0
+    if: scenes.add_scene("menu_panel") != 1
+      return: 0
     if: scenes.add_scene("reading") != 1
       return: 0
     if: scenes.add_scene("writing") != 1
@@ -307,6 +313,31 @@ class GpuBattle:
       call: this.show_question()
     return: launched
 
+  # Exact Electron toolbar roles, without reusing the W/A/S/D hotkeys.
+  # Fullscreen is currently blocked by the pinned GLFW window contract;
+  # open the informational settings panel rather than pretending it works.
+  fn toolbar_action(index):
+    set handled int: 0
+    if: index == 0
+      set handled: this.menu.open_settings()
+    else:
+      if: index == 1
+        set handled: this.menu.open_cosmetics()
+      else:
+        if: index == 2
+          set handled: this.menu.open_settings()
+          set this.menu.status: "FULLSCREEN WINDOW API NOT PORTED"
+        else:
+          if: index == 3
+            set handled: this.menu.open_menu_panel()
+          else:
+            if: index == 4
+              set handled: this.menu.open_bugreport()
+    if: handled == 1
+      call: this.selection.pick(0)
+      call: assert(this.hud.refresh_menu(this.menu) == 1, "electron toolbar drawer refresh")
+    return: handled
+
   fn poll():
     call: this.window.poll()
     if: this.input.key_down("ESCAPE") == 0
@@ -335,10 +366,13 @@ class GpuBattle:
       return: this.move_carousel(1)
     if: pointer_action == 1
       return: this.launch_focus()
-    set mouse_choice int: 0 - 1
     if: pointer_action >= 10
-      if: pointer_action <= 13
-        set mouse_choice: pointer_action - 10
+      if: pointer_action <= 14
+        return: this.toolbar_action(pointer_action - 10)
+    set mouse_choice int: 0 - 1
+    if: pointer_action >= 20
+      if: pointer_action <= 23
+        set mouse_choice: pointer_action - 20
 
     # Move the highlighted answer card with arrow-key edges.
     set navigation: ""
@@ -454,6 +488,9 @@ class GpuBattle:
     call: this.selection.pick(choice)
     if: this.playing() == 0
       set handled int: this.menu.choose(choice)
+      if: this.menu.screen() == "cosmetics"
+        if: this.art.select_theme(this.menu.theme_id) != 1
+          return: 0 - 1
       if: this.menu.quitting == 1
         call: this.window.request_close()
         return: handled

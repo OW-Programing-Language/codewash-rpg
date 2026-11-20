@@ -18,6 +18,8 @@ class BattleHud:
   field rich_text
   field pointer
   field arrow_controls
+  field toolbar_icons
+  field modal_panel
   field hover_frame
   field card_data
   field menu_show_cards
@@ -42,6 +44,8 @@ class BattleHud:
     set this.rich_text: 0
     set this.pointer: 0
     set this.arrow_controls: 0
+    set this.toolbar_icons: 0
+    set this.modal_panel: 0
     set this.hover_frame: 0
     set this.card_data: 0
     set this.menu_show_cards: 1
@@ -69,6 +73,12 @@ class BattleHud:
       return: 0
     set this.arrow_controls: this.meshes.create(this.layout.arrow_vertices())
     if: this.arrow_controls < 1
+      return: 0
+    set this.toolbar_icons: this.meshes.create(this.layout.toolbar_icon_vertices())
+    if: this.toolbar_icons < 1
+      return: 0
+    set this.modal_panel: this.meshes.create(this.layout.panel_vertices())
+    if: this.modal_panel < 1
       return: 0
     return: this.refresh(battle)
 
@@ -139,8 +149,9 @@ class BattleHud:
   fn refresh_menu(router):
     set this.menu_mode: 1
     set this.menu_show_cards: 1
-    if: router.screen() == "settings"
-      set this.menu_show_cards: 0
+    if: router.screen() != "menu"
+      if: router.screen() != "activities"
+        set this.menu_show_cards: 0
     set updated int: this.meshes.create(this.text_builder.menu_vertices(router))
     if: updated < 1
       return: 0
@@ -228,7 +239,12 @@ class BattleHud:
             return: 0
         if: this.renderer.draw_mesh(this.arrow_controls) != 1
           return: 0
+      if: this.menu_show_cards == 0
+        if: this.renderer.draw_mesh(this.modal_panel) != 1
+          return: 0
       if: this.renderer.draw_mesh(this.menu_cards) != 1
+        return: 0
+      if: this.renderer.draw_mesh(this.toolbar_icons) != 1
         return: 0
       if: this.hover_frame > 0
         if: this.renderer.draw_mesh(this.hover_frame) != 1
@@ -275,6 +291,12 @@ class BattleHud:
     if: this.arrow_controls > 0
       call: this.meshes.destroy(this.arrow_controls)
       set this.arrow_controls: 0
+    if: this.toolbar_icons > 0
+      call: this.meshes.destroy(this.toolbar_icons)
+      set this.toolbar_icons: 0
+    if: this.modal_panel > 0
+      call: this.meshes.destroy(this.modal_panel)
+      set this.modal_panel: 0
     if: this.shader_program > 0
       call: this.shader.destroy(this.shader_program)
       set this.shader_program: 0

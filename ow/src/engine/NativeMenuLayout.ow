@@ -61,6 +61,18 @@ class NativeMenuLayout:
   fn button_height():
     return: 0.137
 
+  # Five Electron controls: settings, cosmetics, fullscreen, menu,
+  # bug report. Bottom-right bug shares the square button dimensions.
+  fn toolbar_x(index):
+    if: index == 4
+      return: 0.85
+    return: this.button_x(index)
+
+  fn toolbar_y(index):
+    if: index == 4
+      return: 0.0 - 0.94
+    return: this.button_y()
+
   # Quad writer for the native UI geometry. Z encodes themed GPU colors.
   # The HUD's shader is shared with the original OW bitmap glyph renderer.
   fn quad(buffer, at, x, y, w, h, z):
@@ -89,10 +101,10 @@ class NativeMenuLayout:
   fn chrome_vertices():
     set buffer: array(1728, 0.0)
     set at int: 0
-    # Top-corner icon drop shadows and unchanged ten-pixel-heart strip.
+    # Restore actual Electron toolbar chrome, including bottom-right bug.
     set i int: 0
-    while: i < 4
-      set at: this.quad(buffer, at, this.button_x(i) + 0.006, this.button_y() - 0.008, this.button_width(), this.button_height(), 0 - 10)
+    while: i < 5
+      set at: this.quad(buffer, at, this.toolbar_x(i) + 0.005, this.toolbar_y(i) - 0.010, this.button_width(), this.button_height(), 0 - 10)
       set i: i + 1
     set i: 0
     while: i < 10
@@ -180,9 +192,12 @@ class NativeMenuLayout:
         set w float: rect[2]
         set h float: rect[3]
         set accent int: (0 - 11) - slot
-        # Colored Minecraft-style header and dark level badge.
-        set at: this.quad(buffer, at, x, y + h - 0.115, w, 0.115, accent)
-        set at: this.quad(buffer, at, x + w - 0.132, y + h - 0.103, 0.122, 0.087, 0 - 10)
+        # Electron: skill category + fantasy title live in a dark label
+        # panel at the top-left; the level badge has its own reserved area.
+        # All dimensions are shared by NativeCardLabelLayout.ow.
+        set at: this.quad(buffer, at, x, y + h - 0.152, w, 0.152, accent)
+        set at: this.quad(buffer, at, x + 0.009, y + h - 0.136, w - 0.127, 0.126, 0 - 9)
+        set at: this.quad(buffer, at, x + w - 0.112, y + h - 0.113, 0.101, 0.096, 0 - 10)
         # Dark inset for the current real mob portrait.
         set at: this.quad(buffer, at, x + 0.04, y + h * 0.45, w - 0.08, h * 0.36, 0 - 5)
         # Current mob-name backing and black HP rail.
@@ -234,9 +249,9 @@ class NativeMenuLayout:
     set h float: 0.0
     set target int: pointer.visual
     if: target >= 10
-      if: target <= 13
-        set x: this.button_x(target - 10)
-        set y: this.button_y()
+      if: target <= 14
+        set x: this.toolbar_x(target - 10)
+        set y: this.toolbar_y(target - 10)
         set w: this.button_width()
         set h: this.button_height()
     else:
@@ -274,11 +289,85 @@ class NativeMenuLayout:
     set at: this.quad(buffer, at, x + w, y, t, h, 0 - 17)
     return: buffer
 
+  # Five physical controls: gear, sparkle, maximize, menu and bug report.
   fn button_vertices():
-    set buffer: array(72, 0.0)
+    set buffer: array(90, 0.0)
     set at int: 0
     set i int: 0
-    while: i < 4
-      set at: this.quad(buffer, at, this.button_x(i), this.button_y(), this.button_width(), this.button_height(), 0 - 5)
+    while: i < 5
+      set at: this.quad(buffer, at, this.toolbar_x(i), this.toolbar_y(i), this.button_width(), this.button_height(), 0 - 5)
       set i: i + 1
+    return: buffer
+
+  # Accessible native fallback panels for settings, themes, bug reporting
+  # and menu. Separate clear hit regions permit mouse or W/A/S/D navigation.
+  fn panel_option_x():
+    return: 0.0 - 0.39
+
+  fn panel_option_y(index):
+    return: 0.0 - 0.15 - index * 0.15
+
+  fn panel_option_width():
+    return: 0.78
+
+  fn panel_option_height():
+    return: 0.12
+
+  fn panel_vertices():
+    set buffer: array(180, 0.0)
+    set at int: 0
+    set at: this.quad(buffer, at, 0.0 - 0.46, 0.0 - 0.68, 0.92, 1.10, 0 - 10)
+    set at: this.quad(buffer, at, 0.0 - 0.445, 0.0 - 0.665, 0.89, 1.07, 0 - 4)
+    set i int: 0
+    while: i < 4
+      set at: this.quad(buffer, at, this.panel_option_x(), this.panel_option_y(i), this.panel_option_width(), this.panel_option_height(), 0 - 5)
+      set i: i + 1
+    return: buffer
+
+  # GPU vector-style glyphs, not W/A/S/D proxy hotkeys.
+  # Approximate Lucide icon silhouettes using the same native primitives.
+  fn toolbar_icon_vertices():
+    set buffer: array(900, 0.0)
+    set at int: 0
+    # Gear: outer teeth and hollow rectangular center.
+    set x float: this.toolbar_x(0) + 0.031
+    set y float: this.toolbar_y(0) + 0.039
+    set at: this.quad(buffer, at, x, y, 0.045, 0.055, 0 - 16)
+    set at: this.quad(buffer, at, x + 0.017, y - 0.012, 0.012, 0.080, 0 - 16)
+    set at: this.quad(buffer, at, x - 0.011, y + 0.020, 0.067, 0.013, 0 - 16)
+    set at: this.quad(buffer, at, x + 0.013, y + 0.013, 0.019, 0.026, 0 - 5)
+    # Sparkles: vertical and horizontal ray with smaller satellite glint.
+    set x: this.toolbar_x(1) + 0.052
+    set y: this.toolbar_y(1) + 0.069
+    set at: this.quad(buffer, at, x - 0.005, y - 0.033, 0.010, 0.066, 0 - 14)
+    set at: this.quad(buffer, at, x - 0.028, y - 0.006, 0.056, 0.012, 0 - 14)
+    set at: this.quad(buffer, at, x - 0.033, y + 0.028, 0.008, 0.019, 0 - 14)
+    # Fullscreen: four white L brackets.
+    set x: this.toolbar_x(2) + 0.027
+    set y: this.toolbar_y(2) + 0.032
+    set at: this.quad(buffer, at, x, y + 0.055, 0.025, 0.008, 0 - 16)
+    set at: this.quad(buffer, at, x, y + 0.045, 0.008, 0.018, 0 - 16)
+    set at: this.quad(buffer, at, x + 0.043, y + 0.055, 0.025, 0.008, 0 - 16)
+    set at: this.quad(buffer, at, x + 0.060, y + 0.045, 0.008, 0.018, 0 - 16)
+    set at: this.quad(buffer, at, x, y, 0.025, 0.008, 0 - 16)
+    set at: this.quad(buffer, at, x, y, 0.008, 0.018, 0 - 16)
+    set at: this.quad(buffer, at, x + 0.043, y, 0.025, 0.008, 0 - 16)
+    set at: this.quad(buffer, at, x + 0.060, y, 0.008, 0.018, 0 - 16)
+    # Menu: three horizontal bars.
+    set x: this.toolbar_x(3) + 0.022
+    set y: this.toolbar_y(3) + 0.036
+    set at: this.quad(buffer, at, x, y, 0.062, 0.010, 0 - 16)
+    set at: this.quad(buffer, at, x, y + 0.023, 0.062, 0.010, 0 - 16)
+    set at: this.quad(buffer, at, x, y + 0.046, 0.062, 0.010, 0 - 16)
+    # Bug report: crimson beetle body, head, legs and antennae.
+    set x: this.toolbar_x(4) + 0.037
+    set y: this.toolbar_y(4) + 0.029
+    set at: this.quad(buffer, at, x, y, 0.034, 0.055, 0 - 7)
+    set at: this.quad(buffer, at, x + 0.008, y + 0.052, 0.018, 0.017, 0 - 7)
+    set at: this.quad(buffer, at, x - 0.012, y + 0.016, 0.012, 0.008, 0 - 7)
+    set at: this.quad(buffer, at, x + 0.034, y + 0.016, 0.012, 0.008, 0 - 7)
+    set at: this.quad(buffer, at, x - 0.012, y + 0.043, 0.012, 0.008, 0 - 7)
+    set at: this.quad(buffer, at, x + 0.034, y + 0.043, 0.012, 0.008, 0 - 7)
+    set at: this.quad(buffer, at, x + 0.006, y + 0.064, 0.006, 0.012, 0 - 7)
+    set at: this.quad(buffer, at, x + 0.024, y + 0.064, 0.006, 0.012, 0 - 7)
     return: buffer

@@ -19,6 +19,7 @@ class NativeBattleArt:
   field enemy_path
   field menu_theme
   field menu_logo
+  field theme_id
   field layout
   field ticks
   field menu_ticks
@@ -40,6 +41,7 @@ class NativeBattleArt:
     set this.enemy_path: ""
     set this.menu_theme: 0
     set this.menu_logo: 0
+    set this.theme_id: 0
     set this.layout: new NativeMenuLayout()
     set this.ticks: 0
     set this.menu_ticks: 0
@@ -78,6 +80,36 @@ class NativeBattleArt:
     if: this.menu_logo < 1
       call: this.stop()
       return: 0
+    return: 1
+
+  # Switch only successfully decoded original theme textures. The old GPU
+  # images stay alive until both replacements load; failed loads do not
+  # leave the UI with an invisible background or a missing logo.
+  fn select_theme(index):
+    if: index < 0
+      return: 0
+    if: index > 5
+      return: 0
+    if: index == this.theme_id
+      return: 1
+    set bg: this.catalog.theme_background(index)
+    set lg: this.catalog.theme_logo(index)
+    set fresh_bg int: this.textures.load_image(bg)
+    if: fresh_bg < 1
+      return: 0
+    set fresh_logo int: this.textures.load_image(lg)
+    if: fresh_logo < 1
+      call: this.textures.destroy(fresh_bg)
+      return: 0
+    set old_bg int: this.menu_theme
+    set old_logo int: this.menu_logo
+    set this.menu_theme: fresh_bg
+    set this.menu_logo: fresh_logo
+    set this.theme_id: index
+    if: old_bg > 0
+      call: this.textures.destroy(old_bg)
+    if: old_logo > 0
+      call: this.textures.destroy(old_logo)
     return: 1
 
   # Keep six native mob portraits cached by their *actual* current enemy
@@ -253,7 +285,12 @@ class NativeBattleArt:
     if: this.draw_sprite(this.menu_logo, this.layout.logo_x(), this.layout.logo_y(), 1.08, 0.29, 1.0) != 1
       return: 0
 
-    if: screen != "settings"
+    set show_cards int: 0
+    if: screen == "menu"
+      set show_cards: 1
+    if: screen == "activities"
+      set show_cards: 1
+    if: show_cards == 1
       set i int: 0
       while: i < 7
         set rel float: carousel.visual_relative(i)
