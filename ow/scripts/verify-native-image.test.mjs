@@ -7,10 +7,11 @@ import {pathsForOS, verifyContents} from './verify-native-image.mjs';
 
 test('native paths are correct for Windows, Linux and macOS jpackage images', () => {
   const root = '/package-root';
-  assert.match(pathsForOS(root, 'win32').binary, /CodeWashRPG\.exe$/);
-  assert.match(pathsForOS(root, 'linux').binary, /CodeWashRPG\/bin\/CodeWashRPG$/);
-  assert.match(pathsForOS(root, 'darwin').binary, /CodeWashRPG\.app\/Contents\/MacOS\/CodeWashRPG$/);
-  assert.match(pathsForOS(root, 'darwin').app, /CodeWashRPG\.app\/Contents\/app$/);
+  const normal = p => p.replaceAll('\\\\', '/');
+  assert.match(normal(pathsForOS(root, 'win32').binary), /CodeWashRPG\.exe$/);
+  assert.match(normal(pathsForOS(root, 'linux').binary), /CodeWashRPG\/bin\/CodeWashRPG$/);
+  assert.match(normal(pathsForOS(root, 'darwin').binary), /CodeWashRPG\.app\/Contents\/MacOS\/CodeWashRPG$/);
+  assert.match(normal(pathsForOS(root, 'darwin').app), /CodeWashRPG\.app\/Contents\/app$/);
 });
 
 test('verification catches incomplete packaged image and approves staged layout', () => {
