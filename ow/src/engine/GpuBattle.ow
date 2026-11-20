@@ -229,7 +229,7 @@ class GpuBattle:
       return: 0
     set this.held: choice
     call: this.selection.pick(choice)
-    if: this.menu.screen() != "battle"
+    if: this.playing() == 0
       set handled int: this.menu.choose(choice)
       if: this.menu.quitting == 1
         call: this.window.request_close()
