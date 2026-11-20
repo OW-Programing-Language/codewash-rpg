@@ -177,16 +177,21 @@ public final class NativeLauncher {
         if (!graphicalRun || GraphicsEnvironment.isHeadless()) return;
         String location = logPath == null ? "Unavailable" : logPath.toString();
         String details = "";
+        String hint = "";
         if (logPath != null && Files.isRegularFile(logPath)) {
             try {
                 List<String> lines = Files.readAllLines(logPath, StandardCharsets.UTF_8);
+                if (lines.stream().anyMatch(line -> line.contains("Unable to create a GLFW OpenGL 3.3 window"))) {
+                    hint = "OpenGL 3.3 window creation failed. Check your GPU drivers, "
+                            + "graphics support and Remote Desktop session.\n\n";
+                }
                 int start = Math.max(0, lines.size() - 10);
                 details = String.join("\n", lines.subList(start, lines.size()));
                 if (details.length() > 950) details = details.substring(details.length() - 950);
             } catch (IOException ignored) {}
         }
-        final String message = reason
-                + "\n\nA diagnostic log has been saved to:\n" + location
+        final String message = reason + "\n\n" + hint
+                + "A diagnostic log has been saved to:\n" + location
                 + "\n\nLast output:\n" + details
                 + "\n\nCopy the log when reporting this error.";
         try {
