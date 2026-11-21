@@ -192,3 +192,10 @@ jobs:
           xvfb-run -a -s "-screen 0 1600x900x24" env LIBGL_ALWAYS_SOFTWARE=1 \
             java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
             dev.oreo.Main run src/engine/menu_materials_smoke.ow
+
+      - name: Verify licensed VT323 glyph atlas and mixed-case labels on Mesa
+        working-directory: ow
+        run: |
+          xvfb-run -a -s "-screen 0 1600x900x24" env LIBGL_ALWAYS_SOFTWARE=1 \
+            java -cp "/tmp/ow-battle-lang/target/OwIDE.jar:/tmp/ow-battle-graphics/native-bridge/target/classes:/tmp/ow-battle-graphics/native-bridge/target/lib/*:target/probe-classes" \
+            dev.oreo.Main run src/engine/menu_font_smoke.ow
