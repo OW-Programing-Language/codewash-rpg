@@ -2,6 +2,7 @@
 # This is an opt-in experiment and does not replace the six-skill browser UI.
 import "BattleHudText.ow"
 import "NativeMenuLayout.ow"
+import "NativeToolbarArt.ow"
 
 class BattleHud:
   field meshes
@@ -17,8 +18,10 @@ class BattleHud:
   field rich_panels
   field rich_text
   field pointer
+  field materials
   field arrow_controls
   field toolbar_icons
+  field toolbar_art
   field modal_panel
   field hover_frame
   field card_data
@@ -43,6 +46,7 @@ class BattleHud:
     set this.rich_panels: 0
     set this.rich_text: 0
     set this.pointer: 0
+    set this.materials: 0
     set this.arrow_controls: 0
     set this.toolbar_icons: 0
     set this.modal_panel: 0
@@ -52,12 +56,13 @@ class BattleHud:
     set this.carousel: 0
     set this.menu_mode: 0
     set this.layout: new NativeMenuLayout()
+    set this.toolbar_art: new NativeToolbarArt(meshes, shader, renderer, this.layout)
     set this.text_mesh: 0
     set this.anim_tick: 0
 
   fn start(battle):
-    set vertex: "#version 330 core\nlayout(location=0) in vec3 aPos;\nflat out int vKind;\nflat out int vCode;\nflat out int vTint;\nout vec2 vUv;\nvoid main(){\n  gl_Position=vec4(aPos.xy,0.0,1.0);\n  if(aPos.z<0.0){vKind=1;vCode=int(-aPos.z)-1;vTint=0;vUv=vec2(0.0);}\n  else{\n    int encoded=int(aPos.z+0.5);\n    vKind=0;vCode=encoded/8;vTint=(encoded%8>=4)?1:0;\n    int corner=encoded%4;\n    vUv=vec2((corner==1||corner==2)?1.0:0.0,(corner==2||corner==3)?1.0:0.0);\n  }\n}"
-    set fragment: "#version 330 core\nflat in int vKind;\nflat in int vCode;\nflat in int vTint;\nin vec2 vUv;\nout vec4 pixel;\nuniform int uSelected;\nuniform int uAnimTick;\nconst int fontRows[343]=int[343](14,17,17,31,17,17,17,30,17,17,30,17,17,30,15,16,16,16,16,16,15,30,17,17,17,17,17,30,31,16,16,30,16,16,31,31,16,16,30,16,16,16,15,16,16,23,17,17,15,17,17,17,31,17,17,17,31,4,4,4,4,4,31,7,2,2,2,18,18,12,17,18,20,24,20,18,17,16,16,16,16,16,16,31,17,27,21,21,17,17,17,17,25,21,19,17,17,17,14,17,17,17,17,17,14,30,17,17,30,16,16,16,14,17,17,17,21,18,13,30,17,17,30,20,18,17,15,16,16,14,1,1,30,31,4,4,4,4,4,4,17,17,17,17,17,17,14,17,17,17,17,17,10,4,17,17,17,21,21,21,10,17,17,10,4,10,17,17,17,17,10,4,4,4,4,31,1,2,4,8,16,31,14,19,21,21,25,17,14,4,12,4,4,4,4,14,14,17,1,2,4,8,31,30,1,1,14,1,1,30,2,6,10,18,31,2,2,31,16,16,30,1,1,30,15,16,16,30,17,17,14,31,1,2,4,8,8,8,14,17,17,14,17,17,14,14,17,17,15,1,1,30,0,4,4,31,4,4,0,0,0,0,31,0,0,0,0,21,14,31,14,21,0,1,1,2,4,8,16,16,2,4,8,8,8,4,2,8,4,2,2,2,4,8,0,31,0,31,0,0,0,14,17,1,2,4,0,4,0,0,0,0,0,0,0,0,4,4,0,4,4,0,0,0,0,0,0,4,4,4,4,4,4,4,0,4,25,26,4,8,22,6,0);\nvoid main(){\n  if(vKind==1){\n    float wave=float(uAnimTick%32)/32.0;\n    if(vCode==4){pixel=vec4(0.12,0.11,0.18,1.0);return;}\n    if(vCode==5){pixel=vec4(0.27,0.12,0.53,1.0);return;}\n    if(vCode==6){pixel=vec4(0.98,0.82+wave*0.12,0.09,1.0);return;}\n    if(vCode==7){pixel=vec4(0.96,0.08,0.18,1.0);return;}\n    if(vCode==8){pixel=vec4(0.07,0.07,0.12,1.0);return;}\n    if(vCode==9){pixel=vec4(0.03,0.02,0.05,1.0);return;}\n    if(vCode==10){pixel=vec4(0.77,0.15,0.14,1.0);return;}\n    if(vCode==11){pixel=vec4(0.45,0.18,0.76,1.0);return;}\n    if(vCode==12){pixel=vec4(0.07,0.46,0.83,1.0);return;}\n    if(vCode==13){pixel=vec4(0.07,0.58,0.31,1.0);return;}\n    if(vCode==14){pixel=vec4(0.82,0.16,0.46,1.0);return;}\n    if(vCode==15){pixel=vec4(0.73,0.39,0.10,1.0);return;}\n    if(vCode==16){pixel=vec4(0.18+0.13*wave,0.68+0.22*wave,0.91+0.09*wave,1.0);return;}\n    if(vCode==17){pixel=vec4(1.0,0.80+wave*0.10,0.07,1.0);return;}\n    if(vCode==18){pixel=vec4(0.22,0.14,0.02,1.0);return;}\n    pixel=(vCode==uSelected)?vec4(0.12,0.43+0.07*wave,0.55+0.05*wave,1.0):vec4(0.08,0.15,0.23,1.0);\n    return;\n  }\n  if(vCode<0||vCode>=49)discard;\n  int gx=int(floor(vUv.x*5.0));\n  int gy=int(floor((1.0-vUv.y)*7.0));\n  if(gx<0||gx>=5||gy<0||gy>=7)discard;\n  int bits=fontRows[vCode*7+gy];\n  if((bits&(1<<(4-gx)))==0)discard;\n  pixel=(vTint==1)?vec4(1.0,0.83,0.06,1.0):vec4(0.88,0.96,1.0,1.0);\n}"
+    set vertex: "#version 330 core\nlayout(location=0) in vec3 aPos;\nflat out int vKind;\nflat out int vCode;\nflat out int vTint;\nflat out int vShade;\nout vec2 vUv;\nvoid main(){\n  gl_Position=vec4(aPos.xy,0.0,1.0);\n  if(aPos.z<0.0){vKind=1;vCode=int(-aPos.z)-1;vTint=0;vShade=0;vUv=vec2(0.0);}\n  else{\n    int encoded=int(aPos.z+0.5);\n    vKind=0;vCode=(encoded/8)%49;vTint=(encoded%8>=4)?1:0;vShade=encoded/(8*49);\n    int corner=encoded%4;\n    vUv=vec2((corner==1||corner==2)?1.0:0.0,(corner==2||corner==3)?1.0:0.0);\n  }\n}"
+    set fragment: "#version 330 core\nflat in int vKind;\nflat in int vCode;\nflat in int vTint;\nflat in int vShade;\nin vec2 vUv;\nout vec4 pixel;\nuniform int uSelected;\nuniform int uAnimTick;\nconst int fontRows[343]=int[343](14,17,17,31,17,17,17,30,17,17,30,17,17,30,15,16,16,16,16,16,15,30,17,17,17,17,17,30,31,16,16,30,16,16,31,31,16,16,30,16,16,16,15,16,16,23,17,17,15,17,17,17,31,17,17,17,31,4,4,4,4,4,31,7,2,2,2,18,18,12,17,18,20,24,20,18,17,16,16,16,16,16,16,31,17,27,21,21,17,17,17,17,25,21,19,17,17,17,14,17,17,17,17,17,14,30,17,17,30,16,16,16,14,17,17,17,21,18,13,30,17,17,30,20,18,17,15,16,16,14,1,1,30,31,4,4,4,4,4,4,17,17,17,17,17,17,14,17,17,17,17,17,10,4,17,17,17,21,21,21,10,17,17,10,4,10,17,17,17,17,10,4,4,4,4,31,1,2,4,8,16,31,14,19,21,21,25,17,14,4,12,4,4,4,4,14,14,17,1,2,4,8,31,30,1,1,14,1,1,30,2,6,10,18,31,2,2,31,16,16,30,1,1,30,15,16,16,30,17,17,14,31,1,2,4,8,8,8,14,17,17,14,17,17,14,14,17,17,15,1,1,30,0,4,4,31,4,4,0,0,0,0,31,0,0,0,0,21,14,31,14,21,0,1,1,2,4,8,16,16,2,4,8,8,8,4,2,8,4,2,2,2,4,8,0,31,0,31,0,0,0,14,17,1,2,4,0,4,0,0,0,0,0,0,0,0,4,4,0,4,4,0,0,0,0,0,0,4,4,4,4,4,4,4,0,4,25,26,4,8,22,6,0);\nvoid main(){\n  if(vKind==1){\n    float wave=float(uAnimTick%32)/32.0;\n    if(vCode==4){pixel=vec4(0.12,0.11,0.18,1.0);return;}\n    if(vCode==5){pixel=vec4(0.27,0.12,0.53,1.0);return;}\n    if(vCode==6){pixel=vec4(0.98,0.82+wave*0.12,0.09,1.0);return;}\n    if(vCode==7){pixel=vec4(0.96,0.08,0.18,1.0);return;}\n    if(vCode==8){pixel=vec4(0.07,0.07,0.12,1.0);return;}\n    if(vCode==9){pixel=vec4(0.03,0.02,0.05,1.0);return;}\n    if(vCode==10){pixel=vec4(0.77,0.15,0.14,1.0);return;}\n    if(vCode==11){pixel=vec4(0.45,0.18,0.76,1.0);return;}\n    if(vCode==12){pixel=vec4(0.07,0.46,0.83,1.0);return;}\n    if(vCode==13){pixel=vec4(0.07,0.58,0.31,1.0);return;}\n    if(vCode==14){pixel=vec4(0.82,0.16,0.46,1.0);return;}\n    if(vCode==15){pixel=vec4(0.73,0.39,0.10,1.0);return;}\n    if(vCode==16){pixel=vec4(0.18+0.13*wave,0.68+0.22*wave,0.91+0.09*wave,1.0);return;}\n    if(vCode==17){pixel=vec4(1.0,0.80+wave*0.10,0.07,1.0);return;}\n    if(vCode==18){pixel=vec4(0.22,0.14,0.02,1.0);return;}\n    pixel=(vCode==uSelected)?vec4(0.12,0.43+0.07*wave,0.55+0.05*wave,1.0):vec4(0.08,0.15,0.23,1.0);\n    return;\n  }\n  if(vCode<0||vCode>=49)discard;\n  int gx=int(floor(vUv.x*5.0));\n  int gy=int(floor((1.0-vUv.y)*7.0));\n  if(gx<0||gx>=5||gy<0||gy>=7)discard;\n  int bits=fontRows[vCode*7+gy];\n  if((bits&(1<<(4-gx)))==0)discard;\n  pixel=(vTint==1)?vec4(1.0,0.83,0.06,1.0):vec4(0.88,0.96,1.0,1.0);\n  if(vShade==1)pixel.rgb*=0.46;\n  if(vShade>=2)pixel.rgb*=0.22;\n}"
     set this.shader_program: this.shader.create(vertex, fragment)
     if: this.shader_program < 1
       return: 0
@@ -74,9 +79,11 @@ class BattleHud:
     set this.arrow_controls: this.meshes.create(this.layout.arrow_vertices())
     if: this.arrow_controls < 1
       return: 0
-    set this.toolbar_icons: this.meshes.create(this.layout.toolbar_icon_vertices())
-    if: this.toolbar_icons < 1
+    # Icons are native anti-aliased shader shapes and rounded backgrounds,
+    # not stacked flat quads. Keep the public handle for existing smoke tests.
+    if: this.toolbar_art.start() != 1
       return: 0
+    set this.toolbar_icons: this.toolbar_art.quad
     set this.modal_panel: this.meshes.create(this.layout.panel_vertices())
     if: this.modal_panel < 1
       return: 0
@@ -124,6 +131,10 @@ class BattleHud:
     if: this.hover_frame > 0
       call: this.meshes.destroy(this.hover_frame)
     set this.hover_frame: fresh
+    return: 1
+
+  fn bind_materials(materials):
+    set this.materials: materials
     return: 1
 
   fn bind_pointer(pointer):
@@ -228,6 +239,21 @@ class BattleHud:
         if: carousel_changed == 0
           if: this.sync_hover() != 1
             return: 0
+      # The pattern/gradient pass MUST run after carousel.tick(), before
+      # any opaque HUD overlays. Rebind the HUD shader and reset depth state:
+      # native geometry and textured cards then share the exact frame coords.
+      if: this.menu_show_cards == 1
+        if: this.materials != 0
+          if: this.materials.render(this.carousel) != 1
+            return: 0
+          if: this.renderer.depth_test(0) != 1
+            return: 0
+          if: this.shader.bind(this.shader_program) != 1
+            return: 0
+          if: this.shader.set_int(this.shader_program, "uSelected", this.selection.selected) != 1
+            return: 0
+          if: this.shader.set_int(this.shader_program, "uAnimTick", this.anim_tick) != 1
+            return: 0
       if: this.renderer.draw_mesh(this.menu_chrome) != 1
         return: 0
       if: this.menu_show_cards == 1
@@ -242,9 +268,16 @@ class BattleHud:
       if: this.menu_show_cards == 0
         if: this.renderer.draw_mesh(this.modal_panel) != 1
           return: 0
-      if: this.renderer.draw_mesh(this.menu_cards) != 1
+      # Dedicated toolbar draws the actual five Lucide-like icons; the
+      # obsolete orange/green bitmap glyphs and square background meshes
+      # are deliberately NOT drawn. Restore the HUD program for texts.
+      if: this.toolbar_art.render(this.pointer) != 1
         return: 0
-      if: this.renderer.draw_mesh(this.toolbar_icons) != 1
+      if: this.shader.bind(this.shader_program) != 1
+        return: 0
+      if: this.shader.set_int(this.shader_program, "uSelected", this.selection.selected) != 1
+        return: 0
+      if: this.shader.set_int(this.shader_program, "uAnimTick", this.anim_tick) != 1
         return: 0
       if: this.hover_frame > 0
         if: this.renderer.draw_mesh(this.hover_frame) != 1
@@ -291,8 +324,8 @@ class BattleHud:
     if: this.arrow_controls > 0
       call: this.meshes.destroy(this.arrow_controls)
       set this.arrow_controls: 0
-    if: this.toolbar_icons > 0
-      call: this.meshes.destroy(this.toolbar_icons)
+    if: this.toolbar_art != 0
+      call: this.toolbar_art.stop()
       set this.toolbar_icons: 0
     if: this.modal_panel > 0
       call: this.meshes.destroy(this.modal_panel)

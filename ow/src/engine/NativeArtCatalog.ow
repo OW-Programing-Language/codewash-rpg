@@ -34,6 +34,11 @@ class NativeArtCatalog:
       return: "assets/native/themes/pokemon_logo.png"
     return: "assets/native/themes/minecraft_logo.png"
 
+  # Exactly the same 67x100 repeating transparent cube pattern loaded by
+  # src/components/skills/SkillCard.jsx from Transparent Textures.
+  fn card_pattern_path():
+    return: "assets/native/patterns/cubes.png"
+
   fn icon_slot(skill):
     if: skill == "math"
       return: 0

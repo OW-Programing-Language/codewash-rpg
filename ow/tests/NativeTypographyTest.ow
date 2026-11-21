@@ -39,8 +39,8 @@ class NativeTypographyTest:
     set vertices: this.font.rich_card_text_vertices(this.carousel, this.cards, this.layout)
     call: this.check.assertEquals(7200, len(vertices))
     set firstHeight float: vertices[7] - vertices[1]
-    call: this.check.assertEquals(1, firstHeight < 0.035)
-    call: this.check.assertEquals(1, firstHeight > 0.020)
+    call: this.check.assertEquals(1, firstHeight < 0.021)
+    call: this.check.assertEquals(1, firstHeight > 0.014)
     # The first visible card is the left neighbor; its text fits its header.
     set left: this.layout.card_rect(this.carousel.visual_relative(1))
     call: this.check.assertEquals(1, vertices[0] > left[0])

@@ -61,6 +61,34 @@ class NativeMenuCardData:
       return: "LOGIC BUILDING"
     return: "?"
 
+  # Split only long fantasy titles into their natural Electron wrapping
+  # points. Preserve title() unchanged for data/API clients.
+  fn title_first(index):
+    if: index == 1
+      return: "ENCHANTING"
+    if: index == 2
+      return: "CRAFTING"
+    if: index == 3
+      return: "CHEST"
+    if: index == 4
+      return: "MATCH N"
+    if: index == 5
+      return: "LOGIC"
+    return: this.title(index)
+
+  fn title_second(index):
+    if: index == 1
+      return: "TABLE"
+    if: index == 2
+      return: "TABLE"
+    if: index == 3
+      return: "MANAGEMENT"
+    if: index == 4
+      return: "HATCH"
+    if: index == 5
+      return: "BUILDING"
+    return: ""
+
   fn category(index):
     if: index == 0
       return: "MATH"

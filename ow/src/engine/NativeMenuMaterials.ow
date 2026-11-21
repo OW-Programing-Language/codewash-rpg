@@ -1,0 +1,87 @@
+# Native OpenGL reproduction of src/components/skills/SkillCard.jsx card materials.
+# Reuses its exact six CSS gradients AND the original transparent cube PNG.
+# Does not depend on Electron, browser, CSS, or runtime network.
+class NativeMenuMaterials:
+  field meshes
+  field shaders
+  field textures
+  field renderer
+  field layout
+  field quad
+  field program
+  field pattern
+
+  fn new(meshes, shaders, textures, renderer, layout):
+    set this.meshes: meshes
+    set this.shaders: shaders
+    set this.textures: textures
+    set this.renderer: renderer
+    set this.layout: layout
+    set this.quad: 0
+    set this.program: 0
+    set this.pattern: 0
+
+  fn start():
+    set vertices: [0.0,0.0,0.0, 1.0,0.0,0.0, 1.0,1.0,0.0, 0.0,0.0,0.0, 1.0,1.0,0.0, 0.0,1.0,0.0]
+    set this.quad: this.meshes.create(vertices)
+    if: this.quad < 1
+      return: 0
+    set vs: "#version 330 core\nlayout(location=0) in vec3 aPos;\nout vec2 vUv;\nuniform vec4 uRect;\nvoid main() {\n  vUv=aPos.xy;\n  gl_Position=vec4(uRect.xy+aPos.xy*uRect.zw,0.0,1.0);\n}"
+    set fs: "#version 330 core\nin vec2 vUv;\nout vec4 pixel;\nuniform vec4 uRect;\nuniform vec4 uVisual;   // skill slot, card distance, focus intensity, animation tick\nuniform sampler2D uPattern;\n// CSS-like rounded-rectangle signed distance in logical 1280x720 pixels.\nfloat roundRect(vec2 xy, vec2 lo, vec2 hi, float radius) {\n  vec2 center=(lo+hi)*0.5;\n  vec2 halfSize=(hi-lo)*0.5;\n  vec2 d=abs(xy-center)-halfSize+vec2(radius);\n  return length(max(d,vec2(0.0)))+min(max(d.x,d.y),0.0)-radius;\n}\nvec3 gradientTop(int skill) {\n  if(skill==0)return vec3(0.7255,0.1098,0.1098); // math: #b91c1c\n  if(skill==1)return vec3(0.4941,0.1333,0.8078); // reading: #7e22ce\n  if(skill==2)return vec3(0.0118,0.4118,0.6314); // writing: #0369a1\n  if(skill==3)return vec3(0.0196,0.5882,0.4118); // cleaning: #059669\n  if(skill==4)return vec3(0.8588,0.1529,0.4667); // memory: #db2777\n  return vec3(0.9176,0.3451,0.0471);             // patterns: #ea580c\n}\nvec3 gradientBottom(int skill) {\n  if(skill==0)return vec3(0.6039,0.2039,0.0706); // #9a3412\n  if(skill==1)return vec3(0.2157,0.1882,0.6392); // #3730a3\n  if(skill==2)return vec3(0.1176,0.2510,0.6863); // #1e40af\n  if(skill==3)return vec3(0.0824,0.5020,0.2392); // #15803d\n  if(skill==4)return vec3(0.7451,0.0706,0.2353); // #be123c\n  return vec3(0.7686,0.2549,0.0471);              // #c2410c\n}\nvoid main() {\n  vec2 size=uRect.zw*vec2(640.0,360.0);\n  vec2 px=vUv*size;\n  float sd=roundRect(px,vec2(0.0),size,6.0);\n  if(sd>0.0)discard;\n  float dist=abs(uVisual.y);\n  int skill=int(uVisual.x+0.5);\n  vec3 color;\n  float split=0.45;\n  if(vUv.y>=split) {\n    float g=clamp((vUv.y-split)/(1.0-split),0.0,1.0);\n    color=mix(gradientBottom(skill),gradientTop(skill),g);\n    // Use the *exact* original transparenttextures.com/patterns/cubes.png.\n    // OpenGL loader uses GL_CLAMP_TO_EDGE, so fract() tiles it in shader.\n    vec2 repeatUV=fract(vec2(px.x/67.0,px.y/100.0));\n    vec4 cubes=texture(uPattern,repeatUV);\n    color=mix(color,cubes.rgb,clamp(cubes.a*0.30,0.0,0.30));\n    color*=1.0+0.030*(vUv.x-0.5);\n  } else {\n    color=vec3(0.2275); // Electron #3a3a3a bottom panel\n    if(vUv.y>=0.352)color=vec3(0.102); // #1a1a1a HP rail\n    // Slight bottom-panel vertical material relief.\n    if(vUv.y<0.35)color*=0.95+0.12*vUv.y;\n  }\n  // Card center is bright, side cards deliberately fade toward darkness.\n  float dim=(dist<0.53)?1.0:((dist<1.53)?0.46:0.21);\n  color*=dim;\n  // Thin inner edge, preserving the existing gold outer focus frame.\n  float inside=abs(sd);\n  if(inside<2.0) {\n    vec3 edge=(uVisual.z>0.5)?vec3(1.0,0.79,0.07):vec3(0.37,0.35,0.32);\n    color=mix(color,edge,0.65);\n  }\n  pixel=vec4(color,1.0);\n}"
+    set this.program: this.shaders.create(vs, fs)
+    if: this.program < 1
+      return: 0
+    set this.pattern: this.textures.load_image("assets/native/patterns/cubes.png")
+    if: this.pattern < 1
+      return: 0
+    return: 1
+
+  # Draw far cards first, with the hero card last. Each card gets its own
+  # rect/skill/distance uniforms but reuses one fixed shader and GPU quad.
+  fn render(carousel):
+    if: this.program < 1
+      return: 0
+    if: this.pattern < 1
+      return: 0
+    if: this.renderer.depth_test(0) != 1
+      return: 0
+    if: this.shaders.bind(this.program) != 1
+      return: 0
+    if: this.shaders.set_int(this.program, "uPattern", 0) != 1
+      return: 0
+    if: this.textures.bind(this.pattern, 0) != 1
+      return: 0
+    set i int: 0
+    while: i < 7
+      set rel float: carousel.visual_relative(i)
+      set rect: this.layout.card_rect(rel)
+      if: rect[2] > 0.0
+        set slot float: 1.0 * carousel.visual_slot(i)
+        set distance float: rel
+        if: distance < 0.0
+          set distance: 0.0 - distance
+        set focus float: 0.0
+        if: distance < 0.53
+          set focus: 1.0
+        if: this.shaders.set_vec4(this.program, "uRect", rect[0], rect[1], rect[2], rect[3]) != 1
+          return: 0
+        if: this.shaders.set_vec4(this.program, "uVisual", slot, distance, focus, 0.0) != 1
+          return: 0
+        if: this.renderer.draw_mesh(this.quad) != 1
+          return: 0
+      set i: i + 1
+    if: this.renderer.depth_test(1) != 1
+      return: 0
+    return: 1
+
+  fn stop():
+    if: this.pattern > 0
+      call: this.textures.destroy(this.pattern)
+      set this.pattern: 0
+    if: this.quad > 0
+      call: this.meshes.destroy(this.quad)
+      set this.quad: 0
+    if: this.program > 0
+      call: this.shaders.destroy(this.program)
+      set this.program: 0
+    return: 1
