@@ -2,9 +2,19 @@
 # ASCII indices match the glyph table compiled into BattleHud's shader.
 class BattleHudText:
   field alphabet
+  field menu_alphabet
 
   fn new():
     set this.alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/()=? :.!%"
+    # Same casing as Electron's VT323 CSS text, instead of all-uppercase
+    # 5x7 glyphs. The gameplay font remains unchanged.
+    set this.menu_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-*/()=? :.!%"
+
+  fn menu_code_for(char):
+    set code int: index_of(this.menu_alphabet, char)
+    if: code < 0
+      return: index_of(this.menu_alphabet, "?")
+    return: code
 
   fn code_for(char):
     set code int: index_of(this.alphabet, upper(char))
@@ -71,7 +81,9 @@ class BattleHudText:
   # A larger title and tighter button labels share exactly the same 5x7 glyph
   # shader while retaining a bounded 240-glyph mesh.
   fn glyph_scaled(buffer, at, code, x, y, w, h):
-    set encoded int: code * 8
+    # 2048+code*8 marks the font atlas. Shade bits use 768 increments;
+    # legacy 0..391 battle glyphs still use original 5x7 shader.
+    set encoded int: 2048 + code * 8
     set buffer[at]: x
     set buffer[at + 1]: y
     set buffer[at + 2]: encoded
@@ -101,7 +113,7 @@ class BattleHudText:
       if: at + 18 > len(buffer)
         return: at
       set char: char_at(value, i)
-      set at: this.glyph_scaled(buffer, at, this.code_for(char), x + step * i, y, width, height)
+      set at: this.glyph_scaled(buffer, at, this.menu_code_for(char), x + step * i, y, width, height)
       set i: i + 1
     return: at
 
@@ -115,7 +127,7 @@ class BattleHudText:
     while: i < count
       if: at + 18 > len(buffer)
         return: at
-      set at: this.glyph_scaled(buffer, at, this.code_for(char_at(value, i)), x + step * i, y, width, height)
+      set at: this.glyph_scaled(buffer, at, this.menu_code_for(char_at(value, i)), x + step * i, y, width, height)
       set j int: at - 18
       while: j < at
         set buffer[j + 2]: buffer[j + 2] + 4
@@ -152,17 +164,16 @@ class BattleHudText:
     set start float: x + (available - step * count) / 2.0
     return: this.fitted_line(buffer, at, value, start, y, step * count, height, cap)
 
-  # Electron's side cards are intentionally dim. Extend the existing 5x7
-  # glyph vertex material encoding rather than making extra meshes/shaders:
-  # +392 = near-card text, +784 = far-card text. Character codes remain
-  # unchanged, and the same geometry still respects the badge-safe width.
+  # Electron's side cards intentionally dim. Each menu glyph is VT323 with
+  # 768-code shade bands (near: 2816, far: 3584) and original case retained.
+  # The gameplay 5x7 format is untouched.
   fn faded_line(buffer, at, value, x, y, available, height, cap, fade):
     set start int: at
     set end int: this.fitted_line(buffer, at, value, x, y, available, height, cap)
     if: fade > 0
       set k int: start
       while: k < end
-        set buffer[k + 2]: buffer[k + 2] + 392 * fade
+        set buffer[k + 2]: buffer[k + 2] + 768 * fade
         set k: k + 3
     return: end
 
