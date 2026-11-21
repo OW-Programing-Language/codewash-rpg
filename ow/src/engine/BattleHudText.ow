@@ -232,9 +232,11 @@ class BattleHudText:
     set at int: 0
     set screen: router.screen()
     if: screen == "menu"
-      return: this.role_gold(buffer, at, "LEVEL UP!", 0.0 - 0.38, 0.47, 0.76, "hero", 10)
+      set at: this.role_gold(buffer, at, "LEVEL UP!", 0.0 - 0.38, 0.47, 0.76, "hero", 10)
+      return: buffer
     if: screen == "activities"
-      return: this.role_gold(buffer, at, "LEVEL UP!", 0.0 - 0.38, 0.47, 0.76, "hero", 10)
+      set at: this.role_gold(buffer, at, "LEVEL UP!", 0.0 - 0.38, 0.47, 0.76, "hero", 10)
+      return: buffer
     set at: this.role_line(buffer, at, router.title(), 0.0 - 0.31, 0.47, 0.62, "drawer_title", 0.0, 24, 0, 1)
     set at: this.role_line(buffer, at, router.subtitle(), 0.0 - 0.38, 0.19, 0.76, "drawer_subtitle", 0.0, 50, 0, 1)
     set at: this.role_line(buffer, at, router.status, 0.0 - 0.38, 0.06, 0.76, "drawer_status", 0.0, 48, 0, 1)
