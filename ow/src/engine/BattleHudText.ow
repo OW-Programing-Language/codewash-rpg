@@ -1,14 +1,17 @@
 # Pure OW bitmap text geometry for the experimental OpenGL battle.
 # ASCII indices match the glyph table compiled into BattleHud's shader.
+import "NativeTypographyStyle.ow"
 class BattleHudText:
   field alphabet
   field menu_alphabet
+  field styles
 
   fn new():
     set this.alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/()=? :.!%"
     # Same casing as Electron's VT323 CSS text, instead of all-uppercase
     # 5x7 glyphs. The gameplay font remains unchanged.
     set this.menu_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-*/()=? :.!%'"
+    set this.styles: new NativeTypographyStyle()
 
   fn menu_code_for(char):
     set code int: index_of(this.menu_alphabet, char)
@@ -135,84 +138,113 @@ class BattleHudText:
       set i: i + 1
     return: at
 
-  # Fit the actual Electron card category/title into a dedicated rectangle.
-  # Never extend text into the level badge's reserved right-hand zone.
-  fn fitted_line(buffer, at, value, x, y, available, height, cap):
-    set count int: len(value)
-    if: count > cap
-      set count: cap
-    if: count < 1
+  # Shared role-based geometry is defined in NativeTypographyStyle.ow.
+  # Natural advances follow the original VT323 font cell proportions.
+  # The text is fitted only when required, shrinking both width AND height.
+  fn role_line(buffer, at, value, x, y, available, role, distance, cap, fade, centered):
+    set height float: this.styles.height(role, distance)
+    set metrics: this.styles.metrics(value, available, height, cap, role)
+    if: metrics[4] < 1
       return: at
-    # VT323 is a tall, condensed typeface. The old 0.014 NDC glyph cap
-    # reduced ink to ~5 physical pixels at 1280x720, leaving absurd gaps.
-    # Use 1.12x advance for the glyph quad: the atlas contains side bearings
-    # and actual ink stays inside the character's allocated advance.
-    # Reserve a small safety inset so even long labels avoid the LVL badge.
-    set step float: (available - 0.005) / count
-    if: step > 0.026
-      set step: 0.026
-    set glyph_w float: step * 1.12
-    if: glyph_w > 0.032
-      set glyph_w: 0.032
-    return: this.menu_line(buffer, at, value, x, y, count, glyph_w, height, step)
-
-  fn centered_line(buffer, at, value, x, y, available, height, cap):
-    set count int: len(value)
-    if: count > cap
-      set count: cap
-    if: count < 1
-      return: at
-    set step float: (available - 0.005) / count
-    if: step > 0.026
-      set step: 0.026
-    set start float: x + (available - step * count) / 2.0
-    return: this.fitted_line(buffer, at, value, start, y, step * count, height, cap)
-
-  fn centered_faded_line(buffer, at, value, x, y, available, height, cap, fade):
-    set count int: len(value)
-    if: count > cap
-      set count: cap
-    if: count < 1
-      return: at
-    set step float: (available - 0.005) / count
-    if: step > 0.026
-      set step: 0.026
-    set centered_x float: x + (available - step * count) / 2.0
-    return: this.faded_line(buffer, at, value, centered_x, y, step * count, height, cap, fade)
-
-  # Electron's side cards intentionally dim. Each menu glyph is VT323 with
-  # 768-code shade bands (near: 2816, far: 3584) and original case retained.
-  # The gameplay 5x7 format is untouched.
-  fn faded_line(buffer, at, value, x, y, available, height, cap, fade):
+    set px float: x
+    if: centered == 1
+      set px: x + (available - metrics[3]) / 2.0
     set start int: at
-    set end int: this.fitted_line(buffer, at, value, x, y, available, height, cap)
+    set at: this.menu_line(buffer, at, value, px, y, metrics[4], metrics[0], metrics[2], metrics[1])
+    # Encoded glyph palette: 0=white, 1=muted blue-gray, 2=bright
+    # action text. Independent 2304-wide palette bands preserve fade bits.
+    set color int: 0
+    if: role == "category"
+      set color: 1
+    if: role == "hp"
+      set color: 1
+    if: role == "description"
+      set color: 1
+    if: role == "drawer_subtitle"
+      set color: 1
+    if: role == "drawer_status"
+      set color: 1
+    if: role == "button"
+      set color: 2
+    if: role == "drawer_option"
+      set color: 2
     if: fade > 0
       set k int: start
-      while: k < end
+      while: k < at
         set buffer[k + 2]: buffer[k + 2] + 768 * fade
         set k: k + 3
-    return: end
+    if: color > 0
+      set k int: start
+      while: k < at
+        set buffer[k + 2]: buffer[k + 2] + 2304 * color
+        set k: k + 3
+    return: at
 
-  # On card screens only the real logo and gold LEVEL UP headline show.
-  # Drawer screens use exact functional labels, not W/A/S/D placeholders.
+  fn role_gold(buffer, at, value, x, y, available, role, cap):
+    set height float: this.styles.height(role, 0.0)
+    set metrics: this.styles.metrics(value, available, height, cap, role)
+    if: metrics[4] < 1
+      return: at
+    set center_x float: x + (available - metrics[3]) / 2.0
+    return: this.menu_line_gold(buffer, at, value, center_x, y, metrics[4], metrics[0], metrics[2], metrics[1])
+
+  # Keep compatibility for existing OWUnit clients and battle diagnostics.
+  # Unlike the old version, this helper never stretches short words to fill
+  # the entire destination rectangle.
+  fn fitted_line(buffer, at, value, x, y, available, height, cap):
+    set metrics: this.styles.metrics(value, available, height, cap, "title")
+    if: metrics[4] < 1
+      return: at
+    return: this.menu_line(buffer, at, value, x, y, metrics[4], metrics[0], metrics[2], metrics[1])
+
+  fn centered_line(buffer, at, value, x, y, available, height, cap):
+    set metrics: this.styles.metrics(value, available, height, cap, "title")
+    if: metrics[4] < 1
+      return: at
+    set centered_x float: x + (available - metrics[3]) / 2.0
+    return: this.menu_line(buffer, at, value, centered_x, y, metrics[4], metrics[0], metrics[2], metrics[1])
+
+  fn centered_faded_line(buffer, at, value, x, y, available, height, cap, fade):
+    set metrics: this.styles.metrics(value, available, height, cap, "mob")
+    if: metrics[4] < 1
+      return: at
+    set centered_x float: x + (available - metrics[3]) / 2.0
+    return: this.faded_line(buffer, at, value, centered_x, y, metrics[3] + this.styles.safe_inset(), metrics[2], cap, fade)
+
+  # Fade bands preserve a single font shader and avoid font-cache churn.
+  fn faded_line(buffer, at, value, x, y, available, height, cap, fade):
+    set metrics: this.styles.metrics(value, available, height, cap, "title")
+    if: metrics[4] < 1
+      return: at
+    set start int: at
+    set at: this.menu_line(buffer, at, value, x, y, metrics[4], metrics[0], metrics[2], metrics[1])
+    if: fade > 0
+      set k int: start
+      while: k < at
+        set buffer[k + 2]: buffer[k + 2] + 768 * fade
+        set k: k + 3
+    return: at
+
+  # The headline and drawers have independent roles and measured widths.
+  # Do not spread letters across the available button or label width.
   fn menu_vertices(router):
     set buffer: array(5400, 0.0)
     set at int: 0
     set screen: router.screen()
     if: screen == "menu"
-      set at: this.menu_line_gold(buffer, at, "LEVEL UP!", 0.0 - 0.291, 0.47, 10, 0.064, 0.158, 0.058)
+      set at: this.role_gold(buffer, at, "LEVEL UP!", 0.0 - 0.38, 0.47, 0.76, "hero", 10)
       return: buffer
     if: screen == "activities"
-      set at: this.menu_line_gold(buffer, at, "LEVEL UP!", 0.0 - 0.291, 0.47, 10, 0.064, 0.158, 0.058)
+      set at: this.role_gold(buffer, at, "LEVEL UP!", 0.0 - 0.38, 0.47, 0.76, "hero", 10)
       return: buffer
-    set at: this.fitted_line(buffer, at, router.title(), 0.0 - 0.31, 0.50, 0.62, 0.115, 24)
-    set at: this.fitted_line(buffer, at, router.subtitle(), 0.0 - 0.38, 0.21, 0.76, 0.073, 50)
-    set at: this.fitted_line(buffer, at, router.status, 0.0 - 0.38, 0.08, 0.76, 0.066, 48)
+    set at: this.role_line(buffer, at, router.title(), 0.0 - 0.31, 0.47, 0.62, "drawer_title", 0.0, 24, 0, 1)
+    set at: this.role_line(buffer, at, router.subtitle(), 0.0 - 0.38, 0.19, 0.76, "drawer_subtitle", 0.0, 50, 0, 1)
+    set at: this.role_line(buffer, at, router.status, 0.0 - 0.38, 0.06, 0.76, "drawer_status", 0.0, 48, 0, 1)
     set opts: router.options()
     set prefixes: ["W ", "A ", "S ", "D "]
     set i int: 0
     while: i < 4
-      set at: this.fitted_line(buffer, at, prefixes[i] + opts[i], 0.0 - 0.345, (0.0 - 0.12) - i * 0.15, 0.69, 0.079, 42)
+      set at: this.role_line(buffer, at, prefixes[i] + opts[i], 0.0 - 0.345, (0.0 - 0.13) - i * 0.15, 0.69, "drawer_option", 0.0, 42, 0, 0)
       set i: i + 1
     return: buffer
 
@@ -245,30 +277,25 @@ class BattleHudText:
         # uppercase category, a legible VT323 fantasy name in Title Case,
         # and an independent level badge. Far cards are summarized instead
         # of shrinking long headings into unreadable 5px glyphs.
-        set title_height float: 0.067
-        if: fade == 1
-          set title_height: 0.060
-        if: fade == 2
-          set title_height: 0.050
-        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.046, w - 0.146, 0.032, 15, fade)
+        set at: this.role_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.048, w - 0.146, "category", dist, 15, fade, 0)
         set first: cards.display_title_first(slot)
         set second: cards.display_title_second(slot)
         if: second == ""
-          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.116, w - 0.146, title_height, 22, fade)
+          set at: this.role_line(buffer, at, first, x + 0.020, y + h - 0.116, w - 0.146, "title", dist, 22, fade, 0)
         else:
-          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.092, w - 0.146, title_height * 0.60, 22, fade)
+          set at: this.role_line(buffer, at, first, x + 0.020, y + h - 0.094, w - 0.146, "title_wrap", dist, 22, fade, 0)
           if: fade < 2
-            set at: this.faded_line(buffer, at, second, x + 0.020, y + h - 0.137, w - 0.146, title_height * 0.60, 22, fade)
-        set at: this.faded_line(buffer, at, "Lvl " + str(cards.level(slot)), x + w - 0.105, y + h - 0.081, 0.091, 0.061, 9, fade)
+            set at: this.role_line(buffer, at, second, x + 0.020, y + h - 0.138, w - 0.146, "title_wrap", dist, 22, fade, 0)
+        set at: this.role_line(buffer, at, "Lvl " + str(cards.level(slot)), x + w - 0.105, y + h - 0.085, 0.091, "badge", dist, 9, fade, 1)
 
-        # Every visible side card now has its mob name in the dark name pill,
-        # instead of an empty black rectangle. Respect side-card fade tiers.
-        set at: this.centered_faded_line(buffer, at, cards.mob_name(slot), x + w * 0.18, y + h * 0.477, w * 0.64, 0.055, 24, fade)
+        # Every visible card gets a readable centered mob and CTA, but
+        # descriptions and HP measurements are restricted to the hero card.
+        set at: this.role_line(buffer, at, cards.mob_name(slot), x + w * 0.18, y + h * 0.477, w * 0.64, "mob", dist, 24, fade, 1)
         if: dist < 0.53
-          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.035, y + h * 0.438, w - 0.070, 0.029, 20)
-          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.031, y + 0.300, w - 0.062, 0.052, 25)
-          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.031, y + 0.235, w - 0.062, 0.052, 25)
-        set at: this.centered_faded_line(buffer, at, cards.action(slot), x + 0.045, y + 0.093, w - 0.090, 0.088, 15, fade)
+          set at: this.role_line(buffer, at, cards.hp_text(slot), x + 0.035, y + h * 0.416, w - 0.070, "hp", dist, 20, 0, 0)
+          set at: this.role_line(buffer, at, cards.description_a(slot), x + 0.031, y + 0.298, w - 0.062, "description", dist, 25, 0, 1)
+          set at: this.role_line(buffer, at, cards.description_b(slot), x + 0.031, y + 0.234, w - 0.062, "description", dist, 25, 0, 1)
+        set at: this.role_line(buffer, at, cards.action(slot), x + 0.045, y + 0.082, w - 0.090, "button", dist, 15, fade, 1)
       set i: i + 1
     return: buffer
 

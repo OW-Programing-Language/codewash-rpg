@@ -41,8 +41,10 @@ class NativeTypographyTest:
     set firstHeight float: vertices[7] - vertices[1]
     # This used to be <0.021 NDC, barely 6 visible pixels at 720p.
     # The new glyphs must have enough height to read the skill category.
-    call: this.check.assertEquals(1, firstHeight > 0.031)
-    call: this.check.assertEquals(1, firstHeight < 0.035)
+    # The first visible card is the FAR outer card (distance=2).
+    # The role scale reserves ~10px for its category, 13px in focus.
+    call: this.check.assertEquals(1, firstHeight > 0.028)
+    call: this.check.assertEquals(1, firstHeight < 0.030)
     # The first visible card is the left neighbor; its text fits its header.
     set left: this.layout.card_rect(this.carousel.visual_relative(1))
     call: this.check.assertEquals(1, vertices[0] > left[0])

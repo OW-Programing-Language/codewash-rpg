@@ -435,3 +435,31 @@ actual minimum glyph quad width, headline height, spacing and card title
 geometry, preventing the same tiny/over-spaced regression.
 
 **Physical Windows GPU screenshot comparison remains mandatory.**
+
+## PR #43 — Native typography beauty pass (v1.13.11)
+
+All native menu text sizes are now defined centrally in
+`NativeTypographyStyle.ow`, with the complete 1280×720 visual contract in
+`ow/docs/NATIVE-TYPOGRAPHY.md`. The original Electron VT323 glyph atlas
+remains unchanged, as does the legacy 5×7 gameplay font.
+
+Rather than sizing glyph width by the space *available* in a card or
+badge, the renderer derives width from the licensed VT323 atlas 22:40
+cell ratio and the viewport's 1280:720 aspect. Natural glyph advance
+is narrower than the quad to account for intrinsic transparent bearings.
+A line only scales down if its actual ink envelope would otherwise
+cross the 0.007-NDC safety margin, scaling both axes together.
+This removes the previous spaced-out/tall-narrow card lettering.
+
+The menu uses explicit roles for hero headline, card category, title,
+wrapped title, level badge, mob name, HP, description, button label,
+drawer title, subtitle and option. Center card text is largest; side
+cards have progressively simpler, scaled typography without collision.
+Category/body text is cool-gray, CTA text is warm white, the gold hero
+title stays gold, and the glyph shader adds a 1px dark outline that
+protects bright lettering over busy Minecraft textures.
+
+Regression checks include OWUnit text metrics and palette invariants,
+the original suite, and real Mesa/OpenGL tests of every activity, a
+modal drawer and moving carousel. Physical Windows screenshot
+comparison is still required before declaring visual parity.

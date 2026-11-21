@@ -1,0 +1,88 @@
+# Pure OW typography design-system checks, independent from Mesa and GLFW.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/NativeTypographyStyle.ow"
+import "../src/engine/BattleHudText.ow"
+
+class NativeTypographyStyleTest:
+  field check
+  field style
+  field font
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.style: new NativeTypographyStyle()
+    set this.font: new BattleHudText()
+
+  @Test
+  fn hierarchyShrinksPredictablyAwayFromTheFocusedCard():
+    set roles: ["category", "title", "badge", "mob", "button"]
+    set i int: 0
+    while: i < len(roles)
+      set center float: this.style.height(roles[i], 0.0)
+      set near float: this.style.height(roles[i], 1.0)
+      set far float: this.style.height(roles[i], 2.0)
+      call: this.check.assertEquals(1, center > near)
+      call: this.check.assertEquals(1, near > far)
+      set i: i + 1
+    call: this.check.assertEquals(1, this.style.height("hero", 0.0) > 0.15)
+    call: this.check.assertEquals(1, this.style.height("drawer_title", 0.0) > this.style.height("drawer_option", 0.0))
+    call: this.check.assertEquals(1, this.style.height("description", 0.0) < this.style.height("button", 0.0))
+
+  @Test
+  fn naturallyProportionedVT323NeverSpreadsShortTextAcrossAFullBadge():
+    set v: this.style.metrics("Lvl 1", 0.091, this.style.height("badge", 0.0), 9, "badge")
+    call: this.check.assertEquals(5, v[4])
+    call: this.check.assertEquals(1, v[0] > v[1])
+    call: this.check.assertEquals(1, v[3] < 0.091 - this.style.safe_inset())
+    call: this.check.assertEquals(1, v[3] > 0.05)
+    set short: this.style.metrics("Slime", 0.24, 0.060, 24, "mob")
+    call: this.check.assertEquals(1, short[3] < 0.1)
+    call: this.check.assertEquals(1, short[0] > short[1])
+    # The old engine stretched "Slime" over the entire black pill.
+    call: this.check.assertEquals(1, short[3] < 0.24 * 0.50)
+
+  @Test
+  fn longHeadingsFitWithoutDistortingTheirPhysicalAspectRatio():
+    set widths: [0.206, 0.151, 0.096]
+    set depths: [0.0, 1.0, 2.0]
+    set names: ["Management", "Enchanting", "Crafting", "Redstone"]
+    set i int: 0
+    while: i < 3
+      set j int: 0
+      while: j < len(names)
+        set h float: this.style.height("title", depths[i])
+        set m: this.style.metrics(names[j], widths[i], h, 22, "title")
+        call: this.check.assertEquals(len(names[j]), m[4])
+        call: this.check.assertEquals(1, m[3] <= widths[i] - this.style.safe_inset() + 0.000001)
+        call: this.check.assertEquals(1, m[0] > m[1])
+        set ratio float: m[0] / m[2]
+        call: this.check.assertEquals(1, ratio > 0.3093)
+        call: this.check.assertEquals(1, ratio < 0.3095)
+        set j: j + 1
+      set i: i + 1
+
+  @Test
+  fn allSemanticPaletteRolesPreserveRealGlyphCodes():
+    set buf: array(144, 0.0)
+    set muted int: this.font.role_line(buf, 0, "MATH", 0.0, 0.0, 0.2, "category", 0.0, 12, 0, 0)
+    call: this.check.assertEquals(72, muted)
+    call: this.check.assertEquals(1, buf[2] >= 2048 + 2304)
+    call: this.check.assertEquals(1, buf[2] < 2048 + 2304 + 768)
+    set bright int: this.font.role_line(buf, 0, "PLAY", 0.0, 0.0, 0.2, "button", 0.0, 12, 0, 0)
+    call: this.check.assertEquals(72, bright)
+    call: this.check.assertEquals(1, buf[2] >= 2048 + 4608)
+    set near int: this.font.role_line(buf, 0, "MATH", 0.0, 0.0, 0.2, "category", 1.0, 12, 1, 0)
+    call: this.check.assertEquals(72, near)
+    call: this.check.assertEquals(1, buf[2] >= 2048 + 2304 + 768)
+
+  @Test
+  fn centeredRoleGeometryDoesNotExceedButtonOrBadgeBounds():
+    set buf: array(540, 0.0)
+    set end int: this.font.role_line(buf, 0, "CALCULATE!", 0.0 - 0.125, 0.0, 0.25, "button", 0.0, 15, 0, 1)
+    call: this.check.assertEquals(180, end)
+    set x float: buf[0]
+    set far float: buf[end - 15]
+    call: this.check.assertEquals(1, x > 0.0 - 0.125)
+    call: this.check.assertEquals(1, far < 0.125)
+    call: this.check.assertEquals(1, far - x < 0.25 - this.style.safe_inset())

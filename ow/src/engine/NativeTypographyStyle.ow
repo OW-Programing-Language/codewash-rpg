@@ -1,0 +1,108 @@
+# Source-of-truth native typography roles for the fixed 1280x720 viewport.
+# All heights are NDC: 0.01 = 3.6 physical pixels vertically.
+# This keeps text sizing, wrapping and spacing explicit instead of letting
+# each panel derive a random glyph size from its available width.
+class NativeTypographyStyle:
+  fn height(role, distance):
+    if: role == "hero"
+      return: 0.156
+    if: role == "category"
+      if: distance > 1.53
+        return: 0.029
+      if: distance > 0.53
+        return: 0.033
+      return: 0.037
+    if: role == "title"
+      if: distance > 1.53
+        return: 0.043
+      if: distance > 0.53
+        return: 0.054
+      return: 0.066
+    if: role == "title_wrap"
+      if: distance > 1.53
+        return: 0.033
+      if: distance > 0.53
+        return: 0.036
+      return: 0.042
+    if: role == "badge"
+      if: distance > 1.53
+        return: 0.039
+      if: distance > 0.53
+        return: 0.046
+      return: 0.051
+    if: role == "mob"
+      if: distance > 1.53
+        return: 0.044
+      if: distance > 0.53
+        return: 0.052
+      return: 0.060
+    if: role == "button"
+      if: distance > 1.53
+        return: 0.051
+      if: distance > 0.53
+        return: 0.061
+      return: 0.078
+    if: role == "hp"
+      return: 0.036
+    if: role == "description"
+      return: 0.047
+    if: role == "drawer_title"
+      return: 0.114
+    if: role == "drawer_subtitle"
+      return: 0.068
+    if: role == "drawer_status"
+      return: 0.057
+    if: role == "drawer_option"
+      return: 0.073
+    return: 0.056
+
+  # Same VT323 font atlas for every role, with no artificial letter
+  # stretching to fill a pill. 22px/40px cell aspect * 720/1280.
+  fn glyph_ratio():
+    return: 0.309375
+
+  # Natural advances are tighter than glyph quads because the original
+  # VT323 atlas has transparent side bearings. Added CSS tracking: 0px.
+  fn advance_ratio(role):
+    if: role == "hero"
+      return: 1.02
+    if: role == "category"
+      return: 0.82
+    if: role == "title"
+      return: 0.80
+    if: role == "title_wrap"
+      return: 0.80
+    if: role == "badge"
+      return: 0.82
+    if: role == "description"
+      return: 0.81
+    if: role == "drawer_title"
+      return: 0.91
+    return: 0.83
+
+  # Header text may never enter the level badge, even after reflow.
+  fn safe_inset():
+    return: 0.007
+
+  # [glyph_width, advance, glyph_height, ink_envelope_width, char_count].
+  # Clamp the entire *ink envelope*, not only glyph origins. When fitting,
+  # shrink both axes together, preserving the font's physical aspect.
+  fn metrics(value, available, height, limit, role):
+    set count int: len(value)
+    if: count > limit
+      set count: limit
+    if: count < 1
+      return: [0.0, 0.0, 0.0, 0.0, 0]
+    set width float: height * this.glyph_ratio()
+    set step float: width * this.advance_ratio(role)
+    set span float: width + (count - 1) * step
+    set safe float: available - this.safe_inset()
+    if: safe <= 0.0
+      return: [0.0, 0.0, 0.0, 0.0, 0]
+    if: span > safe
+      set fit float: safe / span
+      set width: width * fit
+      set step: step * fit
+      set height: height * fit
+      set span: safe
+    return: [width, step, height, span, count]
