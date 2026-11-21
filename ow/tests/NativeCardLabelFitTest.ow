@@ -42,8 +42,9 @@ class NativeCardLabelFitTest:
         set available float: rect[2] - 0.146
         set badge_x float: rect[0] + rect[2] - 0.112
         set buffer: array(720, 0.0)
-        set first: this.cards.title_first(i)
-        set second: this.cards.title_second(i)
+        # Validate the actual on-screen mixed-case VT323 display strings.
+        set first: this.cards.display_title_first(i)
+        set second: this.cards.display_title_second(i)
         set at int: this.fonts.fitted_line(buffer, 0, first, label_x, 0.0, available, 0.027, 22)
         call: this.check.assertEquals(len(first) * 18, at)
         set glyph int: 0
