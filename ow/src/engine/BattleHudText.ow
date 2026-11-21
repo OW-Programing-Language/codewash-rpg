@@ -245,29 +245,29 @@ class BattleHudText:
         # uppercase category, a legible VT323 fantasy name in Title Case,
         # and an independent level badge. Far cards are summarized instead
         # of shrinking long headings into unreadable 5px glyphs.
-        set title_height float: 0.065
+        set title_height float: 0.067
         if: fade == 1
           set title_height: 0.060
         if: fade == 2
-          set title_height: 0.048
-        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.047, w - 0.146, 0.033, 15, fade)
+          set title_height: 0.050
+        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.046, w - 0.146, 0.032, 15, fade)
         set first: cards.display_title_first(slot)
         set second: cards.display_title_second(slot)
         if: second == ""
-          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.108, w - 0.146, title_height, 22, fade)
+          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.116, w - 0.146, title_height, 22, fade)
         else:
-          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.088, w - 0.146, title_height * 0.80, 22, fade)
+          set at: this.faded_line(buffer, at, first, x + 0.020, y + h - 0.092, w - 0.146, title_height * 0.60, 22, fade)
           if: fade < 2
-            set at: this.faded_line(buffer, at, second, x + 0.020, y + h - 0.127, w - 0.146, title_height * 0.80, 22, fade)
+            set at: this.faded_line(buffer, at, second, x + 0.020, y + h - 0.137, w - 0.146, title_height * 0.60, 22, fade)
         set at: this.faded_line(buffer, at, "Lvl " + str(cards.level(slot)), x + w - 0.105, y + h - 0.081, 0.091, 0.061, 9, fade)
 
         # Every visible side card now has its mob name in the dark name pill,
         # instead of an empty black rectangle. Respect side-card fade tiers.
-        set at: this.centered_faded_line(buffer, at, cards.mob_name(slot), x + w * 0.18, y + h * 0.484, w * 0.64, 0.064, 24, fade)
+        set at: this.centered_faded_line(buffer, at, cards.mob_name(slot), x + w * 0.18, y + h * 0.477, w * 0.64, 0.055, 24, fade)
         if: dist < 0.53
-          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.035, y + h * 0.438, w - 0.070, 0.042, 20)
-          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.031, y + 0.304, w - 0.062, 0.053, 25)
-          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.031, y + 0.255, w - 0.062, 0.053, 25)
+          set at: this.fitted_line(buffer, at, cards.hp_text(slot), x + 0.035, y + h * 0.438, w - 0.070, 0.029, 20)
+          set at: this.fitted_line(buffer, at, cards.description_a(slot), x + 0.031, y + 0.300, w - 0.062, 0.052, 25)
+          set at: this.fitted_line(buffer, at, cards.description_b(slot), x + 0.031, y + 0.235, w - 0.062, 0.052, 25)
         set at: this.centered_faded_line(buffer, at, cards.action(slot), x + 0.045, y + 0.093, w - 0.090, 0.088, 15, fade)
       set i: i + 1
     return: buffer
