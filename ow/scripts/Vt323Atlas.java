@@ -9,12 +9,14 @@ import javax.imageio.ImageIO;
 
 class Vt323Atlas {
     static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-*/()=? :.!%'";
-    static final int COLS = 10, ROWS = 8, CW = 24, CH = 32;
+    // VT323 at 32px is about 16px wide: the 22px cell eliminates the
+    // oversized horizontal gutter that made every native letter tiny.
+    static final int COLS = 10, ROWS = 8, CW = 22, CH = 40;
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2) throw new IllegalArgumentException("font source and output PNG required");
         if (ALPHABET.length() != 76) throw new IllegalStateException("font atlas requires 76 menu glyph codes");
-        Font font = Font.createFont(Font.TRUETYPE_FONT, new File(args[0])).deriveFont(Font.PLAIN, 28.0f);
+        Font font = Font.createFont(Font.TRUETYPE_FONT, new File(args[0])).deriveFont(Font.PLAIN, 32.0f);
         BufferedImage image = new BufferedImage(COLS * CW, ROWS * CH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
         try {
