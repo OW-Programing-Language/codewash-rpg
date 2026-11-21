@@ -8,12 +8,12 @@ import java.io.File;
 import javax.imageio.ImageIO;
 
 class Vt323Atlas {
-    static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/()=? :.!%";
-    static final int COLS = 8, ROWS = 7, CW = 24, CH = 32;
+    static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-*/()=? :.!%";
+    static final int COLS = 10, ROWS = 8, CW = 24, CH = 32;
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2) throw new IllegalArgumentException("font source and output PNG required");
-        if (ALPHABET.length() != 49) throw new IllegalStateException("font atlas requires 49 legacy glyph codes");
+        if (ALPHABET.length() != 75) throw new IllegalStateException("font atlas requires 75 menu glyph codes");
         Font font = Font.createFont(Font.TRUETYPE_FONT, new File(args[0])).deriveFont(Font.PLAIN, 28.0f);
         BufferedImage image = new BufferedImage(COLS * CW, ROWS * CH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
