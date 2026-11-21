@@ -18,6 +18,11 @@ test('native art catalogue references original files with safe sandbox-relative 
   assert.ok(names.includes('themes/minecraft_logo.png'));
   assert.equal(new Set(names).size, names.length);
   for (const name of names) {
+    if (name === 'fonts/vt323-atlas.png') {
+      assert.ok(existsSync(join(root, 'ow/assets/fonts/VT323-Regular.ttf')), 'licensed original VT323 font missing');
+      assert.ok(existsSync(join(root, 'ow/assets/fonts/OFL.txt')), 'VT323 open-font license missing');
+      continue;
+    }
     const source = originalGifForPng[name] ?? mislabeledJpegSource[name] ?? name;
     assert.ok(existsSync(join(root, 'public/assets', source)), 'missing original asset: ' + source);
   }
@@ -123,6 +128,35 @@ test('exact Electron Cubes pattern is an offline 67x100 PNG and stages without C
     assert.deepEqual(staged, ['patterns/cubes.png']);
     const exact = readFileSync(join(tmp, 'ow/assets/native/patterns/cubes.png'));
     assert.deepEqual(exact, src);
+  } finally {
+    rmSync(tmp, {recursive: true, force: true});
+  }
+});
+
+test('VT323 menu font atlas is generated offline from original OFL typeface', () => {
+  const realRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+  const tmp = mkdtempSync(join(tmpdir(), 'codewash-vt323-font-'));
+  try {
+    const catalog = join(tmp, 'ow/src/engine/NativeArtCatalog.ow');
+    const java = join(tmp, 'ow/scripts/Vt323Atlas.java');
+    const ttf = join(tmp, 'ow/assets/fonts/VT323-Regular.ttf');
+    mkdirSync(dirname(catalog), {recursive: true});
+    mkdirSync(dirname(java), {recursive: true});
+    mkdirSync(dirname(ttf), {recursive: true});
+    copyFileSync(join(realRoot, 'ow/scripts/Vt323Atlas.java'), java);
+    copyFileSync(join(realRoot, 'ow/assets/fonts/VT323-Regular.ttf'), ttf);
+    writeFileSync(catalog, 'return: "assets/native/fonts/vt323-atlas.png"\\n');
+    const staged = stageNativeAssets(tmp);
+    assert.deepEqual(staged, ['fonts/vt323-atlas.png']);
+    const output = readFileSync(join(tmp, 'ow/assets/native/fonts/vt323-atlas.png'));
+    assert.deepEqual([...output.subarray(0, 8)], [137,80,78,71,13,10,26,10], 'PNG header');
+    assert.equal(output.readUInt32BE(16), 240, '10 columns by 24px');
+    assert.equal(output.readUInt32BE(20), 256, '8 rows by 32px');
+    assert.ok(output.length > 1400, 'rasterized VT323 must not be empty');
+    // Deterministic: same input font and rasterizer must produce the same bytes.
+    const again = stageNativeAssets(tmp);
+    assert.deepEqual(again, staged);
+    assert.deepEqual(readFileSync(join(tmp, 'ow/assets/native/fonts/vt323-atlas.png')), output);
   } finally {
     rmSync(tmp, {recursive: true, force: true});
   }
