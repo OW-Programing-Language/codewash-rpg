@@ -150,8 +150,8 @@ test('VT323 menu font atlas is generated offline from original OFL typeface', ()
     assert.deepEqual(staged, ['fonts/vt323-atlas.png']);
     const output = readFileSync(join(tmp, 'ow/assets/native/fonts/vt323-atlas.png'));
     assert.deepEqual([...output.subarray(0, 8)], [137,80,78,71,13,10,26,10], 'PNG header');
-    assert.equal(output.readUInt32BE(16), 240, '10 columns by 24px');
-    assert.equal(output.readUInt32BE(20), 256, '8 rows by 32px');
+    assert.equal(output.readUInt32BE(16), 220, '10 columns by 22px');
+    assert.equal(output.readUInt32BE(20), 320, '8 rows by 40px');
     assert.ok(output.length > 1400, 'rasterized VT323 must not be empty');
     // Deterministic: same input font and rasterizer must produce the same bytes.
     const again = stageNativeAssets(tmp);
