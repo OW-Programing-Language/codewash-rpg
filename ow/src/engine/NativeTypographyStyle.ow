@@ -18,6 +18,12 @@ class NativeTypographyStyle:
       if: distance > 0.53
         return: 0.054
       return: 0.066
+    if: role == "title_wrap"
+      if: distance > 1.53
+        return: 0.033
+      if: distance > 0.53
+        return: 0.036
+      return: 0.042
     if: role == "badge"
       if: distance > 1.53
         return: 0.039
@@ -63,6 +69,8 @@ class NativeTypographyStyle:
     if: role == "category"
       return: 0.82
     if: role == "title"
+      return: 0.80
+    if: role == "title_wrap"
       return: 0.80
     if: role == "badge"
       return: 0.82
