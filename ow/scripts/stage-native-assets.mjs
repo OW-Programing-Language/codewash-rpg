@@ -39,7 +39,7 @@ export function listNativeAssets(catalogSource) {
   const assets = new Set();
   for (const match of refs) {
     const name = match[1];
-    if (!/^(?:patterns|skills|items|badges|themes|mobs\/(?:hostile|miniboss|boss))\/[A-Za-z0-9_-]+\.(?:png|jpg|jpeg)$/.test(name)) {
+    if (!/^(?:fonts|patterns|skills|items|badges|themes|mobs\/(?:hostile|miniboss|boss))\/[A-Za-z0-9_-]+\.(?:png|jpg|jpeg)$/.test(name)) {
       throw new Error('Native asset path outside approved catalogue: ' + name);
     }
     assets.add(name);
@@ -60,7 +60,17 @@ export function stageNativeAssets(repoRoot = root) {
       throw new Error('Asset escapes its designated root: ' + name);
     }
     mkdirSync(dirname(destination), {recursive: true});
-    if (existsSync(origin) && statSync(origin).isFile()) {
+    if (name === 'fonts/vt323-atlas.png') {
+      // The native game uses the exact licensed Electron VT323 typeface,
+      // but ships only its offline raster atlas in the portable image.
+      const javaSource = join(repoRoot, 'ow/scripts/Vt323Atlas.java');
+      const fontSource = join(repoRoot, 'ow/assets/fonts/VT323-Regular.ttf');
+      if (!existsSync(javaSource) || !existsSync(fontSource)) {
+        throw new Error('Licensed VT323 font generator assets are missing');
+      }
+      execFileSync('java', [javaSource, fontSource, destination],
+        {stdio: 'pipe', env: {...process.env, JAVA_TOOL_OPTIONS: '-Djava.awt.headless=true'}});
+    } else if (existsSync(origin) && statSync(origin).isFile()) {
       if (Object.hasOwn(mislabeledJpegSource, name)) {
         const magic = readFileSync(origin).subarray(0, 3);
         if (magic[0] !== 0xff || magic[1] !== 0xd8 || magic[2] !== 0xff) {

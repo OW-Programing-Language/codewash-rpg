@@ -1,0 +1,68 @@
+# Font unit regressions for original Electron VT323 native menu text.
+# 5x7 remains the gameplay HUD; only menus use the licensed font atlas.
+import "@owunit/src/OWAssert.ow"
+import "../src/engine/BattleHudText.ow"
+
+class NativeVt323TypographyTest:
+  field check
+  field font
+
+  @BeforeEach
+  fn setup():
+    set this.check: new OWAssert()
+    set this.font: new BattleHudText()
+
+  @Test
+  fn nativeMenuPreservesCaseApostropheAndSeparateGameplayGlyphs():
+    call: this.check.assertEquals(0, this.font.menu_code_for("A"))
+    call: this.check.assertEquals(26, this.font.menu_code_for("a"))
+    call: this.check.assertEquals(1, this.font.menu_code_for("A") != this.font.menu_code_for("a"))
+    call: this.check.assertEquals(1, this.font.menu_code_for("'") != this.font.menu_code_for("?"))
+    # Gameplay still deliberately maps lowercase to original 5x7 uppercase.
+    call: this.check.assertEquals(this.font.code_for("G"), this.font.code_for("g"))
+
+  @Test
+  fn nativeMenuGlyphsCarryAtlasMarkerAndCenterCorrectly():
+    set text: "Ghast"
+    set glyphs: array(180, 0.0)
+    set end int: this.font.centered_line(glyphs, 0, text, 0.0 - 0.20, 0.1, 0.40, 0.043, 12)
+    call: this.check.assertEquals(90, end)
+    call: this.check.assertEquals(1, glyphs[2] >= 2048)
+    call: this.check.assertEquals(1, glyphs[2] < 2816)
+    call: this.check.assertEquals(1, glyphs[0] > 0.0 - 0.20)
+    call: this.check.assertEquals(1, glyphs[0] < 0.20)
+    call: this.check.assertEquals(0, mod(glyphs[2], 8))
+
+  @Test
+  fn shadeBandsDoNotChangeLetterGlyphOrCase():
+    set text: "Redstone"
+    set near: array(288, 0.0)
+    set far: array(288, 0.0)
+    set one int: this.font.faded_line(near, 0, text, 0.0, 0.0, 0.17, 0.040, 22, 1)
+    set two int: this.font.faded_line(far, 0, text, 0.0, 0.0, 0.17, 0.032, 22, 2)
+    call: this.check.assertEquals(len(text) * 18, one)
+    call: this.check.assertEquals(one, two)
+    call: this.check.assertEquals(768, near[2] - 2048 - this.font.menu_code_for("R") * 8)
+    call: this.check.assertEquals(768, far[2] - near[2])
+    call: this.check.assertEquals(0, mod(far[2], 8))
+
+  @Test
+  fn titleGlyphsHaveRealInkAreaAndCompactTracking():
+    set letters: array(180, 0.0)
+    set used int: this.font.fitted_line(letters, 0, "Slime", 0.0 - 0.2, 0.0, 0.20, 0.064, 12)
+    call: this.check.assertEquals(90, used)
+    set width float: letters[3] - letters[0]
+    set advance float: letters[18] - letters[0]
+    call: this.check.assertEquals(1, width > 0.028)
+    call: this.check.assertEquals(1, width < 0.034)
+    call: this.check.assertEquals(1, advance < 0.027)
+    call: this.check.assertEquals(1, width > advance)
+    # Same NDC envelope as a 17px+ readable glyph on a 1280px viewport.
+    set headline: this.font.menu_vertices(new FontHeadlineStub())
+    set headline_height float: headline[7] - headline[1]
+    call: this.check.assertEquals(1, headline_height > 0.15)
+    call: this.check.assertEquals(1, headline_height < 0.17)
+
+class FontHeadlineStub:
+  fn screen():
+    return: "menu"

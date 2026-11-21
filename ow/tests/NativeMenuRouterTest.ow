@@ -107,14 +107,14 @@ class NativeMenuRouterTest:
     call: this.check.assertEquals(1, this.router.quitting)
 
   @Test
-  fn menuTextSharesBoundedBitmapFontWithBattle():
+  fn menuTextUsesReadableVT323WhileBattleKeepsItsBitmapFont():
     set layout: new BattleHudText()
     set vertices: layout.menu_vertices(this.router)
     call: this.check.assertEquals(5400, len(vertices))
     # The screenshot-inspired yellow LEVEL UP headline now replaces the tiny CODEWASH label.
     call: this.check.assertEquals(4, mod(vertices[2], 8))
-    call: this.check.assertEquals(1, vertices[7] - vertices[1] > 0.090)
-    call: this.check.assertEquals(1, vertices[7] - vertices[1] < 0.110)
+    call: this.check.assertEquals(1, vertices[7] - vertices[1] > 0.150)
+    call: this.check.assertEquals(1, vertices[7] - vertices[1] < 0.170)
     call: this.check.assertEquals(1, this.router.open_activities(1))
     call: this.check.assertEquals(5400, len(layout.menu_vertices(this.router)))
 

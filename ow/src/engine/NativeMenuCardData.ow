@@ -89,6 +89,37 @@ class NativeMenuCardData:
       return: "BUILDING"
     return: ""
 
+  # Electron's fantasy names use mixed case via VT323, not blocky
+  # stretched uppercase. Preserve existing uppercase API for old tests
+  # and native module identifiers; these are visual-only strings.
+  fn display_title_first(index):
+    if: index == 0
+      return: "Redstone"
+    if: index == 1
+      return: "Enchanting"
+    if: index == 2
+      return: "Crafting"
+    if: index == 3
+      return: "Chest"
+    if: index == 4
+      return: "Match n'"
+    if: index == 5
+      return: "Logic"
+    return: "?"
+
+  fn display_title_second(index):
+    if: index == 1
+      return: "Table"
+    if: index == 2
+      return: "Table"
+    if: index == 3
+      return: "Management"
+    if: index == 4
+      return: "Hatch"
+    if: index == 5
+      return: "Building"
+    return: ""
+
   fn category(index):
     if: index == 0
       return: "MATH"

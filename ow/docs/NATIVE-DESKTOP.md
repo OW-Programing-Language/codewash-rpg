@@ -378,3 +378,60 @@ matrix remains required.
 **This is a correction PR, not a declaration of 1:1 Electron parity.**
 Font rendering, real dynamic full-screen behavior, full settings and
 report forms, and exact blurred glass/lighting need further work.
+
+## PR #42 — Actual Electron VT323 typography in native OW (v1.13.9)
+
+The user supplied a screenshot showing tiny 5x7, overly spaced and often
+unreadable labels in the five native cards. The original Electron UI uses
+`'VT323', monospace` (see `src/index.css`, `src/App.jsx` and
+`src/components/ui/GlobalStyles.jsx`). Simply resizing the 5x7 bitmap
+cannot reproduce its strokes and character shapes.
+
+This native upgrade uses the **real VT323 Regular font**, licensed under
+SIL Open Font License 1.1, from the Google Fonts repository:
+`https://github.com/google/fonts/tree/main/ofl/vt323`.
+The font and verbatim `OFL.txt` license are retained under
+`ow/assets/fonts/` for reproducible native build-time rasterization.
+
+During packaging, `ow/scripts/Vt323Atlas.java` renders a deterministic
+10x8 / 220x320 RGBA character atlas with 76 glyphs, including lowercase
+letters, digits, punctuation and the apostrophe in *Match n' Hatch*.
+`ow/scripts/stage-native-assets.mjs` places the **PNG only** under
+`ow/assets/native/fonts/vt323-atlas.png`, so the app loads it using the
+existing OW Graphics ImageIO/OpenGL texture API **offline**, without
+Electron, browser, font APIs or network calls at runtime.
+
+Native `BattleHudText` distinguishes VT323 menu glyphs from original
+5x7 gameplay glyphs with explicit GPU vertex tags, preserving game HUD
+compatibility and gold/shaded text. Cards have a consistent typographic
+hierarchy: uppercase small activity label, readable mixed-case fantasy
+name (split on word boundaries), independent `Lvl 1` badge, title-case
+mob name in the pill and a centered CTA. Long headings on far cards are
+summarized instead of crushed into illegible characters. The gameplay
+mode still uses its existing font, with no extra runtime dependency.
+
+Tests: OWUnit glyph-code/case/fade regressions; full card/badge geometry
+tests; deterministic VT323 atlas staging & PNG dimensions; Mesa/OpenGL
+rendering, carousel animation and texture cleanup; offline Windows,
+macOS and Linux native packaging.
+
+Remaining for exact 1:1: full antialiased font blending at arbitrary
+DPI, subpixel layout, original Electron panel logic, proper fullscreen,
+and physical Windows screenshot comparison. These remain unchecked.
+
+### VT323 correction following Windows visual feedback (v1.13.10)
+
+The first VT323 Windows screenshot revealed a **severe legibility regression**:
+characters were as little as five actual ink pixels wide with giant
+inter-character tracking. Initial automated checks tested presence of
+glyph geometry and atlas sampling but did not constrain physical ink size.
+
+Fixes: 32pt VT323 with a narrower 22×40 cell, glyph quads sized at
+112% of their advance to compensate for the internal VT323 side bearings,
+a tighter 0.026-NDC maximum advance, a substantially larger hero headline,
+drawer body text and button labels, and less aggressive near/far dimming.
+The glyph-right-edge badge test remains unchanged. OWUnit now asserts
+actual minimum glyph quad width, headline height, spacing and card title
+geometry, preventing the same tiny/over-spaced regression.
+
+**Physical Windows GPU screenshot comparison remains mandatory.**

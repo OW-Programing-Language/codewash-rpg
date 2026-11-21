@@ -36,6 +36,11 @@ class NativeArtCatalog:
 
   # Exactly the same 67x100 repeating transparent cube pattern loaded by
   # src/components/skills/SkillCard.jsx from Transparent Textures.
+  # Baked locally from the original Electron VT323 font under SIL OFL.
+  # Runtime consumes only a PNG; no font file or browser is required.
+  fn menu_font_atlas_path():
+    return: "assets/native/fonts/vt323-atlas.png"
+
   fn card_pattern_path():
     return: "assets/native/patterns/cubes.png"
 
