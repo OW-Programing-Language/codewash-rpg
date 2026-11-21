@@ -45,3 +45,24 @@ class NativeVt323TypographyTest:
     call: this.check.assertEquals(768, near[2] - 2048 - this.font.menu_code_for("R") * 8)
     call: this.check.assertEquals(768, far[2] - near[2])
     call: this.check.assertEquals(0, mod(far[2], 8))
+
+  @Test
+  fn titleGlyphsHaveRealInkAreaAndCompactTracking():
+    set letters: array(180, 0.0)
+    set used int: this.font.fitted_line(letters, 0, "Slime", 0.0 - 0.2, 0.0, 0.20, 0.064, 12)
+    call: this.check.assertEquals(90, used)
+    set width float: letters[3] - letters[0]
+    set advance float: letters[18] - letters[0]
+    call: this.check.assertEquals(1, width > 0.028)
+    call: this.check.assertEquals(1, width < 0.034)
+    call: this.check.assertEquals(1, advance < 0.027)
+    call: this.check.assertEquals(1, width > advance)
+    # Same NDC envelope as a 17px+ readable glyph on a 1280px viewport.
+    set headline: this.font.menu_vertices(new FontHeadlineStub())
+    set headline_height float: headline[7] - headline[1]
+    call: this.check.assertEquals(1, headline_height > 0.15)
+    call: this.check.assertEquals(1, headline_height < 0.17)
+
+class FontHeadlineStub:
+  fn screen():
+    return: "menu"
