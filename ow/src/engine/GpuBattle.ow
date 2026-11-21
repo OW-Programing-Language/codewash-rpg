@@ -222,7 +222,7 @@ class GpuBattle:
     if: this.menu_materials.start() != 1
       return: 0
     print: "GPU STARTUP: HUD AND NATIVE MENU"
-    set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection)
+    set this.hud: new BattleHud(this.meshes, this.shader, this.renderer, this.selection, textures)
     if: this.hud.start(this.battle) != 1
       return: 0
     set this.menu: new NativeMenuRouter(scenes)
