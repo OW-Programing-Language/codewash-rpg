@@ -1,0 +1,39 @@
+# Mesa/OpenGL typography beauty-pass smoke:
+# render the actual VT323 shader with semantic color roles and a 1px ink
+# outline; exercise all six carousel positions and a real menu drawer.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "native OW boots with typography design system")
+  call: assert(game.hud.menu_font_atlas > 0, "original VT323 texture loaded")
+  set fonts: game.hud.text_builder
+  set style: fonts.styles
+  set heading: fonts.menu_vertices(game.menu)
+  call: assert(heading[7] - heading[1] > 0.15, "full-size LEVEL UP headline")
+  set m: style.metrics("Redstone", 0.206, style.height("title", 0.0), 22, "title")
+  call: assert(m[0] > m[1], "natural VT323 advance no extra letter spacing")
+  call: assert(m[3] < 0.20, "redstone title safely fits badge boundary")
+  set buf: array(180, 0.0)
+  set used int: fonts.role_line(buf, 0, "CALCULATE!", 0.0 - 0.13, 0.0, 0.26, "button", 0.0, 15, 0, 1)
+  call: assert(used == 180, "button caption fits with dedicated role")
+  call: assert(buf[2] >= 2048 + 4608, "bright semantic palette encoded in GPU mesh")
+  set i int: 0
+  while: i < 6
+    call: assert(game.carousel.jump_to(i) == 1, "select activity for visual smoke")
+    call: assert(game.hud.refresh_menu(game.menu) == 1, "rebuild styled glyph mesh")
+    call: assert(game.render() == 0, "draw textured VT323 card in OpenGL")
+    set i: i + 1
+  call: assert(game.menu.open_cosmetics() == 1, "open native Themes drawer")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "refresh drawer font layout")
+  call: assert(game.render() == 0, "drawer option labels render via same role system")
+  call: assert(game.menu.open_menu() == 1, "return to main menu")
+  call: assert(game.hud.refresh_menu(game.menu) == 1, "restore styled cards")
+  call: assert(game.move_carousel(1) == 1, "animate real carousel after text changes")
+  set tick int: 0
+  while: tick < 12
+    call: assert(game.render() == 0, "no font failures during transition")
+    set tick: tick + 1
+  call: assert(game.stop() == 1, "GPU resources released")
+  call: assert(game.hud.menu_font_atlas == 0, "font atlas freed on shutdown")
+  print: "PASS: native typography beauty pass - six card positions, modal, fade, 1px contrast"
