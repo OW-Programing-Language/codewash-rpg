@@ -151,10 +151,32 @@ class BattleHudText:
       set px: x + (available - metrics[3]) / 2.0
     set start int: at
     set at: this.menu_line(buffer, at, value, px, y, metrics[4], metrics[0], metrics[2], metrics[1])
+    # Encoded glyph palette: 0=white, 1=muted blue-gray, 2=bright
+    # action text. Independent 2304-wide palette bands preserve fade bits.
+    set color int: 0
+    if: role == "category"
+      set color: 1
+    if: role == "hp"
+      set color: 1
+    if: role == "description"
+      set color: 1
+    if: role == "drawer_subtitle"
+      set color: 1
+    if: role == "drawer_status"
+      set color: 1
+    if: role == "button"
+      set color: 2
+    if: role == "drawer_option"
+      set color: 2
     if: fade > 0
       set k int: start
       while: k < at
         set buffer[k + 2]: buffer[k + 2] + 768 * fade
+        set k: k + 3
+    if: color > 0
+      set k int: start
+      while: k < at
+        set buffer[k + 2]: buffer[k + 2] + 2304 * color
         set k: k + 3
     return: at
 
