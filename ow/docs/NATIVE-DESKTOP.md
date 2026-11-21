@@ -394,7 +394,7 @@ The font and verbatim `OFL.txt` license are retained under
 `ow/assets/fonts/` for reproducible native build-time rasterization.
 
 During packaging, `ow/scripts/Vt323Atlas.java` renders a deterministic
-10x8 / 240x256 RGBA character atlas with 76 glyphs, including lowercase
+10x8 / 220x320 RGBA character atlas with 76 glyphs, including lowercase
 letters, digits, punctuation and the apostrophe in *Match n' Hatch*.
 `ow/scripts/stage-native-assets.mjs` places the **PNG only** under
 `ow/assets/native/fonts/vt323-atlas.png`, so the app loads it using the
@@ -418,3 +418,20 @@ macOS and Linux native packaging.
 Remaining for exact 1:1: full antialiased font blending at arbitrary
 DPI, subpixel layout, original Electron panel logic, proper fullscreen,
 and physical Windows screenshot comparison. These remain unchecked.
+
+### VT323 correction following Windows visual feedback (v1.13.10)
+
+The first VT323 Windows screenshot revealed a **severe legibility regression**:
+characters were as little as five actual ink pixels wide with giant
+inter-character tracking. Initial automated checks tested presence of
+glyph geometry and atlas sampling but did not constrain physical ink size.
+
+Fixes: 32pt VT323 with a narrower 22×40 cell, glyph quads sized at
+112% of their advance to compensate for the internal VT323 side bearings,
+a tighter 0.026-NDC maximum advance, a substantially larger hero headline,
+drawer body text and button labels, and less aggressive near/far dimming.
+The glyph-right-edge badge test remains unchanged. OWUnit now asserts
+actual minimum glyph quad width, headline height, spacing and card title
+geometry, preventing the same tiny/over-spaced regression.
+
+**Physical Windows GPU screenshot comparison remains mandatory.**
