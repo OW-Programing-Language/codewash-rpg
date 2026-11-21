@@ -102,7 +102,7 @@ class NativeMenuCardData:
     if: index == 3
       return: "Chest"
     if: index == 4
-      return: "Match n"
+      return: "Match n'"
     if: index == 5
       return: "Logic"
     return: "?"
