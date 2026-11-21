@@ -5,7 +5,7 @@ class BattleHudText:
   field menu_alphabet
 
   fn new():
-    set this.alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/()=? :.!%"
+    set this.alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+-*/()=? :.!%'"
     # Same casing as Electron's VT323 CSS text, instead of all-uppercase
     # 5x7 glyphs. The gameplay font remains unchanged.
     set this.menu_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-*/()=? :.!%"
