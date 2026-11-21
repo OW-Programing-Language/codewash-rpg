@@ -1,0 +1,23 @@
+# Verify original VT323 raster atlas is actually loaded and drawn on Mesa.
+# Keeps the legacy gameplay 5x7 font untouched.
+import "GpuBattle.ow"
+
+main:
+  set game: new GpuBattle()
+  call: assert(game.start() == 1, "native UI and offline font textures boot")
+  call: assert(game.hud.menu_font_atlas > 0, "licensed VT323 glyph PNG loaded")
+  call: assert(game.hud.text_builder.menu_code_for("R") != game.hud.text_builder.menu_code_for("r"), "mixed-case menu glyphs")
+  call: assert(game.hud.text_builder.menu_code_for("'") != game.hud.text_builder.menu_code_for("?"), "Match n' Hatch apostrophe exists")
+  set chars: array(108, 0.0)
+  set used int: game.hud.text_builder.menu_line(chars, 0, "Ghast", 0.0 - 0.12, 0.0, 5, 0.02, 0.04, 0.025)
+  call: assert(used == 90, "five original case-sensitive glyphs")
+  call: assert(chars[2] >= 2048, "atlas tag in GPU mesh")
+  call: assert(game.render() == 0, "VT323 glyphs rendered in real OpenGL")
+  call: assert(game.move_carousel(1) == 1, "transitions still work")
+  set i int: 0
+  while: i < 12
+    call: assert(game.render() == 0, "all glyphs render during carousel easing")
+    set i: i + 1
+  call: assert(game.stop() == 1, "GPU cleanup")
+  call: assert(game.hud.menu_font_atlas == 0, "VT323 atlas texture released")
+  print: "PASS: native offline VT323 mixed-case typography and resource cleanup"
