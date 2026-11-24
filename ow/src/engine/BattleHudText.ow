@@ -250,7 +250,7 @@ class BattleHudText:
           set title_height: 0.060
         if: fade == 2
           set title_height: 0.050
-        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.050, w - 0.120, 0.041, 15, fade)
+        set at: this.faded_line(buffer, at, cards.category(slot), x + 0.020, y + h - 0.048, w - 0.120, 0.034, 15, fade)
         set first: cards.display_title_first(slot)
         set second: cards.display_title_second(slot)
         if: second == ""
