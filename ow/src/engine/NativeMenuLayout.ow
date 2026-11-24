@@ -199,9 +199,10 @@ class NativeMenuLayout:
         set w float: rect[2]
         set h float: rect[3]
         set accent int: (0 - 11) - slot
-        # Keep the original gradient/pattern visible throughout the 55%
-        # upper body. Small dark badges float over it, as in SkillCard.jsx.
-        set at: this.quad(buffer, at, x + 0.012, y + h - 0.145, w - 0.136, 0.123, 0 - 9)
+        # A soft translucent header band (NOT a solid black box) gives the small
+        # category/title VT323 text reliable contrast on bright cards while the
+        # card gradient still shows through, close to Electron's SkillCard.
+        set at: this.quad(buffer, at, x + 0.012, y + h - 0.150, w - 0.024, 0.128, 0 - 9)
         set at: this.quad(buffer, at, x + w - 0.112, y + h - 0.111, 0.100, 0.096, 0 - 10)
 
         # Monster name pill at the foot of the gradient/portrait region.
