@@ -35,7 +35,7 @@ class NativeMenuRouter:
   fn open_settings():
     if: this.scenes.activate("settings") != 1
       return: 0
-    set this.status: "SETTINGS ARE NOT IMPLEMENTED YET"
+    set this.status: "PROFILE  AUDIO  LANGUAGE  AND DATA RESET"
     return: 1
 
   fn open_cosmetics():
@@ -47,7 +47,7 @@ class NativeMenuRouter:
   fn open_bugreport():
     if: this.scenes.activate("bugreport") != 1
       return: 0
-    set this.status: "REPORT BUGS IN GITHUB ISSUES"
+    set this.status: "GITHUB.COM/OW-PROGRAMING-LANGUAGE/CODEWASH-RPG"
     return: 1
 
   fn open_menu_panel():
@@ -170,11 +170,11 @@ class NativeMenuRouter:
     if: this.screen() == "reading"
       return: "MATCH THE WORD  FOUR CHOICES"
     if: this.screen() == "settings"
-      return: "AUDIO DISPLAY AND ACCESSIBILITY PENDING"
+      return: "PROFILES AUDIO LANGUAGE AND SAVE DATA"
     if: this.screen() == "cosmetics"
-      return: "SELECT ORIGINAL GAME BACKGROUND"
+      return: "CHANGE THE WORLD THEME LIVE"
     if: this.screen() == "bugreport"
-      return: "BUG SUBMISSION STILL REQUIRES GITHUB"
+      return: "FILE AN ISSUE ON THE PROJECT GITHUB PAGE"
     if: this.screen() == "menu_panel"
       return: "ACTIVITIES AND PROGRESSION TO COME"
     if: this.screen() == "activities"
@@ -187,11 +187,11 @@ class NativeMenuRouter:
         return: ["MATH", "READING", "WRITING", "NEXT"]
       return: ["CLEANING", "MEMORY", "PATTERNS", "BACK"]
     if: this.screen() == "settings"
-      return: ["AUDIO SOON", "VIDEO SOON", "ACCESS SOON", "BACK"]
+      return: ["MUSIC AND SFX", "LANGUAGE", "RESET DATA", "BACK"]
     if: this.screen() == "cosmetics"
-      return: ["NEXT THEME", "PREV THEME", "MINECRAFT", "BACK"]
+      return: ["NEXT THEME", "PREV THEME", "RESET THEME", "BACK"]
     if: this.screen() == "bugreport"
-      return: ["GITHUB ISSUES", "COPY DETAILS", "NO SEND YET", "BACK"]
+      return: ["GITHUB ISSUES", "VERSION 1.0", "OFFLINE BUILD", "BACK"]
     if: this.screen() == "menu_panel"
       return: ["ACTIVITIES", "SETTINGS", "THEMES", "BACK"]
     return: ["PLAY MATH", "ACTIVITIES", "SETTINGS", "QUIT"]
