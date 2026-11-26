@@ -60,6 +60,12 @@ class BattleHudText:
       set i: i + 1
     return: at
 
+  # Battle HUD text now shares the smooth VT323 atlas font (2048+ codes) used
+  # by the menus, instead of the legacy 5x7 glyph grid, so gameplay typography
+  # matches the rest of the UI. Uniform size mirrors the old line() cadence.
+  fn battle_line(buffer, at, text, x, y, limit):
+    return: this.menu_line(buffer, at, upper(text), x, y, limit, 0.034, 0.062, 0.030)
+
   fn vertices(battle):
     # 240 glyph slots, 4320 floats: comfortably below Graphics' 300000 cap.
     # Unused zero-coordinates are degenerate, zero-area triangles.
@@ -68,13 +74,13 @@ class BattleHudText:
     set status: "LVL " + str(battle.game.hero.lvl()) + "  MOB " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
     set question: upper(battle.skill_name) + " " + upper(battle.game.problem.ask())
     set answers: battle.options()
-    set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
-    set at: this.line(buffer, at, question, 0.0 - 0.93, 0.69, 45)
-    set at: this.line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.93, 0.43, 45)
-    set at: this.line(buffer, at, "W  " + str(answers[0]), 0.0 - 0.88, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "A  " + str(answers[1]), 0.09, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "S  " + str(answers[2]), 0.0 - 0.88, 0.0 - 0.94, 20)
-    set at: this.line(buffer, at, "D  " + str(answers[3]), 0.09, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
+    set at: this.battle_line(buffer, at, question, 0.0 - 0.93, 0.69, 45)
+    set at: this.battle_line(buffer, at, "ARROWS MOVE  SPACE CONFIRM", 0.0 - 0.93, 0.43, 45)
+    set at: this.battle_line(buffer, at, "W  " + str(answers[0]), 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "A  " + str(answers[1]), 0.09, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "S  " + str(answers[2]), 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "D  " + str(answers[3]), 0.09, 0.0 - 0.94, 20)
     return: buffer
 
   # Menu text can be laid out independently from the battle bitmap font.
@@ -278,15 +284,15 @@ class BattleHudText:
     set buffer: array(4320, 0.0)
     set at int: 0
     set status: "LVL " + str(battle.game.hero.lvl()) + "  MOB " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
-    set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
-    set at: this.line(buffer, at, "COPY WORD " + battle.game.problem.ask(), 0.0 - 0.93, 0.69, 45)
-    set at: this.line(buffer, at, "TYPED " + spelling.text, 0.0 - 0.93, 0.48, 45)
-    set at: this.line(buffer, at, "LEFT RIGHT PAGES " + str(spelling.page + 1) + "/7", 0.0 - 0.93, 0.34, 45)
+    set at: this.battle_line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
+    set at: this.battle_line(buffer, at, "COPY WORD " + battle.game.problem.ask(), 0.0 - 0.93, 0.69, 45)
+    set at: this.battle_line(buffer, at, "TYPED " + spelling.text, 0.0 - 0.93, 0.48, 45)
+    set at: this.battle_line(buffer, at, "LEFT RIGHT PAGES " + str(spelling.page + 1) + "/7", 0.0 - 0.93, 0.34, 45)
     set options: spelling.options()
-    set at: this.line(buffer, at, "W  " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "A  " + options[1], 0.09, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
-    set at: this.line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "W  " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "A  " + options[1], 0.09, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
     return: buffer
 
   # Task-specific HUD shares the original GPU bitmap font and four cards.
@@ -294,15 +300,15 @@ class BattleHudText:
     set buffer: array(4320, 0.0)
     set at int: 0
     set status: "LVL " + str(battle.game.hero.lvl()) + "  CHEST " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
-    set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
-    set at: this.line(buffer, at, "TASK " + upper(battle.game.problem.ask()), 0.0 - 0.93, 0.69, 45)
-    set at: this.line(buffer, at, "CONTAINER " + upper(battle.game.skill.chest_name()), 0.0 - 0.93, 0.51, 45)
-    set at: this.line(buffer, at, activity.status, 0.0 - 0.93, 0.35, 45)
+    set at: this.battle_line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
+    set at: this.battle_line(buffer, at, "TASK " + upper(battle.game.problem.ask()), 0.0 - 0.93, 0.69, 45)
+    set at: this.battle_line(buffer, at, "CONTAINER " + upper(battle.game.skill.chest_name()), 0.0 - 0.93, 0.51, 45)
+    set at: this.battle_line(buffer, at, activity.status, 0.0 - 0.93, 0.35, 45)
     set options: activity.options()
-    set at: this.line(buffer, at, "W  " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "A  " + options[1], 0.09, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
-    set at: this.line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "W  " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "A  " + options[1], 0.09, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "S  " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "D  " + options[3], 0.09, 0.0 - 0.94, 20)
     return: buffer
 
   # Reuse four OW Graphics answer cards to display a two-page Memory board.
@@ -311,16 +317,16 @@ class BattleHudText:
     set buffer: array(4320, 0.0)
     set at int: 0
     set status: "LVL " + str(battle.game.hero.lvl()) + "  MOB " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
-    set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
-    set at: this.line(buffer, at, "MEMORY  PAIRS " + str(activity.matches) + "/4  BOARDS " + str(activity.boards), 0.0 - 0.93, 0.69, 45)
-    set at: this.line(buffer, at, "LEFT RIGHT PAGES " + str(activity.page + 1) + "/2", 0.0 - 0.93, 0.51, 45)
-    set at: this.line(buffer, at, activity.status, 0.0 - 0.93, 0.35, 45)
+    set at: this.battle_line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
+    set at: this.battle_line(buffer, at, "MEMORY  PAIRS " + str(activity.matches) + "/4  BOARDS " + str(activity.boards), 0.0 - 0.93, 0.69, 45)
+    set at: this.battle_line(buffer, at, "LEFT RIGHT PAGES " + str(activity.page + 1) + "/2", 0.0 - 0.93, 0.51, 45)
+    set at: this.battle_line(buffer, at, activity.status, 0.0 - 0.93, 0.35, 45)
     set cards: activity.visible_cards()
     set start int: activity.page * 4
-    set at: this.line(buffer, at, "W " + str(start + 1) + " " + cards[0], 0.0 - 0.88, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "A " + str(start + 2) + " " + cards[1], 0.09, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "S " + str(start + 3) + " " + cards[2], 0.0 - 0.88, 0.0 - 0.94, 20)
-    set at: this.line(buffer, at, "D " + str(start + 4) + " " + cards[3], 0.09, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "W " + str(start + 1) + " " + cards[0], 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "A " + str(start + 2) + " " + cards[1], 0.09, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "S " + str(start + 3) + " " + cards[2], 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "D " + str(start + 4) + " " + cards[3], 0.09, 0.0 - 0.94, 20)
     return: buffer
 
   # A two-phase Patterns HUD, built with the existing 5x7 bitmap renderer:
@@ -330,19 +336,19 @@ class BattleHudText:
     set buffer: array(4320, 0.0)
     set at int: 0
     set status: "LVL " + str(battle.game.hero.lvl()) + "  MOB " + str(battle.game.mob.cur_hp()) + "/" + str(battle.game.mob.max_hp())
-    set at: this.line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
+    set at: this.battle_line(buffer, at, status, 0.0 - 0.93, 0.86, 45)
     if: activity.phase == 0
-      set at: this.line(buffer, at, "STUDY THE PATTERN", 0.0 - 0.93, 0.73, 45)
+      set at: this.battle_line(buffer, at, "STUDY THE PATTERN", 0.0 - 0.93, 0.73, 45)
     else:
-      set at: this.line(buffer, at, "RECALL THE NEXT COLOR", 0.0 - 0.93, 0.73, 45)
+      set at: this.battle_line(buffer, at, "RECALL THE NEXT COLOR", 0.0 - 0.93, 0.73, 45)
     set prompt: activity.shown_pattern()
-    set at: this.line(buffer, at, substr(prompt, 0, 39), 0.0 - 0.93, 0.60, 39)
+    set at: this.battle_line(buffer, at, substr(prompt, 0, 39), 0.0 - 0.93, 0.60, 39)
     if: len(prompt) > 39
-      set at: this.line(buffer, at, substr(prompt, 39, 39), 0.0 - 0.93, 0.49, 39)
-    set at: this.line(buffer, at, activity.status, 0.0 - 0.93, 0.33, 45)
+      set at: this.battle_line(buffer, at, substr(prompt, 39, 39), 0.0 - 0.93, 0.49, 39)
+    set at: this.battle_line(buffer, at, activity.status, 0.0 - 0.93, 0.33, 45)
     set options: activity.options()
-    set at: this.line(buffer, at, "W " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "A " + options[1], 0.09, 0.0 - 0.75, 20)
-    set at: this.line(buffer, at, "S " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
-    set at: this.line(buffer, at, "D " + options[3], 0.09, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "W " + options[0], 0.0 - 0.88, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "A " + options[1], 0.09, 0.0 - 0.75, 20)
+    set at: this.battle_line(buffer, at, "S " + options[2], 0.0 - 0.88, 0.0 - 0.94, 20)
+    set at: this.battle_line(buffer, at, "D " + options[3], 0.09, 0.0 - 0.94, 20)
     return: buffer

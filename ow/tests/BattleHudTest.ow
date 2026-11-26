@@ -30,8 +30,8 @@ class BattleHudTest:
   fn textBufferIsBoundedAndSupportsMathGlyphs():
     set vertices: this.layout.vertices(this.battle)
     call: this.checker.assertEquals(4320, len(vertices))
-    # The first character is 'L' in LVL. Alphabet index 11, packed as 11*8.
-    call: this.checker.assertEquals(88, vertices[2])
+    # The first character is 'L' in LVL. VT323 atlas glyph: 2048 + 11*8.
+    call: this.checker.assertEquals(2136, vertices[2])
     call: this.checker.assertEquals(1, this.layout.code_for("+") >= 0)
     call: this.checker.assertEquals(1, this.layout.code_for("/") >= 0)
     call: this.checker.assertEquals(1, this.layout.code_for("=") >= 0)
