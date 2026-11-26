@@ -1,6 +1,6 @@
 # Native Patterns study/recall controller. PatternsSkill still owns
 # sequence generation and four color choices; Game.answer owns combat.
-# No timed flashing, animation or sound: OW text-based sequence prototype.
+# Text-based sequence prototype; the packaged GPU controller adds replay audio.
 class NativePatternsActivity:
   field scene
   field phase
@@ -41,7 +41,7 @@ class NativePatternsActivity:
         set this.status: "REMEMBER THE NEXT COLOR IN THE SEQUENCE"
         return: 2
       if: index == 1
-        set this.status: "REPLAY TEXT  THEN CHOOSE RECALL"
+        set this.status: "REPLAY SEQUENCE  THEN CHOOSE RECALL"
         return: 2
       set this.phase: 1
       set this.status: "NOW PICK THE MISSING COLOR"

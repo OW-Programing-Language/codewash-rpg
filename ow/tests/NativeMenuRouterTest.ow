@@ -48,6 +48,28 @@ class NativeMenuRouterTest:
     call: this.check.assertEquals("menu", this.router.screen())
 
   @Test
+  fn audioControlsClampAndRestoreVolume():
+    call: this.router.open_settings()
+    call: this.check.assertEquals(1, this.router.choose(0))
+    call: this.check.assertEquals(50, this.router.volume)
+    call: this.router.choose(1)
+    call: this.check.assertEquals(60, this.router.volume)
+    call: this.router.choose(2)
+    call: this.check.assertEquals(0, this.router.volume)
+    call: this.router.choose(0)
+    call: this.check.assertEquals(0, this.router.volume)
+    call: this.router.choose(2)
+    call: this.check.assertEquals(60, this.router.volume)
+    set i int: 0
+    while: i < 10
+      call: this.router.choose(1)
+      set i: i + 1
+    call: this.check.assertEquals(100, this.router.volume)
+    call: this.router.back()
+    call: this.check.assertEquals(0, this.router.audio_panel)
+    call: this.check.assertEquals("settings", this.router.screen())
+
+  @Test
   fn allSixNativeActivitiesAreRoutable():
     call: this.check.assertEquals(1, this.router.open_activities(0))
     set first: this.router.options()

@@ -34,6 +34,8 @@ test('staging never includes Git internals and writes offline .ow-resolved marke
         String(i + 1).repeat(40) + '"\n').join('');
     for (const item of ['src/engine/battle_gpu.ow',
       'src/engine/battle_lifecycle_smoke.ow',
+      'src/engine/battle_native.ow',
+      'src/engine/audio_smoke.ow',
       'assets/native/skills/math_icon.png',
       'assets/native/items/egg.png',
       'assets/native/themes/minecraft.png',
@@ -41,6 +43,11 @@ test('staging never includes Git internals and writes offline .ow-resolved marke
       const p = join(ow, item);
       mkdirSync(dirname(p), {recursive: true});
       writeFileSync(p, 'test content');
+    }
+    for (const asset of ['bgm/calm1.wav', 'ui/ui/click.wav']) {
+      const p = join(root, 'public/assets/sounds', asset);
+      mkdirSync(dirname(p), {recursive: true});
+      writeFileSync(p, 'audio fixture');
     }
     writeFileSync(join(ow, 'dependencies.yml'), 'format: 1\n');
     writeFileSync(join(ow, 'dependencies.lock.yml'), 'format: 1\ndependencies:\n' + lock);
@@ -53,6 +60,7 @@ test('staging never includes Git internals and writes offline .ow-resolved marke
     }
     const destination = join(root, 'bundle');
     assert.equal(stageOwPayload(root, destination), 5);
+    assert.equal(readFileSync(join(destination, 'assets/sounds/bgm/calm1.wav'), 'utf8'), 'audio fixture');
     for (const [i, name] of ['math', 'flow', 'owunit', 'graphics', 'engine'].entries()) {
       const target = join(destination, '.ow/deps', name);
       assert.equal(existsSync(join(target, '.git')), false);

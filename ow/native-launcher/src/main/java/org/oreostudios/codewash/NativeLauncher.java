@@ -74,7 +74,7 @@ public final class NativeLauncher {
         AtomicBoolean ready = new AtomicBoolean(false);
         String script = "--smoke".equals(mode)
                 ? "src/engine/battle_lifecycle_smoke.ow"
-                : "src/engine/battle_gpu.ow";
+                : "src/engine/battle_native.ow";
         String action = "--check".equals(mode) ? "check" : "run";
         String javaName = isWindows() && graphicalRun ? "javaw.exe"
                 : isWindows() ? "java.exe" : "java";
@@ -241,6 +241,9 @@ public final class NativeLauncher {
             }
         }
         required(root.resolve("src/engine/battle_gpu.ow"));
+        required(root.resolve("src/engine/battle_native.ow"));
+        required(root.resolve("assets/sounds/bgm/calm1.wav"));
+        required(root.resolve("assets/sounds/ui/ui/click.wav"));
         required(root.resolve("src/engine/battle_lifecycle_smoke.ow"));
         required(root.resolve("dependencies.yml"));
         required(root.resolve("dependencies.lock.yml"));

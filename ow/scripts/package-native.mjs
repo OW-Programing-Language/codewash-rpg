@@ -112,6 +112,7 @@ export function stageOwPayload(projectRoot, dest) {
   copyFileSync(join(owRoot, 'dependencies.yml'), join(dest, 'dependencies.yml'));
   copyFileSync(lock, join(dest, 'dependencies.lock.yml'));
   copySafeTree(join(owRoot, 'assets/native'), join(dest, 'assets/native'));
+  copySafeTree(join(projectRoot, 'public/assets/sounds'), join(dest, 'assets/sounds'));
 
   for (const alias of aliases) {
     const source = join(owRoot, '.ow/deps', alias);
@@ -121,6 +122,10 @@ export function stageOwPayload(projectRoot, dest) {
     writeFileSync(marker, pinned.get(alias) + '\n', 'utf8');
   }
   assertFile(join(dest, 'src/engine/battle_gpu.ow'));
+  assertFile(join(dest, 'src/engine/battle_native.ow'));
+  assertFile(join(dest, 'src/engine/audio_smoke.ow'));
+  assertFile(join(dest, 'assets/sounds/bgm/calm1.wav'));
+  assertFile(join(dest, 'assets/sounds/ui/ui/click.wav'));
   assertFile(join(dest, 'src/engine/battle_lifecycle_smoke.ow'));
   assertFile(join(dest, 'assets/native/skills/math_icon.png'));
   assertFile(join(dest, 'assets/native/themes/minecraft.png'));
