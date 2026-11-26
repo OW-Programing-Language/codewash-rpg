@@ -1,0 +1,12 @@
+# No audio device is required: validate the packaged system SPI and safe failure.
+main:
+  call: assert(extension("system.audio.set_volume", 0) == 1, "mute accepted")
+  call: assert(extension("system.audio.effect", "click") == 1, "muted effect is harmless")
+  call: assert(extension("system.audio.note", "RED") == 1, "muted pattern note")
+  call: assert(extension("system.audio.pattern", "RED BLUE ?") == 1, "pattern replay scheduled")
+  call: assert(extension("system.audio.cancel_pattern") == 1, "replay cancelled")
+  call: assert(extension("system.audio.set_volume", 50) == 1, "volume accepted")
+  call: assert(extension("system.audio.play_bgm", "../missing.wav") == 0, "outside sound root rejected")
+  call: assert(extension("system.audio.effect", "missing") == 0, "missing effect is harmless")
+  call: assert(extension("system.audio.stop_bgm") == 1, "stop accepted")
+  print: "PASS: native audio SPI, volume, pattern replay and safe failure"

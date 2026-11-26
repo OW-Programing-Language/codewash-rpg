@@ -1,0 +1,24 @@
+# Interactive GPU preview only; browser and React/Electron game unchanged.
+import "GpuBattle.ow"
+
+main:
+  set preview: new GpuBattle()
+  call: assert(preview.start() == 1, "OW Engine + OpenGL battle boot")
+  call: preview.enable_audio()
+  print: "CodeWash RPG / native audio and GPU battle"
+  print: "Questions and four answer cards now render inside the OpenGL window."
+  print: "W/A/S/D: answer directly. Arrows: highlight. Space: submit. Esc: exit."
+  print: "Menu: W/A/S/D or arrows + Space. Esc backs out; Esc on menu exits."
+  set first_frame int: 0
+  while: preview.running() == 1
+    call: preview.poll()
+    if: preview.running() == 1
+      set count int: preview.render()
+      call: assert(count >= 0, "render menu or battlefield")
+      call: assert(count <= 5, "at most one hit/miss effect")
+      call: assert(preview.present() == 1, "present native OpenGL frame")
+      if: first_frame == 0
+        set first_frame: 1
+        # Desktop launcher removes its splash only AFTER a visible frame.
+        print: "CODEWASH_NATIVE_READY"
+  call: assert(preview.stop() == 1)

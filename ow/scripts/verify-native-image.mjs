@@ -32,6 +32,11 @@ export function verifyContents({root, binary, app}) {
   for (const name of ['native-launcher.jar', 'OwIDE.jar',
     'ow-graphics-native.jar', 'payload/ow/dependencies.lock.yml',
     'payload/ow/src/engine/battle_gpu.ow',
+    'payload/ow/src/engine/battle_native.ow',
+    'payload/ow/src/engine/audio_smoke.ow',
+    'payload/ow/assets/sounds/bgm/calm1.wav',
+    'payload/ow/assets/sounds/ui/ui/click.wav',
+    'payload/ow/assets/sounds/axolotl/c4.wav',
     'payload/ow/assets/native/skills/math_icon.png',
     'payload/ow/assets/native/themes/minecraft.png',
     'payload/ow/assets/native/themes/minecraft_logo.png',
@@ -61,11 +66,12 @@ export function checkBundledOwRuntime(output, platform = process.platform) {
   if (!existsSync(java)) throw new Error('Bundled Java executable missing: ' + java);
   const sep = platform === 'win32' ? ';' : ':';
   const cp = [join(image.app, 'OwIDE.jar'),
+    join(image.app, 'native-launcher.jar'),
     join(image.app, 'ow-graphics-native.jar'),
     join(image.app, 'lib/*')].join(sep);
   const game = join(image.app, 'payload/ow');
   const p = spawnSync(java, ['-cp', cp, 'dev.oreo.Main',
-    'check', 'src/engine/battle_gpu.ow'], {
+    'check', 'src/engine/battle_native.ow'], {
     cwd: game,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -76,7 +82,13 @@ export function checkBundledOwRuntime(output, platform = process.platform) {
     throw new Error('Bundled OW interpreter offline check failed:\n' +
       (p.stdout || '') + '\n' + (p.stderr || '') + '\nStatus ' + p.status);
   }
-  console.log('PASS: bundled OW runtime checks the game offline on ' + platform);
+  const audio = spawnSync(java, ['-cp', cp, 'dev.oreo.Main',
+    'run', 'src/engine/audio_smoke.ow'], {cwd: game, encoding: 'utf8', timeout: 30_000});
+  if (audio.error) throw audio.error;
+  if (audio.status !== 0 || !audio.stdout.includes('PASS: native audio SPI')) {
+    throw new Error('Packaged native audio SPI failed: ' + audio.stdout + audio.stderr);
+  }
+  console.log('PASS: bundled OW runtime and native audio SPI checked offline on ' + platform);
 }
 
 /**
