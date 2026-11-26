@@ -146,10 +146,22 @@ export function buildNativeImage(options) {
   rmSync(stage, {recursive: true, force: true});
   mkdirSync(input, {recursive: true});
   mkdirSync(classes, {recursive: true});
-  const javaSource = join(repoRoot,
-    'ow/native-launcher/src/main/java/org/oreostudios/codewash/NativeLauncher.java');
-  assertFile(javaSource);
-  execute('javac', ['--release', '17', '-d', classes, javaSource]);
+  const launcherRoot = join(repoRoot, 'ow/native-launcher/src/main/java');
+  const javaSources = [
+    join(launcherRoot, 'org/oreostudios/codewash/NativeLauncher.java'),
+    join(launcherRoot, 'org/oreostudios/codewash/SystemRuntimeExtension.java'),
+  ];
+  for (const source of javaSources) assertFile(source);
+  // The system extension implements OW's dev.oreo.RuntimeExtension SPI, so the
+  // built OW compiler jar must be on the compile classpath.
+  execute('javac', ['-classpath', compilerJar, '-encoding', 'UTF-8',
+    '--release', '17', '-d', classes, ...javaSources]);
+  // Register it for ServiceLoader so `extension("system.*")` resolves at runtime.
+  const serviceEntry = 'META-INF/services/dev.oreo.RuntimeExtension';
+  const serviceSource = join(repoRoot, 'ow/native-launcher/src/main/resources', serviceEntry);
+  assertFile(serviceSource);
+  mkdirSync(join(classes, 'META-INF/services'), {recursive: true});
+  copyFileSync(serviceSource, join(classes, serviceEntry));
   execute('jar', ['--create', '--file', join(input, 'native-launcher.jar'),
     '-C', classes, '.']);
 
