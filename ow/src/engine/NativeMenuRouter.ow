@@ -230,6 +230,13 @@ class NativeMenuRouter:
     if: this.screen() == "bugreport"
       if: index == 3
         return: this.open_menu()
+      if: index == 0
+        set opened int: extension("system.open_url", "https://github.com/OW-Programing-Language/codewash-rpg/issues")
+        if: opened == 1
+          set this.status: "OPENED GITHUB ISSUES IN YOUR BROWSER"
+          return: 1
+        set this.status: "COULD NOT OPEN BROWSER  VISIT THE URL ABOVE"
+        return: 0
       set this.status: "OPEN GITHUB ISSUES TO SUBMIT"
       return: 0
     if: this.screen() == "menu_panel"

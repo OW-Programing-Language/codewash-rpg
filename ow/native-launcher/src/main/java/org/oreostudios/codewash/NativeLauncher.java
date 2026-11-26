@@ -158,7 +158,8 @@ public final class NativeLauncher {
         String jars = appDir.resolve("lib").toString()
                 + java.io.File.separator + "*";
         return appDir.resolve("OwIDE.jar") + separator
-                + appDir.resolve("ow-graphics-native.jar") + separator + jars;
+                + appDir.resolve("ow-graphics-native.jar") + separator
+                + appDir.resolve("native-launcher.jar") + separator + jars;
     }
 
     private static void verifyClasspath(Path appDir) {
