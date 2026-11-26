@@ -19,9 +19,20 @@ main:
   set selected: extension("codewash.test.pixel", 320, 98)
   set ordinary: extension("codewash.test.pixel", 960, 98)
   call: assert(selected[1] > ordinary[1] + 30, "W choice highlighted")
-  # The first L in 'LVL' is a real rasterized 5x7 OpenGL glyph.
-  set letter: extension("codewash.test.pixel", 48, 671)
-  call: assert(letter[0] > 150, "top-left text glyph is visible")
+  # The 'LVL' status line renders as real OpenGL glyphs (the VT323 atlas font).
+  # Scan the top-left status band for any bright glyph pixel so the check stays
+  # valid across font geometry changes instead of pinning one exact pixel.
+  set found int: 0
+  set sy int: 560
+  while: sy < 745
+    set sx int: 20
+    while: sx < 360
+      set probe: extension("codewash.test.pixel", sx, sy)
+      if: probe[0] > 150
+        set found: 1
+      set sx: sx + 4
+    set sy: sy + 4
+  call: assert(found == 1, "top-left status text glyph is visible")
 
   call: assert(game.selection.move("RIGHT") == 1, "arrow navigation")
   call: assert(game.render() == 4, "HUD redraws changed selection")
