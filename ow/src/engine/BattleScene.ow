@@ -20,6 +20,7 @@ class BattleScene:
   field scene_name
   field skill_name
   field cached_options
+  field audio_enabled
 
   fn new(app):
     set this.app: app
@@ -39,6 +40,7 @@ class BattleScene:
     set this.scene_name: "battle"
     set this.skill_name: "math"
     set this.cached_options: []
+    set this.audio_enabled: 0
 
   # Patterns has its own Game/ECS state, as every other native activity.
   fn configure_patterns():
@@ -166,6 +168,11 @@ class BattleScene:
   # 1=hit, 2=miss; only the corresponding ECS mesh is made visible.
   fn show_feedback(correct):
     call: this.clear_feedback()
+    if: this.audio_enabled == 1
+      if: correct == 1
+        call: extension("system.audio.effect", "successful_hit")
+      else:
+        call: extension("system.audio.effect", "fail")
     if: correct == 1
       set this.feedback_kind: 1
       return: this.world.set_mesh(this.hit_fx, this.battle_mesh)
@@ -200,6 +207,16 @@ class BattleScene:
       call: this.ecs.set_transform(this.miss_fx, 0.0 - 1.55, 2.05 + 0.015 * this.feedback_frame, 0.0)
     return: 1
 
+  fn audio_after_hit(old_mob, old_level):
+    if: this.audio_enabled == 1
+      if: old_mob.dead() == 1
+        call: extension("system.audio.mob", old_mob.label(), "death")
+        if: this.game.hero.lvl() > old_level
+          call: extension("system.audio.effect", "levelup")
+      else:
+        call: extension("system.audio.mob", old_mob.label(), "hurt")
+    return: 1
+
   fn options():
     return: this.cached_options
 
@@ -215,7 +232,11 @@ class BattleScene:
     set correct int: 0
     if: value == this.game.problem.solution()
       set correct: 1
+    set old_mob: this.game.mob
+    set old_level int: this.game.hero.lvl()
     call: this.game.answer(value)
+    if: correct == 1
+      call: this.audio_after_hit(old_mob, old_level)
     set this.cached_options: this.game.skill.options(this.game.problem)
     call: this.sync_health()
     call: this.show_feedback(correct)
@@ -231,7 +252,11 @@ class BattleScene:
     set correct int: 0
     if: upper(word) == upper(this.game.problem.solution())
       set correct: 1
+    set old_mob: this.game.mob
+    set old_level int: this.game.hero.lvl()
     call: this.game.answer(upper(word))
+    if: correct == 1
+      call: this.audio_after_hit(old_mob, old_level)
     set this.cached_options: this.game.skill.options(this.game.problem)
     call: this.sync_health()
     call: this.show_feedback(correct)
@@ -246,7 +271,10 @@ class BattleScene:
       return: 0 - 1
     if: this.game.skill.mode() != "task"
       return: 0 - 1
+    set old_mob: this.game.mob
+    set old_level int: this.game.hero.lvl()
     call: this.game.answer(this.game.problem.solution())
+    call: this.audio_after_hit(old_mob, old_level)
     set this.cached_options: this.game.skill.options(this.game.problem)
     call: this.sync_health()
     call: this.show_feedback(1)
@@ -262,7 +290,10 @@ class BattleScene:
       return: 0 - 1
     if: this.game.skill.mode() != "memory"
       return: 0 - 1
+    set old_mob: this.game.mob
+    set old_level int: this.game.hero.lvl()
     call: this.game.hit()
+    call: this.audio_after_hit(old_mob, old_level)
     call: this.sync_health()
     call: this.show_feedback(1)
     return: 1

@@ -79,6 +79,7 @@ class GpuBattle:
   field pointer
   field menu_materials
   field escape_held
+  field audio_enabled
 
   fn new():
     set entities: new EngineEntitiesModule()
@@ -114,6 +115,7 @@ class GpuBattle:
     set this.hud: 0
     set this.menu: 0
     set this.escape_held: 0
+    set this.audio_enabled: 0
     set this.spelling: new NativeSpellingInput()
     set this.art: 0
     set this.layout: new NativeMenuLayout()
@@ -240,6 +242,28 @@ class GpuBattle:
     print: "GPU STARTUP: INITIALIZED"
     return: 1
 
+  # The packaged launcher supplies the system SPI; GPU smoke tests stay silent.
+  fn enable_audio():
+    set this.audio_enabled: 1
+    set this.battle.audio_enabled: 1
+    set this.reading.audio_enabled: 1
+    set this.writing.audio_enabled: 1
+    set this.cleaning.audio_enabled: 1
+    set this.memory.audio_enabled: 1
+    set this.patterns.audio_enabled: 1
+    call: extension("system.audio.set_volume", this.menu.volume)
+    return: extension("system.audio.start_music", this.menu.theme_id)
+
+  fn cancel_pattern_audio():
+    if: this.audio_enabled == 1
+      call: extension("system.audio.cancel_pattern")
+    return: 1
+
+  fn sound(name):
+    if: this.audio_enabled == 1
+      call: extension("system.audio.effect", name)
+    return: 1
+
   fn active_battle():
     if: this.menu.screen() == "patterns"
       return: this.patterns
@@ -304,6 +328,10 @@ class GpuBattle:
   fn move_carousel(direction):
     if: this.carousel.move(direction) != 1
       return: 0
+    if: direction == 1
+      call: this.sound("actioncard_right")
+    else:
+      call: this.sound("actioncard_left")
     if: this.menu.screen() == "activities"
       if: this.menu.open_activities(this.carousel.page()) != 1
         return: 0
@@ -316,6 +344,7 @@ class GpuBattle:
     set this.held: 0 - 1
     set launched int: this.carousel.launch(this.menu)
     if: launched == 1
+      call: this.sound("click")
       call: this.selection.pick(0)
       call: assert(this.refresh_active_hud() == 1, "focused native activity HUD")
       call: this.show_question()
@@ -342,6 +371,7 @@ class GpuBattle:
             if: index == 4
               set handled: this.menu.open_bugreport()
     if: handled == 1
+      call: this.sound("click")
       call: this.selection.pick(0)
       call: assert(this.hud.refresh_menu(this.menu) == 1, "electron toolbar drawer refresh")
     return: handled
@@ -353,6 +383,8 @@ class GpuBattle:
     else:
       if: this.escape_held == 0
         set this.escape_held: 1
+        call: this.cancel_pattern_audio()
+        call: this.sound("click")
         call: this.menu.back()
         if: this.menu.quitting == 1
           call: this.window.request_close()
@@ -495,7 +527,15 @@ class GpuBattle:
     set this.held: choice
     call: this.selection.pick(choice)
     if: this.playing() == 0
+      set before_volume int: this.menu.volume
+      set before_theme int: this.menu.theme_id
       set handled int: this.menu.choose(choice)
+      if: this.audio_enabled == 1
+        if: before_volume != this.menu.volume
+          call: extension("system.audio.set_volume", this.menu.volume)
+        if: before_theme != this.menu.theme_id
+          call: extension("system.audio.start_music", this.menu.theme_id)
+      call: this.sound("click")
       if: this.menu.screen() == "cosmetics"
         if: this.art.select_theme(this.menu.theme_id) != 1
           return: 0 - 1
@@ -516,7 +556,18 @@ class GpuBattle:
             call: this.menu.focus_card(this.carousel.focused())
           call: assert(this.hud.refresh_menu(this.menu) == 1, "menu screen refresh")
       return: handled
+    call: this.sound("click")
     if: this.menu.screen() == "patterns"
+      if: this.audio_enabled == 1
+        if: this.patterns_activity.phase == 0
+          if: choice == 1
+            call: extension("system.audio.pattern", this.patterns_activity.shown_pattern())
+          else:
+            call: this.cancel_pattern_audio()
+        else:
+          call: this.cancel_pattern_audio()
+          set colors: this.patterns_activity.options()
+          call: extension("system.audio.note", colors[choice])
       set action int: this.patterns_activity.choose(choice)
       if: action == 3
         call: this.menu.open_menu()
@@ -528,11 +579,15 @@ class GpuBattle:
       return: action
     if: this.menu.screen() == "memory"
       set action int: this.memory_activity.select(choice)
+      if: action == 4
+        call: this.sound("notification")
       if: action >= 0
         call: assert(this.refresh_active_hud() == 1, "memory card reveal HUD")
       return: action
     if: this.menu.screen() == "cleaning"
       set action int: this.cleaning_activity.choose(choice)
+      if: action == 1
+        call: this.sound("notification")
       if: action == 3
         call: this.menu.open_menu()
         call: this.selection.pick(0)
@@ -591,6 +646,9 @@ class GpuBattle:
     return: this.window.present()
 
   fn stop():
+    if: this.audio_enabled == 1
+      call: this.cancel_pattern_audio()
+      call: extension("system.audio.stop_bgm")
     if: this.menu_materials != 0
       call: this.menu_materials.stop()
     if: this.art != 0

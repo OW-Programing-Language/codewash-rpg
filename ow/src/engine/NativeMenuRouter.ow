@@ -6,6 +6,9 @@ class NativeMenuRouter:
   field status
   field quitting
   field theme_id
+  field audio_panel
+  field volume
+  field last_volume
 
   fn new(scenes):
     set this.scenes: scenes
@@ -13,6 +16,9 @@ class NativeMenuRouter:
     set this.status: ""
     set this.quitting: 0
     set this.theme_id: 0
+    set this.audio_panel: 0
+    set this.volume: 50
+    set this.last_volume: 50
 
   fn screen():
     return: this.scenes.active_name()
@@ -35,6 +41,7 @@ class NativeMenuRouter:
   fn open_settings():
     if: this.scenes.activate("settings") != 1
       return: 0
+    set this.audio_panel: 0
     set this.status: "PROFILE  AUDIO  LANGUAGE  AND DATA RESET"
     return: 1
 
@@ -117,6 +124,9 @@ class NativeMenuRouter:
     return: 1
 
   fn back():
+    if: this.screen() == "settings"
+      if: this.audio_panel == 1
+        return: this.open_settings()
     if: this.screen() == "menu"
       set this.quitting: 1
       return: 1
@@ -187,6 +197,8 @@ class NativeMenuRouter:
         return: ["MATH", "READING", "WRITING", "NEXT"]
       return: ["CLEANING", "MEMORY", "PATTERNS", "BACK"]
     if: this.screen() == "settings"
+      if: this.audio_panel == 1
+        return: ["VOLUME DOWN", "VOLUME UP", "MUTE / UNMUTE", "BACK"]
       return: ["MUSIC AND SFX", "LANGUAGE", "RESET DATA", "BACK"]
     if: this.screen() == "cosmetics"
       return: ["NEXT THEME", "PREV THEME", "RESET THEME", "BACK"]
@@ -213,6 +225,27 @@ class NativeMenuRouter:
       set this.quitting: 1
       return: 1
     if: this.screen() == "settings"
+      if: this.audio_panel == 1
+        if: index == 3
+          return: this.open_settings()
+        if: index == 0
+          if: this.volume > 0
+            set this.volume: this.volume - 10
+        if: index == 1
+          if: this.volume < 100
+            set this.volume: this.volume + 10
+        if: index == 2
+          if: this.volume > 0
+            set this.last_volume: this.volume
+            set this.volume: 0
+          else:
+            set this.volume: this.last_volume
+        set this.status: "MASTER VOLUME " + str(this.volume) + " PERCENT"
+        return: 1
+      if: index == 0
+        set this.audio_panel: 1
+        set this.status: "MASTER VOLUME " + str(this.volume) + " PERCENT"
+        return: 1
       if: index == 3
         return: this.open_menu()
       set this.status: "COMING SOON  FEATURE NOT AVAILABLE"
