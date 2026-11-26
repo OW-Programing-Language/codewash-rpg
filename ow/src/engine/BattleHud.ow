@@ -296,13 +296,12 @@ class BattleHud:
     else:
       if: this.renderer.draw_mesh(this.option_cards) != 1
         return: 0
-    if: this.menu_mode == 1
-      if: this.renderer.blend(1) != 1
-        return: 0
-      if: this.textures.bind(this.menu_font_atlas, 1) != 1
-        return: 0
-      if: this.shader.set_int(this.shader_program, "uMenuFont", 1) != 1
-        return: 0
+    if: this.renderer.blend(1) != 1
+      return: 0
+    if: this.textures.bind(this.menu_font_atlas, 1) != 1
+      return: 0
+    if: this.shader.set_int(this.shader_program, "uMenuFont", 1) != 1
+      return: 0
     if: this.renderer.draw_mesh(this.text_mesh) != 1
       return: 0
     if: this.menu_mode == 1
@@ -310,8 +309,8 @@ class BattleHud:
         if: this.rich_text > 0
           if: this.renderer.draw_mesh(this.rich_text) != 1
             return: 0
-      if: this.renderer.blend(0) != 1
-        return: 0
+    if: this.renderer.blend(0) != 1
+      return: 0
     if: this.renderer.depth_test(1) != 1
       return: 0
     return: 2

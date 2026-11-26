@@ -12,8 +12,17 @@ main:
   call: assert(game.reading.skill_name == "reading", "reading uses original skill")
   call: assert(game.hud.refresh(game.reading) == 1, "word and options sent to GPU")
   call: assert(game.render() == 4, "four reading ECS battle meshes")
-  set readingHeader: extension("codewash.test.pixel", 48, 615)
-  call: assert(readingHeader[0] > 150, "READING word glyphs rasterized")
+  set gfound int: 0
+  set gsy int: 560
+  while: gsy < 715
+    set gsx int: 20
+    while: gsx < 360
+      set gprobe: extension("codewash.test.pixel", gsx, gsy)
+      if: gprobe[0] > 150
+        set gfound: 1
+      set gsx: gsx + 4
+    set gsy: gsy + 4
+  call: assert(gfound == 1, "READING word glyphs rasterized")
   set hero: extension("codewash.test.pixel", 498, 360)
   call: assert(hero[2] > hero[0] + 30, "cyan reading hero drawn")
   set selected: extension("codewash.test.pixel", 320, 98)

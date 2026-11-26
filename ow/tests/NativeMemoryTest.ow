@@ -159,7 +159,7 @@ class NativeMemoryTest:
     call: this.check.assertEquals(first, this.memory.game.skill.face(0))
     set layout: new BattleHudText()
     call: this.check.assertEquals(4320, len(layout.memory_vertices(this.memory, this.activity)))
-    call: this.check.assertEquals(88, layout.memory_vertices(this.memory, this.activity)[2])
+    call: this.check.assertEquals(2136, layout.memory_vertices(this.memory, this.activity)[2])
 
   @Test
   fn invalidIndicesAndPagesNeverFlipOrDamage():

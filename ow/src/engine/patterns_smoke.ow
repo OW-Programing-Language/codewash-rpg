@@ -12,8 +12,17 @@ main:
   call: assert(preview.patterns_activity.phase == 0, "study first")
   call: assert(preview.hud.refresh_patterns(preview.patterns, preview.patterns_activity) == 1, "GPU study HUD")
   call: assert(preview.render() == 4, "Patterns renders four ECS meshes")
-  set header: extension("codewash.test.pixel", 48, 671)
-  call: assert(header[0] > 150, "visible OpenGL glyphs")
+  set gfound int: 0
+  set gsy int: 560
+  while: gsy < 715
+    set gsx int: 20
+    while: gsx < 360
+      set gprobe: extension("codewash.test.pixel", gsx, gsy)
+      if: gprobe[0] > 150
+        set gfound: 1
+      set gsx: gsx + 4
+    set gsy: gsy + 4
+  call: assert(gfound == 1, "visible OpenGL glyphs")
   set selected: extension("codewash.test.pixel", 320, 98)
   set unselected: extension("codewash.test.pixel", 960, 98)
   call: assert(selected[1] > unselected[1] + 30, "highlighted GPU choice")

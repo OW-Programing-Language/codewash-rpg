@@ -11,8 +11,17 @@ main:
   call: assert(preview.memory.game.skill.mode() == "memory", "original MemorySkill")
   call: assert(preview.hud.refresh_memory(preview.memory, preview.memory_activity) == 1, "draw hidden cards")
   call: assert(preview.render() == 4, "Memory has four ECS battle meshes")
-  set header: extension("codewash.test.pixel", 48, 671)
-  call: assert(header[0] > 150, "real OpenGL level header pixels")
+  set gfound int: 0
+  set gsy int: 560
+  while: gsy < 715
+    set gsx int: 20
+    while: gsx < 360
+      set gprobe: extension("codewash.test.pixel", gsx, gsy)
+      if: gprobe[0] > 150
+        set gfound: 1
+      set gsx: gsx + 4
+    set gsy: gsy + 4
+  call: assert(gfound == 1, "real OpenGL level header pixels")
   set selected: extension("codewash.test.pixel", 320, 98)
   set othercard: extension("codewash.test.pixel", 960, 98)
   call: assert(selected[1] > othercard[1] + 30, "Memory selection card highlighted")

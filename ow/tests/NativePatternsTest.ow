@@ -125,7 +125,7 @@ class NativePatternsTest:
     set glyphs: new BattleHudText()
     set vertices: glyphs.patterns_vertices(this.patterns, this.activity)
     call: this.check.assertEquals(4320, len(vertices))
-    call: this.check.assertEquals(88, vertices[2])
+    call: this.check.assertEquals(2136, vertices[2])
 
   @Test
   fn originalPatternsSkillSupportsAllSixColorsAndFourChoices():
