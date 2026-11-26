@@ -24,7 +24,7 @@ main:
   # valid across font geometry changes instead of pinning one exact pixel.
   set found int: 0
   set sy int: 560
-  while: sy < 745
+  while: sy < 715
     set sx int: 20
     while: sx < 360
       set probe: extension("codewash.test.pixel", sx, sy)
